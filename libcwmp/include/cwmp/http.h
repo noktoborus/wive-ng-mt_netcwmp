@@ -93,6 +93,7 @@ struct http_digest_auth_t
 	char    qop[MIN_DEFAULT_LEN+1];
 	char    nc[MIN_DEFAULT_LEN+1];
     char    uri[MIN_DEFAULT_LEN*4+1];
+	char	opaque[MIN_DEFAULT_LEN+1];
 };
 
 
