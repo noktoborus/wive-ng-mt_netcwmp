@@ -1531,7 +1531,7 @@ int http_parse_digest_auth(const char * auth, http_digest_auth_t * digest_auth)
     TRstrncpy(digest_auth->cnonce, cnonce, MIN_DEFAULT_LEN);
     TRstrncpy(digest_auth->qop, "auth", MIN_DEFAULT_LEN);
     TRstrncpy(digest_auth->nc, nc, MIN_DEFAULT_LEN);
-	TRstrncpy(digest_auto->opaque, opaque, MIN_DEFAULT_LEN);
+	TRstrncpy(digest_auth->opaque, opaque, MIN_DEFAULT_LEN);
 
     return CWMP_OK;
 
