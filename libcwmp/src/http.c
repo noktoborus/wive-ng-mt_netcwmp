@@ -1332,26 +1332,18 @@ void http_digest_calc_ha1(
         const char *pszCNonce,
         char *SessionKey)
 {
-    MD5_CTX Md5Ctx;
+	bool md5sess = (TRstrcasecmp(pszAlg, "md5-sess") == 0);
     char HA1[HASHLEN];
 
-    MD5Init(&Md5Ctx);
-    MD5Update(&Md5Ctx, (unsigned char *)pszUserName, strlen(pszUserName));
-    MD5Update(&Md5Ctx, (unsigned char *)":", 1);
-    MD5Update(&Md5Ctx, (unsigned char *)pszRealm, strlen(pszRealm));
-    MD5Update(&Md5Ctx, (unsigned char *)":", 1);
-    MD5Update(&Md5Ctx, (unsigned char *)pszPassword, strlen(pszPassword));
-    MD5Final((unsigned char *)HA1, &Md5Ctx);
-    if (TRstrcasecmp(pszAlg, "md5-sess") == 0)
-    {
-        MD5Init(&Md5Ctx);
-        MD5Update(&Md5Ctx, (unsigned char *)HA1, HASHLEN);
-        MD5Update(&Md5Ctx, (unsigned char *)":", 1);
-        MD5Update(&Md5Ctx, (unsigned char *)pszNonce, strlen(pszNonce));
-        MD5Update(&Md5Ctx, (unsigned char *)":", 1);
-        MD5Update(&Md5Ctx, (unsigned char *)pszCNonce, strlen(pszCNonce));
-        MD5Final((unsigned char *)HA1, &Md5Ctx);
-    };
+	MD5(HA1, pszUserName, ":", pszRealm, ":", pszPassword);
+
+	if ((!pszCNonce || !*pszCNonce) && md5sess) {
+		/* rfc2069: skip cnonce in H(A1) */
+		cwmp_log_info("cnonce not given for md5-sess algorithm");
+	} else if (md5sess) {
+		MD5(HA1, HA1, ":", pszNonce, ":", pszCNonce);
+	}
+
     convert_to_hex(HA1, SessionKey);
 };
 
@@ -1438,29 +1430,36 @@ int http_check_digest_auth(const char * auth_realm, const char * auth, char * cp
 }
 
 int http_calc_digest_response(const char * user, const char * pwd,
-                const char * realm,
-                const char * nonce,
-                const char * uri,
-                const char * cnonce,
-                const char * nc,
-                const char * qop,
-                char * response)
+				http_digest_auth_t *digest)
 {
     char ha1[HASHHEXLEN+1];
     char ha2[HASHHEXLEN+1];
     char valid_response[HASHHEXLEN+1];
-    http_digest_calc_ha1("MD5", user, realm, pwd, nonce, cnonce, ha1);
-    MD5(ha2, "POST", ":", uri, NULL);
-#if 0
-	/* RFC 2617 method */
-    MD5(valid_response, ha1, ":", nonce, ":", nc, ":", cnonce, ":", qop, ":", ha2, NULL);
-#else
-	/* simple, RFC 2069 method */
-    MD5(valid_response, ha1, ":", nonce, ":", ha2, NULL);
-#endif
+
+    http_digest_calc_ha1("MD5",
+			user, digest->realm, pwd, digest->nonce, digest->cnonce, ha1);
+
+    MD5(ha2, "POST", ":", digest->uri, NULL);
+
+	if (digest->rfc2617) {
+			/* RFC 2617 method */
+		MD5(valid_response,
+				ha1, ":",
+				digest->nonce, ":",
+				digest->nc, ":",
+				digest->cnonce, ":",
+				digest->qop, ":",
+				ha2, NULL);
+	} else {
+		/* simple, RFC 2069 method */
+		MD5(valid_response,
+				ha1, ":",
+				digest->nonce, ":",
+				ha2, NULL);
+	}
 
 
-    TRstrncpy(response, valid_response, HASHHEXLEN);
+    TRstrncpy(digest->response, valid_response, HASHHEXLEN);
 
     return CWMP_OK;
 }
@@ -1480,10 +1479,11 @@ int http_parse_digest_auth(const char * auth, http_digest_auth_t * digest_auth)
     char        realm[128] = {0};
 
     char		qop[16] = {0};
-    char		nc[16] = {0};
+    char		nc[16] = "00000001";
 
     char		response[128] = {0};
     char		opaque[128] = {};
+	bool		rfc2617 = false;
 
 
     FUNCTION_TRACE();
@@ -1510,11 +1510,12 @@ int http_parse_digest_auth(const char * auth, http_digest_auth_t * digest_auth)
             http_parse_key_value(&s, response, sizeof(response), 9);
         else if (! strncmp(s, "uri=", 4))
             http_parse_key_value(&s, uri, sizeof(uri), 4);
-        else if (! strncmp(s, "qop=", 4))
+        else if (! strncmp(s, "qop=", 4)) {
+			rfc2617 = true;
             http_parse_key_value(&s, qop, sizeof(qop), 4);
-        else if (! strncmp(s, "cnonce=", 7))
+		} else if (! strncmp(s, "cnonce=", 7)) {
             http_parse_key_value(&s, cnonce, sizeof(cnonce), 7);
-        else if (! strncmp(s, "nc=", 3))
+		} else if (! strncmp(s, "nc=", 3))
             http_parse_key_value(&s, nc, sizeof(nc), 3);
         else if (! strncmp(s, "domain=", 7))
             http_parse_key_value(&s, uri, sizeof(uri), 7);
@@ -1525,6 +1526,11 @@ int http_parse_digest_auth(const char * auth, http_digest_auth_t * digest_auth)
     cwmp_log_info("user[%s], realm[%s], nonce[%s], response[%s], uri[%s], qop[%s], cnonce[%s], nc[%s], opaque[%s]\n",
                   user, realm, nonce, response, uri, qop, cnonce, nc, opaque);
 
+	if (!*cnonce) {
+		string_randomize(cnonce, sizeof(cnonce) - 1);
+	}
+
+	digest_auth->rfc2617 = rfc2617;
     TRstrncpy(digest_auth->realm, realm, MIN_DEFAULT_LEN);
     TRstrncpy(digest_auth->nonce, nonce, MIN_DEFAULT_LEN);
     TRstrncpy(digest_auth->uri, uri, MIN_DEFAULT_LEN*4);
@@ -1542,8 +1548,10 @@ int http_parse_digest_auth(const char * auth, http_digest_auth_t * digest_auth)
 
 
 
-int http_write_request(http_socket_t * sock , http_request_t * request, cwmp_chunk_t * chunk, pool_t * pool)
+int http_write_request(http_socket_t * sock, http_request_t * request, cwmp_chunk_t * chunk, pool_t * pool)
 {
+	char auth_fmt[2048] = {};
+	char *p = auth_fmt;
     char buffer[HTTP_DEFAULT_LEN+1];
     char * data;
 
@@ -1559,16 +1567,12 @@ int http_write_request(http_socket_t * sock , http_request_t * request, cwmp_chu
         "Content-Type: text/xml; charset=utf-8\r\n"
         "Content-Length: %d\r\n"
         ;
-    const char * auth_fmt = "Authorization: Digest username=\"%s\", realm=\"%s\", nonce=\"%s\", uri=\"%s\", response=\"%s\", opaque=\"%s\"\r\n";
-    //qop=%s, nc=%s, cnonce=\"%s\"
 
     http_dest_t * dest = request->dest;
 
-
-
-
     len2 = cwmp_chunk_length(chunk);
 
+	/* formatting header */
     len1 = TRsnprintf(buffer, HTTP_DEFAULT_LEN, header_fmt,
                     http_method(request->method),
                     dest->uri,
@@ -1576,20 +1580,35 @@ int http_write_request(http_socket_t * sock , http_request_t * request, cwmp_chu
                     dest->port,
                     "CPE Netcwmp Agent",
                     len2);
+
+
     if(len2 > 0)
     {
          if((dest->auth.active == CWMP_FALSE) && (dest->auth_type == HTTP_DIGEST_AUTH))
         {
-            http_calc_digest_response(dest->user, dest->password,
-                    dest->auth.realm, dest->auth.nonce, dest->auth.uri, dest->auth.cnonce, dest->auth.nc, dest->auth.qop, dest->auth.response);
+            http_calc_digest_response(dest->user, dest->password, &dest->auth);
 
-            len1 += TRsnprintf(buffer + len1, HTTP_DEFAULT_LEN - len1, auth_fmt,
-                            dest->user,
-                            dest->auth.realm, dest->auth.nonce,
-                            dest->auth.uri, dest->auth.response,
-							dest->auth.opaque
-                            //dest->auth.qop, dest->auth.nc, dest->auth.cnonce
-                            );
+			/* formatting authorization string */
+			p += TRsnprintf(auth_fmt, sizeof(auth_fmt) - (p - auth_fmt),
+					"Authorization: Digest "
+					"username=\"%s\", realm=\"%s\", nonce=\"%s\", "
+					"uri=\"%s\"",
+					dest->user, dest->auth.realm, dest->auth.nonce, dest->auth.uri
+					);
+
+			if (dest->auth.rfc2617) {
+				p += TRsnprintf(auth_fmt, sizeof(auth_fmt) - (p - auth_fmt),
+						", qop=%s, nc=%s, cnonce=\"%s\"",
+						dest->auth.qop, dest->auth.nc, dest->auth.cnonce);
+			}
+
+			if (dest->auth.opaque[0]) {
+				p += TRsnprintf(auth_fmt, sizeof(auth_fmt) - (p - auth_fmt),
+						", opaque=\"%s\"",
+						dest->auth.opaque);
+			}
+
+			len1 += (size_t)(p - sizeof(auth_fmt));
         }
     }
 

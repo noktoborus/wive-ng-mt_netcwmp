@@ -24,6 +24,8 @@
  *                                                                      *
  ***********************************************************************/
 
+#include <time.h>
+#include <stdlib.h>
 #include "cwmpd.h"
 #include "modules/data_model.h"
 
@@ -83,7 +85,8 @@ int main(int argc, char **argv)
 {
 //    cwmp_pid_t pid;
     cwmp_t * cwmp;
-
+	time_t seed = time(NULL);
+	srand((unsigned int)seed);
 
 //    nvram_init(RT2860_NVRAM);
 
@@ -104,7 +107,7 @@ int main(int argc, char **argv)
     char* loglevel = cwmp_conf_pool_get(cwmp_global_pool,"cwmpd:log_level");
     int level = CWMP_LOG_INFO;
 
-    if (loglevel != NULL) 
+    if (loglevel != NULL)
     {
 	if (strcasecmp(loglevel,"error") == 0) level = CWMP_LOG_ERROR;
         else if (strcasecmp(loglevel,"warn") == 0) level = CWMP_LOG_WARN;
@@ -134,7 +137,7 @@ int main(int argc, char **argv)
     char* envVersion = getenv("VERSIONPKG");
 
 
-    if (envDevName != NULL) 
+    if (envDevName != NULL)
     {
 	cwmp_log_error("DEVNAME parameter: %s", envDevName);
     }
@@ -143,7 +146,7 @@ int main(int argc, char **argv)
 	cwmp_log_error("DEVNAME parameter not found!");
     }
 
-    if (envVersion != NULL) 
+    if (envVersion != NULL)
     {
 	cwmp_conf_set("env:VERSIONPKG", envVersion);
 	cwmp_log_error("VERSIONPKG parameter: %s", envVersion);

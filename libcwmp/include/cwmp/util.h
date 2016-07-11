@@ -72,6 +72,8 @@
 #define VPN_DEF "ppp0"
 
 
+void string_randomize(char *buffer, size_t size);
+
 int getHWStatistic(unsigned long long* rxtx_count);
 char* getIntIp(pool_t * pool);
 int getIfMac(char *ifname, char *if_hw);
@@ -294,7 +296,7 @@ static INLINE int is_digit(const char *str)
 {
     int     i;
     int     n;
-    
+
     if(!str)
     {
         return -1;

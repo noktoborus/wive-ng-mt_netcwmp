@@ -6,10 +6,10 @@
  *                                                                      *
  *                                                                      *
  * Email: netcwmp ( & ) gmail dot com                                *
- *                                                                      *  
+ *                                                                      *
  ***********************************************************************/
 
- 
+
 #include "cwmp/util.h"
 #include "cwmp/log.h"
 #include "cwmp/cfg.h"
@@ -108,7 +108,17 @@ void MD5(char *buf, ...)
     cwmp_hex_to_string(buf, hash, sizeof(hash));
 }
 
+void
+string_randomize(char *buffer, size_t size)
+{
+	const char base[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		"abcdefghijklmnopqrstuvwxyz0123456789+";
+	size_t i;
 
+	for (i = 0u; i < size; i++) {
+		buffer[i] = base[rand() % sizeof(base) - 1];
+	}
+}
 
 void convert_to_hex(const char *Bin, char *Hex)
 {
@@ -188,7 +198,7 @@ char* getWanIfName(pool_t * pool)
 
     if_name = WAN_DEF;
 
-    switch (mode) 
+    switch (mode)
     {
 	case 0: if_name = "br0";break;
 //	case 1: case 4: if_name = WAN_DEF;break;
@@ -398,7 +408,7 @@ char* ReadFile(char *name, unsigned long *fileLen)
 	fprintf(stderr, "Unable to open file %s", name);
 	return NULL;
     }
-    
+
     //Get file length
     fseek(file, 0, SEEK_END);
     *fileLen=ftell(file);
@@ -622,7 +632,7 @@ int firmware_upgrade(char* filename)
 	unsigned long file_size = 0;
 
 	char* buffer = ReadFile(filename, &file_size);
-	if (buffer == NULL) 
+	if (buffer == NULL)
 	{
 	    cwmp_log_error("Check image error: unable to read image file: %s", filename);
 	    return 1;

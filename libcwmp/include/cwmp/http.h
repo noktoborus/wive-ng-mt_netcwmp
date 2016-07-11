@@ -13,6 +13,7 @@
 #ifndef __CWMPHTTP_H__
 #define __CWMPHTTP_H__
 
+#include <stdbool.h>
 #include <cwmp/types.h>
 #include <cwmp/cwmp.h>
 #include <cwmp/buffer.h>
@@ -87,12 +88,22 @@ struct http_digest_auth_t
 {
 	int		active; //digest auth
 	char 	realm[MIN_DEFAULT_LEN+1];
-	char 	nonce[MIN_DEFAULT_LEN+1];
-	char 	cnonce[MIN_DEFAULT_LEN+1];
-	char    response[MIN_DEFAULT_LEN+1];
-	char    qop[MIN_DEFAULT_LEN+1];
-	char    nc[MIN_DEFAULT_LEN+1];
     char    uri[MIN_DEFAULT_LEN*4+1];
+
+	char 	nonce[MIN_DEFAULT_LEN+1];
+	/* if qop field received,
+	 * then work on RFC 2069
+	 * (without qop, cnonce and nc fields)
+	 */
+	bool rfc2617;
+	char    qop[MIN_DEFAULT_LEN+1];
+	char 	cnonce[MIN_DEFAULT_LEN+1];
+	char    nc[MIN_DEFAULT_LEN+1];
+	/* calculated response */
+	char    response[MIN_DEFAULT_LEN+1];
+	/* custom field, must be returned
+	 * to server, if defined
+	 */
 	char	opaque[MIN_DEFAULT_LEN+1];
 };
 
