@@ -9,11 +9,14 @@
  *                                                                      *
  ***********************************************************************/
 
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
 #include "cwmp/http.h"
 #include "cwmp/log.h"
 #include "cwmp_private.h"
 #include <cwmp/md5.h>
-
 
 
 
@@ -218,19 +221,56 @@ int http_socket_server (http_socket_t **news, int port, int backlog, int timeout
 }
 
 
-int http_socket_connect(http_socket_t * sock, int family, const char * host, int port)
+int http_socket_connect(http_socket_t * sock, const char * host, int port)
 {
+	struct addrinfo hints = {.ai_family = AF_UNSPEC, .ai_socktype = SOCK_STREAM};
+	struct addrinfo *result = NULL;
+	struct addrinfo *res = NULL;
+	char nport[16] = {};
+	int rval = 0;
 
-    http_sockaddr_set(sock->addr, family, port, host);
-    if (connect(sock->sockdes, (const struct sockaddr *)&sock->addr->sin4,
-                sizeof(struct sockaddr_in)) == -1)
-    {
-        return CWMP_ERROR;
-    }
+	cwmp_log_info("connecting to %s:%d", host, port);
 
+	if (sock->sockdes != 0 && sock->sockdes != -1) {
+		/* sucks functions:
+		 * http_socket_create()
+		 * http_sockaddr_set()
+		*/
+		close(sock->sockdes);
+		sock->sockdes = -1;
+	}
 
+	snprintf(nport, sizeof(nport), "%d", port);
+	rval = getaddrinfo(host, nport, &hints, &result);
+	if (rval) {
+		if (rval == EAI_SYSTEM) {
+			cwmp_log_info("getaddrinfo(): %s", strerror(errno));
+		} else {
+			cwmp_log_info("getaddrinfo(): %s", gai_strerror(rval));
+		}
+		return CWMP_ERROR;
+	}
 
+	for (res = result; res; res = res->ai_next) {
+		sock->sockdes = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		/* TODO: add normal ip addr print */
+		cwmp_log_info("connect to addrinfo: %p", (void*)res);
+		if (sock->sockdes == -1) {
+			cwmp_log_info("socket(): %s", strerror(errno));
+			goto gai_error;
+		}
+		if (connect(sock->sockdes, res->ai_addr, res->ai_addrlen) == -1) {
+			cwmp_log_info("connect(): %s", strerror(errno));
+			goto gai_error;
+		}
+	}
+
+	freeaddrinfo(result);
     return CWMP_OK;
+
+gai_error:
+	freeaddrinfo(result);
+	return CWMP_ERROR;
 }
 
 int http_socket_accept(http_socket_t *sock, http_socket_t ** news)
@@ -1822,7 +1862,7 @@ int http_send_file(const char * fromfile, const char *tourl )
 	//FIXME: find a proper way to wait sock after write instead of TCP_NODELAY
 	setsockopt (sock->sockdes, IPPROTO_TCP, TCP_NODELAY, (void *)&one, sizeof(one));
 
-        rc = http_socket_connect(sock, AF_INET, dest->host, dest->port);
+        rc = http_socket_connect(sock, dest->host, dest->port);
         if(rc != CWMP_OK)
         {
             cwmp_log_error("connect to host faild. Host is %s:%d.", dest->host, dest->port);
@@ -1888,7 +1928,7 @@ int http_receive_file(const char *fromurl, const char * tofile)
             goto out;
         }
 
-        rc = http_socket_connect(sock, AF_INET, dest->host, dest->port);
+        rc = http_socket_connect(sock, dest->host, dest->port);
         if(rc != CWMP_OK)
         {
             cwmp_log_error("connect to host faild. Host is %s:%d.", dest->host, dest->port);

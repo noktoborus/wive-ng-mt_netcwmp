@@ -510,7 +510,7 @@ int cwmp_session_create_connection(cwmp_session_t * session)
 
     http_socket_set_sendtimeout(sock, 10);
 
-    rc = http_socket_connect(sock, AF_INET, session->dest->host, session->dest->port);
+    rc = http_socket_connect(sock, session->dest->host, session->dest->port);
     if(rc != CWMP_OK)
     {
         cwmp_log_alert("connect to ACS faild. Host is %s:%d.", session->dest->host, session->dest->port);

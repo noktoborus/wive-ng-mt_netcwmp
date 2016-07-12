@@ -187,7 +187,7 @@ int http_socket_write (http_socket_t * sock, const char *buf, int bufsize);
 int http_socket_create(http_socket_t **news, int family, int type, int protocol, pool_t * pool);
 int http_socket_calloc(http_socket_t **news, pool_t * pool);
 int http_socket_server (http_socket_t **news, int port, int backlog, int timeout, pool_t * pool);
-int http_socket_connect(http_socket_t * sock, int family, const char * host, int port);
+int http_socket_connect(http_socket_t * sock, const char * host, int port);
 int http_socket_accept(http_socket_t *sock, http_socket_t ** news);
 void http_socket_close(http_socket_t * sock);
 void http_socket_destroy(http_socket_t * sock);
