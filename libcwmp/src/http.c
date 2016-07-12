@@ -1488,11 +1488,17 @@ int http_calc_digest_response(const char *method,
 	convert_to_hex(ha2, ha2hex);
 
 	if (digest->rfc2617) {
-			/* RFC 2617 method */
+		/* increment nonce-count if client (zero for server-side) */
+		if (digest->nc) {
+			TRsnprintf(digest->nc_hex, sizeof(digest->nc_hex),
+					"%08"PRIxPTR, digest->nc);
+			digest->nc++;
+		}
+		/* RFC 2617 method */
 		MD5(valid_response,
 				ha1hex, ":",
 				digest->nonce, ":",
-				digest->nc, ":",
+				digest->nc_hex, ":",
 				digest->cnonce, ":",
 				digest->qop, ":",
 				ha2hex, NULL);
@@ -1516,16 +1522,16 @@ int http_parse_digest_auth(const char * auth, http_digest_auth_t * digest_auth, 
     char buffer[128];
     char * end;
 
-    char		user[256] = {0}; /*CDRouter will test largest size ConnectionRequest Username*/
-    char		uri[256] = {0};//uri[32768]
-    char		nonce[33] = {0};
-    char		cnonce[33] = {0};
-    char        realm[128] = {0};
+    char		user[256] = {}; /*CDRouter will test largest size ConnectionRequest Username*/
+    char		uri[256] = {};//uri[32768]
+    char		nonce[33] = {};
+    char		cnonce[33] = {};
+    char        realm[128] = {};
 
-    char		qop[16] = {0};
-    char		nc[16] = "00000001";
+    char		qop[16] = {};
+    char		nc[16] = {};
 
-    char		response[128] = {0};
+    char		response[128] = {};
     char		opaque[128] = {};
 	bool		rfc2617 = false;
 
@@ -1582,12 +1588,17 @@ int http_parse_digest_auth(const char * auth, http_digest_auth_t * digest_auth, 
 		TRstrncpy(digest_auth->uri, uri, MIN_DEFAULT_LEN*4);
     TRstrncpy(digest_auth->cnonce, cnonce, MIN_DEFAULT_LEN);
     TRstrncpy(digest_auth->qop, "auth", MIN_DEFAULT_LEN);
-    TRstrncpy(digest_auth->nc, nc, MIN_DEFAULT_LEN);
+	if (!*nc) {
+		TRstrncpy(digest_auth->nc_hex, nc, MIN_DEFAULT_LEN);
+		digest_auth->nc = 1;
+	} else {
+		digest_auth->nc = 0;
+	}
 	TRstrncpy(digest_auth->opaque, opaque, MIN_DEFAULT_LEN);
 
     cwmp_log_info("user[%s], realm[%s], "
 			"nonce[%s], response[%s], uri[%s], "
-			"qop[%s], cnonce[%s], nc[%s], opaque[%s]\n",
+			"qop[%s], cnonce[%s], nc[%s:%"PRIuPTR"], opaque[%s]\n",
                   user,
 				  digest_auth->realm,
 				  digest_auth->nonce,
@@ -1595,12 +1606,12 @@ int http_parse_digest_auth(const char * auth, http_digest_auth_t * digest_auth, 
 				  digest_auth->uri,
 				  digest_auth->qop,
 				  digest_auth->cnonce,
+				  digest_auth->nc_hex,
 				  digest_auth->nc,
 				  digest_auth->opaque
 				  );
 
     return CWMP_OK;
-
 }
 
 
@@ -1641,7 +1652,7 @@ int http_write_request(http_socket_t * sock, http_request_t * request, cwmp_chun
                     len2);
 
 
-	if((dest->auth.active == CWMP_FALSE) && (dest->auth_type == HTTP_DIGEST_AUTH))
+	if(dest->auth_type == HTTP_DIGEST_AUTH && *dest->auth.realm)
 	{
 		http_calc_digest_response(http_method(request->method),
 				dest->user, dest->password, &dest->auth);
@@ -1658,7 +1669,7 @@ int http_write_request(http_socket_t * sock, http_request_t * request, cwmp_chun
 		if (dest->auth.rfc2617) {
 			len1 += TRsnprintf(buffer + len1, sizeof(buffer) - len1,
 					", qop=%s, nc=%s, cnonce=\"%s\"",
-					dest->auth.qop, dest->auth.nc, dest->auth.cnonce);
+					dest->auth.qop, dest->auth.nc_hex, dest->auth.cnonce);
 		}
 
 		if (dest->auth.opaque[0]) {

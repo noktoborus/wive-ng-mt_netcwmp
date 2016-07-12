@@ -13,6 +13,7 @@
 #ifndef __CWMPHTTP_H__
 #define __CWMPHTTP_H__
 
+#include <inttypes.h>
 #include <stdbool.h>
 #include <cwmp/types.h>
 #include <cwmp/cwmp.h>
@@ -98,7 +99,8 @@ struct http_digest_auth_t
 	bool rfc2617;
 	char    qop[MIN_DEFAULT_LEN+1];
 	char 	cnonce[MIN_DEFAULT_LEN+1];
-	char    nc[MIN_DEFAULT_LEN+1];
+	size_t  nc;
+	char	nc_hex[9];
 	/* calculated response */
 	char    response[MIN_DEFAULT_LEN+1];
 	/* custom field, must be returned
