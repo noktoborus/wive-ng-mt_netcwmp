@@ -1470,7 +1470,8 @@ int http_check_digest_auth(const char * auth_realm, const char * auth, char * cp
         return -1;
 }
 
-int http_calc_digest_response(const char * user, const char * pwd,
+int http_calc_digest_response(const char *method,
+		const char * user, const char * pwd,
 				http_digest_auth_t *digest)
 {
     char ha1hex[HASHHEXLEN+1] = {};
@@ -1483,7 +1484,7 @@ int http_calc_digest_response(const char * user, const char * pwd,
     http_digest_calc_ha1("MD5",
 			user, digest->realm, pwd, digest->nonce, digest->cnonce, ha1hex);
 
-    MD5(ha2, "POST", ":", digest->uri, NULL);
+    MD5(ha2, method, ":", digest->uri, NULL);
 	convert_to_hex(ha2, ha2hex);
 
 	if (digest->rfc2617) {
@@ -1628,7 +1629,7 @@ int http_write_request(http_socket_t * sock, http_request_t * request, cwmp_chun
 
     http_dest_t * dest = request->dest;
 
-    /*len2 = cwmp_chunk_length(chunk);*/
+    len2 = cwmp_chunk_length(chunk);
 
 	/* formatting header */
     len1 = TRsnprintf(buffer, HTTP_DEFAULT_LEN, header_fmt,
@@ -1642,7 +1643,8 @@ int http_write_request(http_socket_t * sock, http_request_t * request, cwmp_chun
 
 	if((dest->auth.active == CWMP_FALSE) && (dest->auth_type == HTTP_DIGEST_AUTH))
 	{
-		http_calc_digest_response(dest->user, dest->password, &dest->auth);
+		http_calc_digest_response(http_method(request->method),
+				dest->user, dest->password, &dest->auth);
 
 		/* formatting authorization string */
 		len1 += TRsnprintf(buffer + len1, sizeof(buffer) - len1,
@@ -1680,7 +1682,7 @@ int http_write_request(http_socket_t * sock, http_request_t * request, cwmp_chun
     {
         data = (char *)pool_palloc(pool, len1 + len2 + 1);
         TRstrncpy(data, buffer, len1);
-        cwmp_chunk_copy(data+len1,chunk,  len2);
+        cwmp_chunk_copy(data+len1, chunk, len2);
     }
     else
     {
