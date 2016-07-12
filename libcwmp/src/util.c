@@ -72,7 +72,7 @@ static char * base64_encode(const char *src)
     return (str);
 }
 */
-static void cwmp_hex_to_string(char *to, const unsigned char *p, size_t len)
+void cwmp_hex_to_string(char *to, const unsigned char *p, size_t len)
 {
     const char  *hex = "0123456789abcdef";
 
@@ -89,23 +89,22 @@ static void cwmp_hex_to_string(char *to, const unsigned char *p, size_t len)
 
 void MD5(char *buf, ...)
 {
-    unsigned char   hash[HASHLEN];
     unsigned char   *p;
     va_list ap;
     MD5_CTX ctx;
 
     MD5Init(&ctx);
-
+	/*cwmp_log_debug("MD5(begin, target=%p)", buf);*/
     va_start(ap, buf);
     while ((p = va_arg(ap, unsigned char *)) != NULL)
     {
+		/*cwmp_log_debug("MD5(input): '%s', %d", p, strlen((char*)p));*/
         MD5Update(&ctx, p, strlen((char *) p));
     }
     va_end(ap);
+	/*cwmp_log_debug("MD5(end)");*/
 
-    MD5Final(hash, &ctx);
-
-    cwmp_hex_to_string(buf, hash, sizeof(hash));
+    MD5Final((unsigned char*)buf, &ctx);
 }
 
 void
@@ -116,7 +115,7 @@ string_randomize(char *buffer, size_t size)
 	size_t i;
 
 	for (i = 0u; i < size; i++) {
-		buffer[i] = base[rand() % sizeof(base) - 1];
+		buffer[i] = base[rand() % (sizeof(base) - 1)];
 	}
 }
 

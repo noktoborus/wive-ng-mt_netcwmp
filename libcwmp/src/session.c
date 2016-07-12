@@ -1181,7 +1181,7 @@ int cwmp_session_recv_response(cwmp_session_t * session)
             {
                 session->dest->auth.active = CWMP_FALSE;
 
-                http_parse_digest_auth(auth, &session->dest->auth);
+                http_parse_digest_auth(auth, &session->dest->auth, session->dest->uri);
             }
         }
 

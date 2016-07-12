@@ -104,7 +104,7 @@ struct http_digest_auth_t
 	/* custom field, must be returned
 	 * to server, if defined
 	 */
-	char	opaque[MIN_DEFAULT_LEN+1];
+	char	opaque[128];
 };
 
 
@@ -197,7 +197,7 @@ void http_socket_set_recvtimeout(http_socket_t * sock, int timeout);
 void http_socket_set_sendtimeout(http_socket_t * sock, int timeout);
 
 int http_check_digest_auth(const char * auth_realm, const char * auth, char * cpeuser, char * cpepwd);
-int http_parse_digest_auth(const char * auth, http_digest_auth_t * digest_auth);
+int http_parse_digest_auth(const char * auth, http_digest_auth_t * digest_auth, const char *back_uri);
 int http_parse_cookie(const char * cookie, char * dest_cookie);
 int http_socket_set_writefunction(http_socket_t * sock, http_write_callback_pt callback, void * calldata);
 
