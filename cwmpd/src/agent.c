@@ -40,14 +40,14 @@
 enum
 {
     CWMP_ST_START = 0,
-    WMP_ST_INFORM,
-    WMP_ST_SEND,
-    WMP_ST_RESEMD,
-    WMP_ST_RECV,
-    WMP_ST_ANSLYSE,
-    WMP_ST_RETRY,
-    WMP_ST_END,
-    WMP_ST_EXIT
+    CWMP_ST_INFORM,
+    CWMP_ST_SEND,
+    CWMP_ST_RESEMD,
+    CWMP_ST_RECV,
+    CWMP_ST_ANSLYSE,
+    CWMP_ST_RETRY,
+    CWMP_ST_END,
+    CWMP_ST_EXIT
 };
 
 static const char *
