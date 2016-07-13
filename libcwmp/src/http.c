@@ -1,3 +1,4 @@
+/* vim: set et: */
 /************************************************************************
  * Id: http.c                                                           *
  *                                                                      *
@@ -830,30 +831,24 @@ int http_read_header(http_socket_t * sock, cwmp_chunk_t * header, pool_t * pool)
     {
         rc = http_read_line(sock, buffer, 1023);
         if (rc < 0) return rc;
-	if (rc == 0) break;
+        if (rc == 0) break;
 
         buffer[rc] = 0;
 
-	if (buffer[1] == '\0')
-	{
-    	    if (buffer[0] == '\n' || buffer[0] == '\r') break;
-	}
-	else
-	{
-	    if (buffer[0] == '\r' && buffer[1] == '\n' && buffer[2] == '\0') break;
-	}
+        if (buffer[1] == '\0') {
+            if (buffer[0] == '\n' || buffer[0] == '\r') {
+                break;
+            }
+        } else {
+            if (buffer[0] == '\r' && buffer[1] == '\n' && buffer[2] == '\0') {
+                break;
+            }
+        }
 
-        cwmp_log_debug("header : %s",buffer);
-
-	//cwmp_log_debug("%s", buffer);
         cwmp_chunk_write_string(header, buffer, rc, pool);
         bytes += rc;
-//        if (buffer[0] == '\r' && buffer[1] == '\n')
-//	cwmp_log_error("%i %i",buffer[0], buffer[1]);
-
-
-
-
+        // if (buffer[0] == '\r' && buffer[1] == '\n')
+        //cwmp_log_error("%i %i",buffer[0], buffer[1]);
     }
 
     cwmp_log_debug("DEBUG: http_read_header READ %i",bytes);
