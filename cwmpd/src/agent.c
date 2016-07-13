@@ -214,21 +214,17 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
     FUNCTION_TRACE();
     event_list_t  *evtlist;
 
-    while (TRUE)
-    {
-        if (cwmp->new_request == CWMP_NO)
-        {
+    while (TRUE) {
+        if (cwmp->new_request == CWMP_NO) {
             cwmp_log_debug("No new request from ACS\n");
             sleep(2);
             periodic++;
 
-            if (periodic<10)
-            {
+            if (periodic < 10) {
                 continue;
             } else {
-                if (cwmp_conf_get_int("cwmpd:notification") != 0)
-                {
-                            cwmp_log_info("Periodic response\n");
+                if (cwmp_conf_get_int("cwmpd:notification") != 0) {
+                    cwmp_log_info("Periodic response\n");
                     queue_push(cwmp->queue, NULL, TASK_NOTIFY_TAG);
                 }
                 periodic = 0;
@@ -245,36 +241,29 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
         cwmp_log_debug("session timeout is %d", session->timeout);
         cwmp_session_open(session);
 
-        while (!session_close)
-        {
+        while (!session_close) {
             cwmp_log_info("session status: %d (%s)",
             session->status, cwmp_status_string(session->status));
 
-            switch (session->status)
-            {
+            switch (session->status) {
             case CWMP_ST_START:
                 //create a new connection to acs
                 cwmp_log_debug("session status: New START\n");
 
-                if (cwmp_session_connect(session, cwmp->acs_url) != CWMP_OK)
-                {
+                if (cwmp_session_connect(session, cwmp->acs_url) != CWMP_OK) {
                     cwmp_log_error("connect to acs: %s failed.\n", cwmp->acs_url);
                     session->status = CWMP_ST_RETRY;
-                }
-                else
-                {
+                } else {
                     session->status = CWMP_ST_INFORM;
                 }
                 break;
             case CWMP_ST_INFORM:
                 evtlist = NULL;
                 cwmp_agent_get_active_event(cwmp, session,  & evtlist);
-                if(evtlist != NULL)
-                {
+                if(evtlist != NULL) {
                     cwmp_event_clear_active(cwmp);
                 }
-                if (cwmp->acs_auth)
-                {
+                if (cwmp->acs_auth) {
                     cwmp_session_set_auth(session,   cwmp->acs_user  , cwmp->acs_pwd );
                 }
 
@@ -290,8 +279,7 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
 
                 rv = cwmp_agent_send_request(session);
 
-                if (rv == CWMP_OK)
-                {
+                if (rv == CWMP_OK) {
                     cwmp_log_debug("session data sended OK, rv=%d", rv);
                     session->status = CWMP_ST_RECV;
                 } else {
@@ -305,35 +293,26 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
 
                 rv = cwmp_agent_recv_response(session);
 
-                if (rv == HTTP_200 || rv == CWMP_OK)
-                {
+                if (rv == HTTP_200 || rv == CWMP_OK) {
                     session->status = CWMP_ST_ANSLYSE;
-                }
-                else
-                {
+                } else {
                     session->status = CWMP_ST_END;
                 }
                 break;
 
             case CWMP_ST_ANSLYSE:
                 rv = cwmp_agent_analyse_session(session);
-                if (rv == CWMP_OK)
-                {
+                if (rv == CWMP_OK) {
                     session->status = CWMP_ST_SEND;
-                }
-                else
-                {
+                } else {
                     session->status = CWMP_ST_END;
                 }
                 break;
             case CWMP_ST_RETRY:
-                if (cwmp_agent_retry_session(session) == CWMP_TIMEOUT)
-                {
+                if (cwmp_agent_retry_session(session) == CWMP_TIMEOUT) {
                     cwmp_log_debug("session retry timeover, go out");
                     session->status = CWMP_ST_EXIT;
-                }
-                else
-                {
+                } else {
                     session->status = CWMP_ST_START;
                 }
                 break;
@@ -341,20 +320,16 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
                 //close connection of ACS
                 //run task from queue
 
-                if (session->newdata == CWMP_YES)
-                {
+                if (session->newdata == CWMP_YES) {
                     session->status = CWMP_ST_SEND;
-                }
-                else
-                {
+                } else {
                     session->status = CWMP_ST_EXIT;
                 }
                 break;
 
             case CWMP_ST_EXIT:
                 cwmp_session_close(session);
-                if (session->reconnect == CWMP_YES)
-                {
+                if (session->reconnect == CWMP_YES) {
                     session->reconnect = CWMP_NO;
                     session->status = CWMP_ST_START;
                     break;
@@ -363,8 +338,7 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
 
                 if (session->parameter_value_changed == TRUE)
 
-                if (fork() == 0)
-                {
+                if (fork() == 0) {
                     sleep(3);
                     execl("/etc/scripts/internet.sh","/etc/scripts/internet.sh",(char*)NULL);
                 }

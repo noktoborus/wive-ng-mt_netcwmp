@@ -343,7 +343,7 @@ struct cwmp_st
 	char * event_filename;
 
 	pthread_mutex_t     event_mutex;
-	
+
 	event_list_t * el;
 
 	int	event_count;
@@ -357,7 +357,7 @@ struct cwmp_st
 	pool_t * pool;
 	parameter_node_t * root;
 
-	
+
 
 #ifdef USE_CWMP_OPENSSL
     SSL_CTX * ssl_ctx;
@@ -385,7 +385,7 @@ struct parameter_node_st
 	cwmp_byte_t     type;
 	cwmp_byte_t	inform;	//informable parameter
 	cwmp_byte_t	inform_sort;	//informable parameter sorting
-	
+
 	size_t		value_length;
 	char *          value;
 	parameter_node_attr_t attr;

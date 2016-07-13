@@ -78,7 +78,7 @@ int cwmp_event_list_init(pool_t * pool, event_list_t * el)
     for(i=0; i<size; i++)
     {
 	event_code_t * ec = cwmp_event_code_create(pool);
-	el->events[i] = ec;	
+	el->events[i] = ec;
     }
    el->count = 0;
     return CWMP_OK;
@@ -88,14 +88,14 @@ int cwmp_event_list_init(pool_t * pool, event_list_t * el)
 int cwmp_event_global_init(cwmp_t * cwmp)
 {
     FILE    *fp = NULL;
-    
+
     if(!cwmp)
     {
         cwmp_log_error("param cwmp is NULL\n");
         return CWMP_ERROR;
     }
     memset(&cwmp->event_global, 0, sizeof(event_global_t));
-    
+
     //判断配置文件是否存在
     if(access(cwmp->event_filename, F_OK) == -1)
     {
@@ -113,9 +113,9 @@ int cwmp_event_global_init(cwmp_t * cwmp)
     {
         cwmp_log_error("read event global file fail\n");
     }
-	
+
     fclose(fp);
-    
+
     return CWMP_OK;
 }
 
@@ -124,12 +124,12 @@ int cwmp_event_file_save(cwmp_t * cwmp)
 {
     FILE    *fp = NULL;
     int     ret = CWMP_OK;
-    FUNCTION_TRACE(); 
+    FUNCTION_TRACE();
     if(!cwmp)
     {
         return CWMP_ERROR;
     }
-    
+
     if((fp = fopen(cwmp->event_filename, "wb+")) == NULL)
     {
         cwmp_log_error("can't open file: %s.\n", cwmp->event_filename);
@@ -139,7 +139,7 @@ int cwmp_event_file_save(cwmp_t * cwmp)
     if(fwrite(&cwmp->event_global, sizeof(event_global_t), 1, fp) != 1)
     {
         cwmp_log_error("can't write event global to %s\n", cwmp->event_filename);
-     
+
         ret = CWMP_ERROR;
     }
 
@@ -188,93 +188,52 @@ int cwmp_event_init(cwmp_t *cwmp)
     }
 
     //upgrade firmware
- 
+
     if(cwmp->event_global.event_flag & EVENT_REBOOT_TRANSFERCOMPLETE_FLAG)
     {
         cwmp_event_set_value(cwmp, INFORM_MDOWNLOAD, 1, NULL, 0, 0, 0);
         cwmp_event_set_value(cwmp, INFORM_TRANSFERCOMPLETE, 1, cwmp->event_global.event_key, cwmp->event_global.fault_code, cwmp->event_global.start, cwmp->event_global.end);
     }
 
-    
+
     return CWMP_OK;
 }
-
-/*
-//设置某个事件的commandkey
-int cwmp_event_set_commandkey(cwmp_t *cwmp, const int event, const char *cmd_key, time_t start)
-{
-    cwmp_log_debug( "cwmp_event_set_commandkey begin, event=%d\n", event);
-    if(event < 0 || event >= INFORM_MAX)
-    {
-        cwmp_log_error( "event=%d, max=%d\n", event, INFORM_MAX);
-        return CWMP_ERROR;
-    }
-
-    pthread_mutex_lock(&cwmp->event_mutex);
-
-    int max = cwmp->el->size;
-    int i;
-    for(i=0; i<max; i++)
-    {
-	event_code_t * ec = cwmp->el->events[i];
-	if(ec->event == event)
-	{
-		strcpy(ec->command_key, cmd_key);
-		ec->start = start;		
-		break;
-	}
-    }
-
-
-    pthread_mutex_unlock(&cwmp->event_mutex);
-    
-    cwmp_log_debug( "cwmp_event_set_commandkey end\n");
-    return CWMP_OK;
-}
-*/
 
 int cwmp_event_set_value(cwmp_t *cwmp,  int event,   int value, const char * cmd_key, int fault_code, time_t start, time_t end)
 {
     cwmp_log_debug( "cwmp_event_set_value begin, event=%d, value=%d, %s\n", event, value, cmd_key);
-    if(event < 0 || event >= INFORM_MAX)
-    {
+    if(event < 0 || event >= INFORM_MAX) {
         cwmp_log_error( "event=%d, max=%d\n", event, INFORM_MAX);
         return CWMP_ERROR;
     }
     int count = cwmp->el->count;
-	
+
 //    int max = cwmp->el->size;
 
-     if(count  >= cwmp->el->size)
-     {
+     if(count  >= cwmp->el->size) {
 		return CWMP_ERROR;
      }
 
     pthread_mutex_lock(&cwmp->event_mutex);
 
- 
+
     int i;
     int k=count;
-	
-    for(i=0; i<count; i++)
-    {
-	event_code_t * ec = cwmp->el->events[i];
-	if(ec->event == event)
-	{
-		k = i;		
-		break;
-	}
-    }
 
-   
+    for(i=0; i<count; i++) {
+		event_code_t * ec = cwmp->el->events[i];
+		if(ec->event == event) {
+			k = i;
+			break;
+		}
+    }
 
 	event_code_t * ec = cwmp->el->events[k];
 	memset(ec, 0, sizeof(event_code_t));
 	ec->event = event;
 	ec->ref = value;
-	ec->code = inform_event_table[event].code;	
-	if(cmd_key != NULL)
-	{
+	ec->code = inform_event_table[event].code;
+	if(cmd_key != NULL) {
 		TRstrncpy(ec->command_key, cmd_key,COMMAND_KEY_LEN);
 	}
 
@@ -283,125 +242,24 @@ int cwmp_event_set_value(cwmp_t *cwmp,  int event,   int value, const char * cmd
 	ec->end = end;
 	cwmp->el->count ++;
 
-    	pthread_mutex_unlock(&cwmp->event_mutex);
-    
-    	return CWMP_OK;
+	pthread_mutex_unlock(&cwmp->event_mutex);
+
+	return CWMP_OK;
 
 }
-
-/*
-//设置某个事件的值
-int cwmp_event_set_value1(cwmp_t *cwmp,  int event,   int value)
-{
-    cwmp_log_debug( "cwmp_event_set_value begin, event=%d, value=%d\n", event, value);
-    if(event < 0 || event >= INFORM_MAX)
-    {
-        cwmp_log_error( "event=%d, max=%d\n", event, INFORM_MAX);
-        return CWMP_ERROR;
-    }
-
-    pthread_mutex_lock(&cwmp->event_mutex);
-    if(cwmp->el->count < cwmp->el->size-1)
-    {
-        int count = cwmp->el->count;
-	event_code_t * ec = cwmp->el->events[count];
-	ec->event = event;
-        ec->ref = value;
-	ec->code = inform_event_table[event].code;	
-	cwmp->el->count ++;
-    }
-    
-    pthread_mutex_unlock(&cwmp->event_mutex);
-    
-    cwmp_log_debug( "cwmp_event_set_value end\n");
-    return CWMP_OK;
-}
-
-int cwmp_event_inc_set_value(cwmp_t *cwmp, int event,  int step)
-{
-    cwmp_log_debug( "cwmp_event_inc_set_value begin, event=%d, step=%d\n", event, step);
-    if(event < 0 || event >= INFORM_MAX)
-    {
-        cwmp_log_error( "event=%d, max=%d\n", event, INFORM_MAX);
-        return CWMP_ERROR;
-    }
-
-    pthread_mutex_lock(&cwmp->event_mutex);
-   // cwmp->event_info[index].ref += step;
-    int max = cwmp->el->size;
-    int i;
-    for(i=0; i<max-1; i++)
-    {
-	event_code_t * ec = cwmp->el->events[i];
-	if(ec->event == event)
-	{
-		ec->ref += step;
-		break;
-	}
-    }
-    if(i == max)
-    {
-    	event_code_t * newec = cwmp->el->events[cwmp->el->count];
-	newec->event = event;
-	newec->ref += 1;
-	newec->code = inform_event_table[event].code;	 
-    }
-		
-	
-    pthread_mutex_unlock(&cwmp->event_mutex);
-    
-    cwmp_log_debug( "cwmp_event_inc_set_value end\n");
-    return CWMP_OK;
-}
-
-int cwmp_event_dec_set_value(cwmp_t *cwmp, const int event, const unsigned int step)
-{
-    cwmp_log_debug( "cwmp_event_dec_set_value begin, event=%d, step=%d\n", event, step);
-    if(event < 0 || event >= INFORM_MAX)
-    {
-        cwmp_log_error( "event=%d, max=%d\n", event, INFORM_MAX);
-        return CWMP_ERROR;
-    }
-
-    pthread_mutex_lock(&cwmp->event_mutex);
-    int max = cwmp->el->size;
-    int i;
-    for(i=0; i<max-1; i++)
-    {
-	event_code_t * ec = cwmp->el->events[i];
-	if(ec->event == event)
-	{
-		ec->ref -= step;
-		if(ec->ref < 0)
-		{
-			ec->ref = 0;
-		}
-		break;
-	}
-    }
-    pthread_mutex_unlock(&cwmp->event_mutex);
-    
-    cwmp_log_debug( "cwmp_event_dec_set_value end\n");
-    return CWMP_OK;
-}
-
-*/
 
 int cwmp_event_get_index(cwmp_t *cwmp,const char *name)
 {
     int index = -1;
     int i;
 
-    if(!name)
-    {
+    if(!name) {
         goto finish;
     }
 //    int size = cwmp->el->size;
-	
-    for(i=0; i<INFORM_MAX; i++)
-    {
-        if(TRstrcmp(cwmp->el->events[i]->code, name) == 0)
-        {
+
+    for(i=0; i<INFORM_MAX; i++) {
+        if(TRstrcmp(cwmp->el->events[i]->code, name) == 0) {
             index = i;
             break;
         }
@@ -416,20 +274,18 @@ size_t cwmp_write_callback(void *ptr, size_t size, size_t nmemb, void *data)
     size_t          realsize = size * nmemb;
     memorystruct_t  *mem = (memorystruct_t*)data;
 
-    if(!mem || !ptr)
-    {
+    if(!mem || !ptr) {
         cwmp_log_error( "ptr or data is NULL\n");
         return 0;
     }
 
     mem->data = (char *)realloc(mem->data, mem->size + realsize + 1);
-    if (mem->data)
-    {
+    if (mem->data) {
         memcpy(&(mem->data[mem->size]), ptr, realsize);
         mem->size += realsize;
         mem->data[mem->size] = 0;
     }
-    
+
     return realsize;
 
 }
@@ -442,60 +298,42 @@ int cwmp_event_clear_active(cwmp_t *cwmp)
     int     i;
 //    int     notify_flag = 0;
 
-
     assert(cwmp != NULL);
-
 
     pthread_mutex_lock(&cwmp->event_mutex);
 
     event_code_t ** pec = cwmp->el->events;
     int evsize = cwmp->el->count;
-    for(i=0; i<evsize; i++)
-    {
-        if(pec[i]->ref <= 0)
-        {
+    for(i=0; i<evsize; i++) {
+        if(pec[i]->ref <= 0) {
             continue;
         }
 
-
-    switch(pec[i]->event)
-    {
-		case INFORM_BOOTSTRAP:
-			
-		        {
-		 
+		switch(pec[i]->event) {
+			case INFORM_BOOTSTRAP:
 				cwmp->event_global.event_flag |=  EVENT_REBOOT_ACS_FLAG;
-		        	cwmp_event_file_save(cwmp);
-		        }
-		break;
+					cwmp_event_file_save(cwmp);
+				break;
+			case INFORM_MREBOOT:
+				cwmp->event_global.event_flag |= EVENT_REBOOT_ACS_FLAG;
+					cwmp_event_file_save(cwmp);
 
-		case INFORM_MREBOOT:
-			cwmp->event_global.event_flag |= EVENT_REBOOT_ACS_FLAG;
+				break;
+			case INFORM_VALUECHANGE:
+	//			notify_flag = 1;
+				break;
+			case INFORM_TRANSFERCOMPLETE:
+				cwmp->event_global.event_flag |= EVENT_REBOOT_TRANSFERCOMPLETE_FLAG;
+				memset(cwmp->event_global.event_key, 0, COMMAND_KEY_LEN+1);
+				strcpy(cwmp->event_global.event_key, pec[i]->command_key);
+				cwmp->event_global.fault_code = pec[i]->fault_code;
+				cwmp->event_global.start = pec[i]->start;
+				cwmp->event_global.end = pec[i]->end;
+				cwmp_event_file_save(cwmp);
+				break;
+		}
 
-            		cwmp_event_file_save(cwmp);
-
-		break;
-
-		case INFORM_VALUECHANGE:
-//			notify_flag = 1;
-
-		break;
-
-		case INFORM_TRANSFERCOMPLETE:
-			cwmp->event_global.event_flag |= EVENT_REBOOT_TRANSFERCOMPLETE_FLAG;
-			memset(cwmp->event_global.event_key, 0, COMMAND_KEY_LEN+1);
-			strcpy(cwmp->event_global.event_key, pec[i]->command_key);
-			cwmp->event_global.fault_code = pec[i]->fault_code;
-			cwmp->event_global.start = pec[i]->start;
-			cwmp->event_global.end = pec[i]->end;			
-            cwmp_event_file_save(cwmp);
-
-			break;
-			
-	}
-
-	pec[i]->ref = 0; //clear
-
+		pec[i]->ref = 0; //clear
 
     }
 
@@ -509,7 +347,7 @@ int cwmp_event_clear_active(cwmp_t *cwmp)
         hash_index_t    *hi = NULL;
         val_change_t    *tmp = NULL;
         char            *key = NULL;
-        
+
         for (hi = hash_first(cwmp->ht_val_change); hi; hi = hash_next(hi))
         {
             hash_this(hi, (const void**)(&key), NULL, (void**)&tmp);
@@ -543,7 +381,7 @@ static int get_active_event_list(cwmp_t *cwmp, event_list_t **pevent_list, int *
     event_list_t    *evlist = NULL;
     int             count = 0;
     int             ret = CWMP_OK;
-    
+
     if(!cwmp || !pevent_list || !pevt_count)
     {
         cwmp_log_error( "param is NULL\n");
@@ -555,7 +393,7 @@ static int get_active_event_list(cwmp_t *cwmp, event_list_t **pevent_list, int *
     for(i=0; max; i++)
     {
         if(cwmp->event_info[i].ref > 0)
-        {            
+        {
             evlist = realloc(evlist, sizeof(event_t)*(count+1));
             if(!evlist)
             {
