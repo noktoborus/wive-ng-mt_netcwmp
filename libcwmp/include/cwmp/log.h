@@ -34,9 +34,9 @@
 #define CWMP_LOG_DEBUG_SQL       0x400
 
 #ifdef WIN32
-#define FUNCTION_TRACE()	cwmp_log_debug("TRACE: %s()\n", __FUNCTION__)
+#define FUNCTION_TRACE()	cwmp_log_debug("TRACE: %s()", __FUNCTION__)
 #else
-#define FUNCTION_TRACE()	cwmp_log_debug("TRACE: %s()\n", __func__)
+#define FUNCTION_TRACE()	cwmp_log_debug("TRACE: %s()", __func__)
 #endif
 
 typedef struct cwmp_log_t cwmp_log_t;
