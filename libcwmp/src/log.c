@@ -16,6 +16,9 @@
 #include <stdarg.h>
 #include <string.h>
 #include <syslog.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <inttypes.h>
 #include <time.h>
 #include <stdio.h>
 #include "cwmp/log.h"
@@ -109,6 +112,7 @@ void cwmp_log_write(int level, cwmp_log_t * log, const char * fmt, va_list ap)
     time_t t;
     struct tm *tm;
     char tm_str[24] = {};
+    pid_t pid = getpid();
     if (g_ot_log_file_ptr == NULL) return; /* Uninitialized logger! */
     vsyslog(cwmp_loglevel_to_syslog_level(level), fmt, ap);
 
@@ -125,7 +129,8 @@ void cwmp_log_write(int level, cwmp_log_t * log, const char * fmt, va_list ap)
 
         /* syslog-style time */
         strftime(tm_str, sizeof(tm_str), "%b %e %T", tm);
-        fprintf(logger->file, "%s %s: ", tm_str, cwmp_loglevel_to_string(level));
+        fprintf(logger->file, "%s %s: [%"PRIuPTR"]",
+                tm_str, cwmp_loglevel_to_string(level), (size_t)pid);
         vfprintf(logger->file, fmt, ap);
         fprintf(logger->file, "\n");
 
