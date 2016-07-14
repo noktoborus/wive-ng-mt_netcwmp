@@ -1,3 +1,4 @@
+/* vim: set et : */
 /************************************************************************
  * Id: log.c                                                            *
  *                                                                      *
@@ -8,13 +9,15 @@
  * Email: netcwmp ( & ) gmail dot com                                *
  *                                                                      *
  ***********************************************************************/
- 
- 
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 #include <syslog.h>
+#include <time.h>
+#include <stdio.h>
 #include "cwmp/log.h"
 
 struct cwmp_log_t
@@ -27,7 +30,28 @@ struct cwmp_log_t
 static cwmp_log_t 	g_cwmp_log_file;
 static cwmp_log_t*	g_ot_log_file_ptr = NULL;
 
-
+const char *
+cwmp_loglevel_to_string(int level)
+{
+    switch(level) {
+        case CWMP_LOG_CRIT:
+            return "CRITICAL";
+        case CWMP_LOG_ERROR:
+            return "ERROR";
+        case CWMP_LOG_WARN:
+            return "WARNING";
+        case CWMP_LOG_NOTICE:
+            return "NOTICE";
+        case CWMP_LOG_INFO:
+            return "INFO";
+        case CWMP_LOG_TRACE:
+            return "TRACE";
+        case CWMP_LOG_DEBUG:
+            return "DEBUG";
+        default:
+            return "?";
+    }
+}
 
 int cwmp_loglevel_to_syslog_level(int level) {
     switch (level)
@@ -82,6 +106,9 @@ void cwmp_log_fini()
 
 void cwmp_log_write(int level, cwmp_log_t * log, const char * fmt, va_list ap)
 {
+    time_t t;
+    struct tm *tm;
+    char tm_str[24] = {};
     if (g_ot_log_file_ptr == NULL) return; /* Uninitialized logger! */
     vsyslog(cwmp_loglevel_to_syslog_level(level), fmt, ap);
 
@@ -93,6 +120,12 @@ void cwmp_log_write(int level, cwmp_log_t * log, const char * fmt, va_list ap)
 
     if (logger->level >= level)
     {
+        t = time(NULL);
+        tm = gmtime(&t);
+
+        /* syslog-style time */
+        strftime(tm_str, sizeof(tm_str), "%b %e %T", tm);
+        fprintf(logger->file, "%s %s: ", tm_str, cwmp_loglevel_to_string(level));
         vfprintf(logger->file, fmt, ap);
         fprintf(logger->file, "\n");
 
@@ -103,11 +136,11 @@ void cwmp_log_write(int level, cwmp_log_t * log, const char * fmt, va_list ap)
 
 }
 
-void cwmp_log_tracer(int level, cwmp_log_t * log,const char * fmt, ...)
+void cwmp_log_trace(const char * fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    cwmp_log_write(level, log, fmt, ap);
+    cwmp_log_write(CWMP_LOG_TRACE, NULL, fmt, ap);
     va_end(ap);
 }
 

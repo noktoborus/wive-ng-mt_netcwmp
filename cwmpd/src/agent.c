@@ -216,7 +216,7 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
 
     while (TRUE) {
         if (cwmp->new_request == CWMP_NO) {
-            cwmp_log_debug("No new request from ACS\n");
+            cwmp_log_debug("No new request from ACS");
             sleep(2);
             periodic++;
 
@@ -224,13 +224,13 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
                 continue;
             } else {
                 if (cwmp_conf_get_int("cwmpd:notification") != 0) {
-                    cwmp_log_info("Periodic response\n");
+                    cwmp_log_info("Periodic response");
                     queue_push(cwmp->queue, NULL, TASK_NOTIFY_TAG);
                 }
                 periodic = 0;
             }
         } else {
-            cwmp_log_error("### ### ### New request from ACS ### ### ###\n");
+            cwmp_log_error("### ### ### New request from ACS ### ### ###");
         }
 
         cwmp->new_request = CWMP_NO;
@@ -248,10 +248,10 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
             switch (session->status) {
             case CWMP_ST_START:
                 //create a new connection to acs
-                cwmp_log_debug("session status: New START\n");
+                cwmp_log_debug("session status: New START");
 
                 if (cwmp_session_connect(session, cwmp->acs_url) != CWMP_OK) {
-                    cwmp_log_error("connect to acs: %s failed.\n", cwmp->acs_url);
+                    cwmp_log_error("connect to acs: %s failed.", cwmp->acs_url);
                     session->status = CWMP_ST_RETRY;
                 } else {
                     session->status = CWMP_ST_INFORM;
@@ -386,7 +386,7 @@ int cwmp_agent_analyse_session(cwmp_session_t * session)
     {
         session->newdata = CWMP_NO;
         cwmp_log_debug("analyse receive length is 0");
-    cwmp_log_error("DEBUG: cwmp_agent_analyse_session ERROR 1");
+    cwmp_log_debug("cwmp_agent_analyse_session ERROR 1");
     goto eventcheck;
     }
 
@@ -411,7 +411,7 @@ int cwmp_agent_analyse_session(cwmp_session_t * session)
 
     method = cwmp_get_rpc_method_name(doc);
 
-    cwmp_log_info("analyse method is: %s\n", method);
+    cwmp_log_info("analyse method is: %s", method);
 
     cwmp_chunk_clear(session->writers);
     pool_clear(session->envpool);
@@ -541,7 +541,7 @@ static void print_param(parameter_node_t * param, int level)
 
   parameter_node_t * child;
   char fmt[64];
-  //cwmp_log_debug("name: %s, type: %s, level: %d\n", param->name, cwmp_get_type_string(param->type), level);
+  //cwmp_log_debug("name: %s, type: %s, level: %d", param->name, cwmp_get_type_string(param->type), level);
 //  int i=0;
 
   sprintf(fmt, "|%%-%ds%%s,  get:%%p set:%%p refresh:%%p", level*4);
@@ -579,7 +579,7 @@ void cwmp_agent_session(cwmp_t * cwmp)
 
     if (cwmp_session_get_localip(local_ip) == -1)
     {
-        cwmp_log_error("get local ip error. exited.\n");
+        cwmp_log_error("get local ip error. exited.");
         exit(-1);
     }
 
@@ -630,21 +630,21 @@ int cwmp_agent_download_file(download_arg_t * dlarg)
         return 9001;
     }
 
-    cwmp_log_info("FILETYPE: %s \n", dlarg->filetype);
+    cwmp_log_info("FILETYPE: %s", dlarg->filetype);
 
     if(strcmp(dlarg->filetype, "1 Firmware Upgrade Image") == 0)
     {
-        cwmp_log_info(" ### FIRMWARE UPGRADE ### \n");
+        cwmp_log_info(" ### FIRMWARE UPGRADE ###");
 
         if (access("/tmp/download.img", F_OK) != -1)
         {
             firmware_upgrade("/tmp/download.img");
         } else {
-            cwmp_log_error("ERROR: downloaded firmware does not exist! \n");
+            cwmp_log_error("ERROR: downloaded firmware does not exist!");
         }
 
     } else if(strcmp(dlarg->filetype, "3 Vendor Configuration File") == 0) {
-        cwmp_log_info(" ### CONFIG UPGRADE ### \n");
+        cwmp_log_info(" ### CONFIG UPGRADE ###");
 
         system("rm /tmp/mysystem.cfg");
         system("tar -C / -xf /tmp/download.img");
@@ -654,11 +654,11 @@ int cwmp_agent_download_file(download_arg_t * dlarg)
             system("nvram_clear 2860");
                 system("nvram_renew 2860 /tmp/mysystem.cfg");
         } else {
-                cwmp_log_error("ERROR: downloaded config does not exist! \n");
+                cwmp_log_error("downloaded config does not exist!");
         }
 
     } else {
-        cwmp_log_error("ERROR! Unknown DOWNLOAD FILETYPE: %s.\n",dlarg->filetype);
+        cwmp_log_error("Unknown DOWNLOAD FILETYPE: %s",dlarg->filetype);
     }
 
 
@@ -684,7 +684,7 @@ int cwmp_agent_upload_file(cwmp_t * cwmp, upload_arg_t * ularg)
         fromfile = "/tmp/mysystem.tar.gz";
         //fromfile = cwmp_conf_pool_get(cwmp->pool,"cwmp:vconf_filename");
 
-        cwmp_log_debug("DEBUG: cwmp_agent_upload_file: try 1 %s",tourl);
+        cwmp_log_debug("cwmp_agent_upload_file: try 1 %s",tourl);
 
         //Send 1
         if (http_send_file(fromfile, tourl) == CWMP_OK) return CWMP_OK;
@@ -701,7 +701,7 @@ int cwmp_agent_upload_file(cwmp_t * cwmp, upload_arg_t * ularg)
         snprintf(&tourl2[0],1024,"%s://%s:%i/%s",tourl_dest->scheme,tourl_dest->host,tourl_dest->port,tourl_dest->uri);
 
         tourl = pool_pstrdup(cwmp->pool, tourl2);
-        cwmp_log_debug("DEBUG: cwmp_agent_upload_file: try 2 %s",tourl);
+        cwmp_log_debug("cwmp_agent_upload_file: try 2 %s",tourl);
 
         //Send 2
         if (http_send_file(fromfile, tourl) == CWMP_OK) return CWMP_OK;
@@ -710,12 +710,12 @@ int cwmp_agent_upload_file(cwmp_t * cwmp, upload_arg_t * ularg)
         snprintf(&tourl2[0],1024,"%s://%s:%i/%s",tourl_dest->scheme,tourl_dest->host,tourl_dest->port,tourl_dest->uri);
 
         tourl = pool_pstrdup(cwmp->pool, tourl2);
-        cwmp_log_debug("DEBUG: cwmp_agent_upload_file: try 3 %s",tourl);
+        cwmp_log_debug("cwmp_agent_upload_file: try 3 %s",tourl);
 
         //Send 3
         if (http_send_file(fromfile, tourl) == CWMP_OK) return CWMP_OK;
 
-        cwmp_log_info("DEBUG: cwmp_agent_upload_file: tourl_result %s",tourl);
+        cwmp_log_debug("cwmp_agent_upload_file: tourl_result %s", tourl);
     }
     else if(strcmp(ularg->filetype, "2 Vendor Log File") == 0)
     {
@@ -818,7 +818,7 @@ int cwmp_agent_run_tasks(cwmp_t * cwmp)
                 break;
 
             default:
-                    cwmp_log_error("!!! ERROR !!! Unknown task tag: %s \n", tasktype);
+                    cwmp_log_error("Unknown task tag: %s", tasktype);
                 break;
 
         }

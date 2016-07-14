@@ -826,7 +826,7 @@ int http_read_line(http_socket_t * sock, char * buffer, int max)
         {
             if ( http_socket_read(sock, &c, 1) < 0 )
             {
-                cwmp_log_error("DEBUG: http_read_line ERROR 2");
+                cwmp_log_error("http_read_line ERROR 2");
                 return CWMP_ERROR;
             };
 
@@ -840,7 +840,7 @@ int http_read_line(http_socket_t * sock, char * buffer, int max)
     }
     if (i >= max)
     {
-        cwmp_log_error("DEBUG: http_read_line ERROR 1");
+        cwmp_log_error("http_read_line ERROR 1");
         return CWMP_ERROR;
     }
 
@@ -879,7 +879,7 @@ int http_read_header(http_socket_t * sock, cwmp_chunk_t * header, pool_t * pool)
         //cwmp_log_error("%i %i",buffer[0], buffer[1]);
     }
 
-    cwmp_log_debug("DEBUG: http_read_header READ %i",bytes);
+    cwmp_log_debug("http_read_header READ %i",bytes);
     return bytes;
 
 }
@@ -944,7 +944,7 @@ int http_read_request(http_socket_t * sock, http_request_t * request, pool_t * p
     http_parser_t * parser;
     char data[2048];
 
-    cwmp_log_debug("DEBUG: http_read_request");
+    cwmp_log_debug("http_read_request");
 
     FUNCTION_TRACE();
     bytes = 0;
@@ -952,9 +952,8 @@ int http_read_request(http_socket_t * sock, http_request_t * request, pool_t * p
     cwmp_chunk_create(&header, pool);
 
     rc = http_read_header(sock, header, pool);
-    if (rc <= 0)
-    {
-	cwmp_log_error("DEBUG: http_read_request ERR %i",rc);
+    if (rc <= 0) {
+        cwmp_log_debug("http_read_request ERR %i",rc);
         return rc;
     }
 
@@ -1284,7 +1283,7 @@ int http_read_response(http_socket_t * sock, http_response_t * response, pool_t 
     rc = http_read_header(sock, header, pool);
     if (rc <= 0)
     {
-	cwmp_log_info("DEBUG: http_read_response ERROR 1");
+        cwmp_log_debug("http_read_response ERROR 1");
         return -1;
     }
 
@@ -1327,7 +1326,7 @@ int http_read_response(http_socket_t * sock, http_response_t * response, pool_t 
 
     if (version == NULL || resp_code == NULL || message == NULL)
     {
-	cwmp_log_info("DEBUG: http_read_response ERROR 2");
+        cwmp_log_debug("http_read_response ERROR 2");
         return -2;
     }
 
@@ -1356,7 +1355,7 @@ int http_read_response(http_socket_t * sock, http_response_t * response, pool_t 
         cwmp_log_info("Http read response code is (%d)\n", code);
     }
 
-	cwmp_log_info("DEBUG: http_read_response OK");
+	cwmp_log_debug("http_read_response OK");
      return code;
 
 }
@@ -1800,16 +1799,15 @@ int http_send_file_request(http_socket_t * sock , http_request_t * request, cons
 */
     FILE *tf = fopen(fromfile, "rb");
 
-    if(!tf)
-    {
-        cwmp_log_error("DEBUG: http_send_file_request ERR: unable to open filename %s", fromfile);
-	return CWMP_ERROR;
+    if(!tf) {
+        cwmp_log_error("http_send_file_request(): unable to open filename %s", fromfile);
+        return CWMP_ERROR;
     }
 
     fseek(tf,0L,SEEK_END);
     len2 = ftell(tf);
     fseek(tf,0L,SEEK_SET);
-    cwmp_log_info("DEBUG: http_send_file_request FILE LEN %lu",len2);
+    cwmp_log_debug("http_send_file_request FILE LEN %lu",len2);
 
 
     len1 = TRsnprintf(buffer, HTTP_DEFAULT_LEN, header_fmt,

@@ -245,12 +245,11 @@ int cwmp_session_get_localip(char *hostip)
     int i;
 
     int res = gethostname(hostname, sizeof(hostname));
-    if (res != 0)
-    {
-        cwmp_log_error("Error: %u\n", WSAGetLastError());
+    if (res != 0) {
+        cwmp_log_error("%u", WSAGetLastError());
         return -1;
     }
-    cwmp_log_debug("hostname=%s\n", hostname);
+    cwmp_log_debug("hostname=%s", hostname);
     ////////////////
     // ������������ȡ������Ϣ.
     //
@@ -259,9 +258,8 @@ int cwmp_session_get_localip(char *hostip)
     pHostent = gethostbyname(hostname);
 
 
-    if (pHostent==NULL)
-    {
-        cwmp_log_error("Error: %u\n", WSAGetLastError());
+    if (pHostent==NULL) {
+        cwmp_log_error("%u", WSAGetLastError());
         return -1;
     }
     //////////////////
@@ -279,7 +277,7 @@ int cwmp_session_get_localip(char *hostip)
     {
         memcpy ( &sa.sin_addr.s_addr, he.h_addr_list[i],he.h_length);
         // ����������IP��ַ.
-        cwmp_log_debug("Address: %s\n", inet_ntoa(sa.sin_addr)); // ��ʾ��ַ��
+        cwmp_log_debug("Address: %s", inet_ntoa(sa.sin_addr)); // ��ʾ��ַ��
         TRsnprintf(hostip, 20, "%s", inet_ntoa(sa.sin_addr));
         break;
     }
@@ -499,7 +497,7 @@ int cwmp_session_create_connection(cwmp_session_t * session)
 
         }
     }
-    cwmp_log_info("session connect using ssl?(%s)\n", use_ssl==1?"yes":"no");
+    cwmp_log_info("session connect using ssl: %s", use_ssl==1?"yes":"no");
 
     int rc = http_socket_create(&sock, AF_INET, SOCK_STREAM, 0, session->connpool);
     if (rc != CWMP_OK)
@@ -694,10 +692,10 @@ parameter_list_t * cwmp_session_create_inform_parameters(cwmp_session_t * sessio
 /*    name    = cwmp_conf_pool_get(pool, "cwmp:wan_interface");
     if (name == NULL || TRstrcmp(name, "") == 0 )
     {
-        cwmp_log_debug("cwmp:wan_interface name is: [%s]\n", name);
+        cwmp_log_debug("cwmp:wan_interface name is: [%s]", name);
         name    = CWMP_APPEND_PARAMETER_NAME(pool, 8, InternetGatewayDeviceModule, WANDeviceModule, "1", WANConnectionDeviceModule, "1", WANIPConnectionModule, "1", ExternalIPAddressModule);
     }
-    cwmp_log_debug("cwmp:wan_interface new name is: [%s]\n", name);
+    cwmp_log_debug("cwmp:wan_interface new name is: [%s]", name);
     value   = cwmp_data_get_parameter_value(session->cwmp, session->root, name, pool);
     parameter = cwmp_create_parameter(session->env,  name, value, 0, TYPE_STRING);
     cwmp_add_parameter_to_list(session->env,  pl, parameter);
@@ -809,9 +807,8 @@ xmldoc_t *  cwmp_session_create_getrpcmethods_response_message(cwmp_session_t * 
     int rv;
     FUNCTION_TRACE();
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
-    if (rv != CWMP_OK)
-    {
-        cwmp_log_error("no header node \n");
+    if (rv != CWMP_OK) {
+        cwmp_log_error("no header node");
     }
     return cwmp_create_getrpcmethods_response_message(session->env, header, rpc_methods, sizeof(rpc_methods)/sizeof(rpc_methods[0]));
 }
@@ -827,9 +824,8 @@ xmldoc_t *  cwmp_session_create_getparameternames_response_message(cwmp_session_
     fault_code_t fault;
     FUNCTION_TRACE();
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
-    if (rv != CWMP_OK)
-    {
-        cwmp_log_error("no header node \n");
+    if (rv != CWMP_OK) {
+        cwmp_log_error("no header node");
     }
 
     rv = cwmp_parse_getparameternames_message(session->env, doc, &path, &next_level, &fault);
@@ -852,16 +848,15 @@ xmldoc_t *  cwmp_session_create_getparameternames_response_message(cwmp_session_
 
 xmldoc_t *  cwmp_session_create_getparametervalues_response_message(cwmp_session_t * session, xmldoc_t * doc, pool_t * pool)
 {
-    cwmp_log_error("DEBUG: cwmp_session_create_getparametervalues_response_message");
+    cwmp_log_error("cwmp_session_create_getparametervalues_response_message");
     header_t * header;
     int rv;
     parameter_list_t * pl;
     fault_code_t fault;
     FUNCTION_TRACE();
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
-    if (rv != CWMP_OK)
-    {
-        cwmp_log_error("no header node \n");
+    if (rv != CWMP_OK) {
+        cwmp_log_error("no header node");
     }
 
     rv = cwmp_parse_getparametervalues_message(session->env, doc, session->root, &pl, &fault);
@@ -886,9 +881,8 @@ xmldoc_t *  cwmp_session_create_setparametervalues_response_message(cwmp_session
 
     FUNCTION_TRACE();
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
-    if (rv != CWMP_OK)
-    {
-        cwmp_log_error("no header node \n");
+    if (rv != CWMP_OK) {
+        cwmp_log_error("no header node");
     }
 
     rv = cwmp_parse_setparametervalues_message(session->env, doc, session->root, &pl, &fault);
@@ -908,7 +902,6 @@ xmldoc_t *  cwmp_session_create_setparametervalues_response_message(cwmp_session
 
 xmldoc_t *  cwmp_session_create_setparameterattributes_response_message(cwmp_session_t * session, xmldoc_t * doc, pool_t * pool)
 {
-    cwmp_log_error("DEBUG2: cwmp_session_create_setparameterattributes_response_message \n");
     header_t * header;
     int rv;
     parameter_list_t * pl = NULL;
@@ -923,9 +916,8 @@ xmldoc_t *  cwmp_session_create_setparameterattributes_response_message(cwmp_ses
 
     FUNCTION_TRACE();
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
-    if (rv != CWMP_OK)
-    {
-        cwmp_log_error("no header node \n");
+    if (rv != CWMP_OK) {
+        cwmp_log_error("no header node");
     }
 
     rv = cwmp_parse_setparameterattributes_message(session->env, doc, session->root, &pl, &fault);
@@ -956,9 +948,8 @@ xmldoc_t *  cwmp_session_create_download_response_message(cwmp_session_t * sessi
     fault_code_t fault;
     FUNCTION_TRACE();
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
-    if (rv != CWMP_OK)
-    {
-        cwmp_log_error("no header node \n");
+    if (rv != CWMP_OK) {
+        cwmp_log_error("no header node");
     }
 
     download_arg_t * dlarg;
@@ -994,9 +985,8 @@ xmldoc_t *  cwmp_session_create_upload_response_message(cwmp_session_t * session
     fault_code_t fault;
     FUNCTION_TRACE();
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
-    if (rv != CWMP_OK)
-    {
-        cwmp_log_error("no header node \n");
+    if (rv != CWMP_OK) {
+        cwmp_log_error("no header node");
     }
 
     upload_arg_t * uparg;
@@ -1026,9 +1016,8 @@ xmldoc_t *  cwmp_session_create_addobject_response_message(cwmp_session_t * sess
     fault_code_t fault;
     FUNCTION_TRACE();
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
-    if (rv != CWMP_OK)
-    {
-        cwmp_log_error("no header node \n");
+    if (rv != CWMP_OK) {
+        cwmp_log_error("no header node");
     }
     rv = cwmp_parse_addobject_message(session->env, doc, session->root, &instances, &status,  &fault);
     if(rv != CWMP_OK)
@@ -1046,9 +1035,8 @@ xmldoc_t *  cwmp_session_create_deleteobject_response_message(cwmp_session_t * s
     fault_code_t fault;
     FUNCTION_TRACE();
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
-    if (rv != CWMP_OK)
-    {
-        cwmp_log_error("no header node \n");
+    if (rv != CWMP_OK) {
+        cwmp_log_error("no header node");
     }
 
     rv = cwmp_parse_deleteobject_message(session->env, doc, session->root, &status, &fault);
@@ -1065,7 +1053,6 @@ xmldoc_t *  cwmp_session_create_deleteobject_response_message(cwmp_session_t * s
 
 xmldoc_t *  cwmp_session_create_reboot_response_message(cwmp_session_t * session, xmldoc_t * doc, pool_t * pool)
 {
-    cwmp_log_error("DEBUG cwmp_session_create_reboot_response_message\n");
     header_t * header;
     int rv;
     char * key;
@@ -1074,7 +1061,7 @@ xmldoc_t *  cwmp_session_create_reboot_response_message(cwmp_session_t * session
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
     if (rv != CWMP_OK)
     {
-        cwmp_log_error("no header node \n");
+        cwmp_log_error("no header node");
     }
 
     rv = cwmp_parse_reboot_message(session->env, doc, &key, &fault);
@@ -1093,9 +1080,8 @@ xmldoc_t *  cwmp_session_create_factoryreset_response_message(cwmp_session_t * s
 //    fault_code_t fault;
     FUNCTION_TRACE();
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
-    if (rv != CWMP_OK)
-    {
-        cwmp_log_error("no header node \n");
+    if (rv != CWMP_OK) {
+        cwmp_log_error("no header node");
     }
 
     cwmp_t * cwmp = session->cwmp;
@@ -1107,7 +1093,7 @@ xmldoc_t *  cwmp_session_create_factoryreset_response_message(cwmp_session_t * s
 int cwmp_session_send_request(cwmp_session_t * session)
 {
     size_t alength = cwmp_chunk_length(session->writers);
-    cwmp_log_error("DEBUG: cwmp_session_send_request len: %u",alength);
+    cwmp_log_error("cwmp_session_send_request len: %u",alength);
     //    http_request_t * request;
     //    http_request_create(&request, session->env->pool);
     //    request->dest = session->dest;
@@ -1143,12 +1129,12 @@ int cwmp_session_send_request(cwmp_session_t * session)
 
     if (rv <= 0)
     {
-        cwmp_log_error("DEBUG: cwmp_session_send_request ERR");
+        cwmp_log_error("cwmp_session_send_request ERR");
         return CWMP_ERROR;
     }
     else
     {
-        cwmp_log_error("DEBUG: cwmp_session_send_request OK");
+        cwmp_log_error("cwmp_session_send_request OK");
         return CWMP_OK;
     }
 
@@ -1159,7 +1145,7 @@ int cwmp_session_send_request(cwmp_session_t * session)
 
 int cwmp_session_recv_response(cwmp_session_t * session)
 {
-    cwmp_log_error("DEBUG: cwmp_session_recv_response");
+    cwmp_log_error("cwmp_session_recv_response");
     int respcode;
     http_response_t * response;
     char * auth;
@@ -1205,12 +1191,12 @@ int cwmp_session_recv_response(cwmp_session_t * session)
 
     if(respcode == HTTP_200 || respcode == HTTP_204)
     	{
-//	    cwmp_log_error("DEBUG: cwmp_session_recv_response OK");
+//	    cwmp_log_error("cwmp_session_recv_response OK");
 		return respcode;
     	}
     else
     	{
-	    cwmp_log_error("DEBUG: cwmp_session_recv_response ERR");
+	    cwmp_log_error("cwmp_session_recv_response ERR");
 		return CWMP_ERROR;
     	}
 
