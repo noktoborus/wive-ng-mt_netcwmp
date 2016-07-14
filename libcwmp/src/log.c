@@ -129,7 +129,7 @@ void cwmp_log_write(int level, cwmp_log_t * log, const char * fmt, va_list ap)
 
         /* syslog-style time */
         strftime(tm_str, sizeof(tm_str), "%b %e %T", tm);
-        fprintf(logger->file, "%s %s: [%"PRIuPTR"]",
+        fprintf(logger->file, "%s %s [%"PRIuPTR"]:",
                 tm_str, cwmp_loglevel_to_string(level), (size_t)pid);
         vfprintf(logger->file, fmt, ap);
         fprintf(logger->file, "\n");
