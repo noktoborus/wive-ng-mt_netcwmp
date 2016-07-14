@@ -1344,11 +1344,11 @@ int cwmp_parse_getparametervalues_message_parameter_iterator(env_t * env, parame
 	{
 	    /* OK */
 	}
-	
+
     }
 
     return rc;
-    
+
 }
 
 //cwmp_parse_getparametervalues_message
@@ -1362,7 +1362,7 @@ int cwmp_parse_getparametervalues_message(env_t * env , xmldoc_t * doc, paramete
 
     nvram_init(RT2860_NVRAM);
 
-    parameterListNode = cwmp_xml_get_child_with_name(cwmp_get_rpc_method_node(doc), "ParameterNames");
+    parameterListNode = cwmp_xml_get_child_with_name(cwmp_get_rpc_method_node(doc), CWMP_RPC_PARAMETERNAMES);
 
 
     if (!parameterListNode || !ppl)
@@ -1382,7 +1382,7 @@ int cwmp_parse_getparametervalues_message(env_t * env , xmldoc_t * doc, paramete
 //    const char * value;
 //    parameter_t * parameter;
 
-    
+
 
     parameterNode = XmlNodeGetFirstChild(parameterListNode);
     while (parameterNode)
@@ -1412,10 +1412,10 @@ int cwmp_parse_getparametervalues_message(env_t * env , xmldoc_t * doc, paramete
 	    else
 	    {
 		/*parameter_t * parameter =*/ cwmp_parameter_list_add_parameter(env, pool, ppl, root, name, NULL, 1, 0);//Add with getter exec
-		
+
 	    }
 
-	    if (rc != CWMP_OK) 
+	    if (rc != CWMP_OK)
 	    {
 		cwmp_set_faultcode(fault, FAULT_CODE_9003);
 	    }
@@ -1442,7 +1442,7 @@ int cwmp_parse_getparametervalues_message(env_t * env , xmldoc_t * doc, paramete
 /*		while (childNode)
 		{
 			cwmp_log_error("INFO cwmp_parameter_list_add_parameter: add child param !!!");
-			
+
 			xmlnode_t * pnode  = parameterNode;
 			childNode = XmlNodeGetNextSibling(childNode);
 
@@ -1452,7 +1452,7 @@ int cwmp_parse_getparametervalues_message(env_t * env , xmldoc_t * doc, paramete
 			{
 				cwmp_log_error("INFO cwmp_parameter_list_add_parameter: add child param %s.", nodepath);
 				parameter_t * param = cwmp_parameter_list_add_parameter(env,ppl,root,nodepath,NULL, 1, 0); // FIXME: exec_set is not allowed
-			    
+
 			}
 //			nodepath[1023] = '\0';
 */
@@ -1472,7 +1472,7 @@ int cwmp_parse_getparametervalues_message(env_t * env , xmldoc_t * doc, paramete
 	    cwmp_log_error("cwmp_parse_getparametervalues_message: parameter (%s) getter returned fault code %i", name, parameter->fault_code);
 	    rc = CWMP_ERROR;
 	}
-*/	
+*/
 //	if (parameter) {
 //    		*nextpv = parameter;
 //		nextpv++;
@@ -1508,58 +1508,58 @@ int cwmp_parse_getparametervalues_message(env_t * env , xmldoc_t * doc, paramete
 parameter_t*  cwmp_parameter_list_add_parameter(env_t * env, pool_t * pool , parameter_list_t ** ppl, parameter_node_t * root, const char * name, const char * value, BOOL exec_get, BOOL exec_set)
 {
 	//dlink ACS fix
-	if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.AddressingType") == 0) 
+	if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.AddressingType") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.AddressingType";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.Name") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.Name") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Name";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.MACAddress") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.MACAddress") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.MACAddress";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.DNSServers") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.DNSServers") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.DNSServers";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.Enable") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.Enable") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Enable";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.DNSEnabled") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.DNSEnabled") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.DNSEnabled";
 	else
-	if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Name") == 0) 
+	if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Name") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.Name";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.PPPoEServiceName") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.PPPoEServiceName") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.PPPoEServiceName";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.Username";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Password") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Password") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.Password";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.MaxMRUSize") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.MaxMRUSize") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.MaxMRUSize";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.NATEnabled") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.NATEnabled") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.NATEnabled";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.PPPAuthenticationProtocol") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.PPPAuthenticationProtocol") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.PPPAuthenticationProtocol";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.PPPLCPEcho") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.PPPLCPEcho") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.PPPLCPEcho";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.PPPLCPEchoRetry") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.PPPLCPEchoRetry") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.PPPLCPEchoRetry";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Enable") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Enable") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.Enable";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.TransportType") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.TransportType") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.TransportType";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.DefaultGateway") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.DefaultGateway") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.DefaultGateway";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.ExternalIPAddress";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.DNSServers") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.DNSServers") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.DNSServer";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.MACAddress") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.MACAddress") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.MACAddress";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ConnectionTrigger") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ConnectionTrigger") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.ConnectionTrigger";
-	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.NATEnabled") == 0) 
+	else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.NATEnabled") == 0)
 	    name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.NATEnabled";
 
 
-	
+
 	parameter_t* parameter = cwmp_create_parameter(env ,  name, value, TRstrlen(value), 0);
 	if (!parameter)
         {
@@ -1625,7 +1625,7 @@ parameter_t*  cwmp_parameter_list_add_parameter(env_t * env, pool_t * pool , par
 	        {
 		    //exec set function
 		    parameter->fault_code =  (*pn->set)(env->cwmp, name,  value, TRstrlen(value), pn->args, callback_register_task);
-		    
+
 		    if (parameter->fault_code == FAULT_CODE_OK)
 		    {
 			cwmp_log_error("INFO cwmp_parameter_list_add_parameter: set parameter value (%s=%s)", name, value);
@@ -1651,11 +1651,11 @@ parameter_t*  cwmp_parameter_list_add_parameter(env_t * env, pool_t * pool , par
                 (*ppl)->size += CWMP_RENEW_SIZE;
         }
 	(*ppl)->count += 1;
-*/    
+*/
 	if (cwmp_add_parameter_to_list(env, *ppl, parameter) != CWMP_OK)
 	{
 	    cwmp_log_error("ERROR cwmp_parameter_list_add_parameter: parameter %s add error.", name);
-	    
+
 	}
 
 
@@ -1713,7 +1713,7 @@ int  cwmp_parse_setparameterattributes_message(env_t * env , xmldoc_t * doc, par
 	else
 	{
 	    parameter_node_t * pn = cwmp_get_parameter_node(root, name);
-	    if (pn && pn->inform == 0) 
+	    if (pn && pn->inform == 0)
 	    {
 		switch (value[0])
 		{
@@ -1723,7 +1723,7 @@ int  cwmp_parse_setparameterattributes_message(env_t * env , xmldoc_t * doc, par
 		}
 	    }
 	}
-	
+
 	if (parameter) {
     	    *nextpv = parameter;
 	    nextpv++;
@@ -1792,7 +1792,7 @@ int  cwmp_parse_setparametervalues_message(env_t * env , xmldoc_t * doc, paramet
 	    //parameter_node_t * pn = cwmp_get_parameter_node(root, name);
 	    //if (pn && pn->inform == 0) pn->inform = 2;
 	}
-	
+
 	if (parameter) {
     	    *nextpv = parameter;
 	    nextpv++;
@@ -2372,7 +2372,7 @@ int cwmp_create_inform_message_parameter_iterator(env_t * env, parameter_list_t 
     }
 
     return rc;
-    
+
 }
 
 /*
@@ -2438,7 +2438,7 @@ xmldoc_t* cwmp_create_inform_message(env_t * env ,  header_t * header,
     ESA(retryCountNode  , cwmp_create_retry_count_node(env ,  informNode, retry_count));
     ESA(paramlistNode   , cwmp_create_parameter_list_node(env ,  informNode, pl));
 
-    
+
 
     return doc;
 }
@@ -2704,7 +2704,7 @@ xmldoc_t * cwmp_create_setparametervalues_response_message(env_t * env ,  header
     {
 	parameter_node_t * pn = cwmp_get_parameter_node(root, (*(pv+count))->name );
 
-	if ( pn && pn->inform == 0 ) 
+	if ( pn && pn->inform == 0 )
 	{
 	    pn->inform = 2; // FIXME: D-Link refresh
 	}

@@ -489,6 +489,8 @@ int cwmp_session_create_connection(cwmp_session_t * session)
     int use_ssl = 0;
     http_dest_t *  dest = session->dest;
 
+	FUNCTION_TRACE();
+
     if(dest)
     {
         if(strncmp(dest->scheme, "https", 5) == 0)
@@ -511,6 +513,7 @@ int cwmp_session_create_connection(cwmp_session_t * session)
     http_socket_set_sendtimeout(sock, 10);
 
     rc = http_socket_connect(sock, session->dest->host, session->dest->port);
+	cwmp_log_info("http_socket_connect() -> %d", rc);
     if(rc != CWMP_OK)
     {
         cwmp_log_alert("connect to ACS faild. Host is %s:%d.", session->dest->host, session->dest->port);

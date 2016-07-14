@@ -221,57 +221,85 @@ int http_socket_server (http_socket_t **news, int port, int backlog, int timeout
 
 }
 
+void
+saddr_char(char *str, size_t size, sa_family_t family, struct sockaddr *sa)
+{
+    char xhost[40];
+    switch(family) {
+    case AF_INET:
+        inet_ntop(AF_INET, &((struct sockaddr_in*)sa)->sin_addr,
+                xhost, sizeof(xhost));
+        snprintf(str, size, "%s:%u", xhost,
+                ntohs(((struct sockaddr_in*)sa)->sin_port));
+        break;
+    case AF_INET6:
+        inet_ntop(AF_INET6, &((struct sockaddr_in6*)sa)->sin6_addr,
+                xhost, sizeof(xhost));
+        snprintf(str, size, "[%s]:%u", xhost,
+                ntohs(((struct sockaddr_in6*)sa)->sin6_port));
+        break;
+    default:
+        snprintf(str, size, "[unknown fa]");
+        break;
+    }
+}
 
 int http_socket_connect(http_socket_t * sock, const char * host, int port)
 {
-	struct addrinfo hints = {.ai_family = AF_UNSPEC, .ai_socktype = SOCK_STREAM};
-	struct addrinfo *result = NULL;
-	struct addrinfo *res = NULL;
-	char nport[16] = {};
-	int rval = 0;
+    struct addrinfo hints = {.ai_family = AF_UNSPEC, .ai_socktype = SOCK_STREAM};
+    struct addrinfo *result = NULL;
+    struct addrinfo *res = NULL;
+    char nport[16] = {};
+    int rval = 0;
+    FUNCTION_TRACE();
+    cwmp_log_info("connecting to %s:%d", host, port);
 
-	cwmp_log_info("connecting to %s:%d", host, port);
+    if (sock->sockdes != 0 && sock->sockdes != -1) {
+        /* sucks functions:
+         * http_socket_create()
+         * http_sockaddr_set()
+        */
+        close(sock->sockdes);
+        sock->sockdes = -1;
+    }
 
-	if (sock->sockdes != 0 && sock->sockdes != -1) {
-		/* sucks functions:
-		 * http_socket_create()
-		 * http_sockaddr_set()
-		*/
-		close(sock->sockdes);
-		sock->sockdes = -1;
-	}
+    snprintf(nport, sizeof(nport), "%d", port);
+    rval = getaddrinfo(host, nport, &hints, &result);
+    if (rval != 0) {
+        if (rval == EAI_SYSTEM) {
+            cwmp_log_info("getaddrinfo(): %s", strerror(errno));
+        } else {
+            cwmp_log_info("getaddrinfo(): %s", gai_strerror(rval));
+        }
+        return CWMP_ERROR;
+    } else if (!result) {
+        cwmp_log_info("address not resolved");
+        return CWMP_ERROR;
+    }
 
-	snprintf(nport, sizeof(nport), "%d", port);
-	rval = getaddrinfo(host, nport, &hints, &result);
-	if (rval) {
-		if (rval == EAI_SYSTEM) {
-			cwmp_log_info("getaddrinfo(): %s", strerror(errno));
-		} else {
-			cwmp_log_info("getaddrinfo(): %s", gai_strerror(rval));
-		}
-		return CWMP_ERROR;
-	}
+    for (res = result; res; res = res->ai_next) {
+        char xaddr[96] = {};
+        sock->sockdes = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+        saddr_char(xaddr, sizeof(xaddr),\
+                res->ai_family, (struct sockaddr*)res->ai_addr);
+        cwmp_log_info("connect to addr: %s", xaddr);
 
-	for (res = result; res; res = res->ai_next) {
-		sock->sockdes = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-		/* TODO: add normal ip addr print */
-		cwmp_log_info("connect to addrinfo: %p", (void*)res);
-		if (sock->sockdes == -1) {
-			cwmp_log_info("socket(): %s", strerror(errno));
-			goto gai_error;
-		}
-		if (connect(sock->sockdes, res->ai_addr, res->ai_addrlen) == -1) {
-			cwmp_log_info("connect(): %s", strerror(errno));
-			goto gai_error;
-		}
-	}
+        if (sock->sockdes == -1) {
+            cwmp_log_info("socket(): %s", strerror(errno));
+            goto gai_error;
+        }
+        if (connect(sock->sockdes, res->ai_addr, res->ai_addrlen) == -1) {
+            cwmp_log_info("connect(): %s", strerror(errno));
+            goto gai_error;
+        }
+    }
 
-	freeaddrinfo(result);
+    freeaddrinfo(result);
     return CWMP_OK;
 
 gai_error:
-	freeaddrinfo(result);
-	return CWMP_ERROR;
+    freeaddrinfo(result);
+    return CWMP_ERROR;
 }
 
 int http_socket_accept(http_socket_t *sock, http_socket_t ** news)

@@ -338,10 +338,13 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
 
                 if (session->parameter_value_changed == TRUE)
 
+                /* ??? */
+                /*
                 if (fork() == 0) {
                     sleep(3);
                     execl("/etc/scripts/internet.sh","/etc/scripts/internet.sh",(char*)NULL);
                 }
+                */
                 break;
 
 

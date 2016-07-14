@@ -108,7 +108,7 @@
 #define CWMP_RPC_FACTORYRESET               "cwmp:FactoryReset"
 #define CWMP_RPC_FACTORYRESETRESPONSE       "cwmp:FactoryResetResponse"
 
-
+#define CWMP_RPC_PARAMETERNAMES "cwmp:ParameterNames"
 
 #define CWMP_INFORM_EVENT_CODE_0  "0 BOOTSTRAP"
 #define CWMP_INFORM_EVENT_CODE_1  "1 BOOT"
