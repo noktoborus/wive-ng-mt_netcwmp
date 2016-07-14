@@ -19,6 +19,8 @@ model_func_t ModelFunction[] =
     {"cpe_get_igd_ms_username", cpe_get_igd_ms_username},
     {"cpe_get_igd_ms_password", cpe_get_igd_ms_password},
     {"cpe_get_igd_ms_connectionrequesturl", cpe_get_igd_ms_connectionrequesturl},
+    {"cpe_get_igd_ms_url", cpe_get_igd_ms_url},
+    {"cpe_set_igd_ms_url", cpe_set_igd_ms_url},
     {"cpe_get_igd_ms_connectionrequestusername", cpe_get_igd_ms_connectionrequestusername},
     {"cpe_get_igd_ms_connectionrequestpassword", cpe_get_igd_ms_connectionrequestpassword},
     {"cpe_set_igd_ms_connectionrequestusername", cpe_set_igd_ms_connectionrequestusername},
@@ -115,7 +117,7 @@ int get_index_after_paramname(parameter_node_t * param, const char * tag_name)
         {
              if(is_digit(tmp->name) == 0)
              {
-                return TRatoi(tmp->name);   
+                return TRatoi(tmp->name);
              }
         }
     }
@@ -124,7 +126,7 @@ int get_index_after_paramname(parameter_node_t * param, const char * tag_name)
 
 
 void cwmp_model_load(cwmp_t * cwmp, const char * xmlfile)
-{  
+{
 
     cwmp_model_load_xml(cwmp, xmlfile, ModelFunction, sizeof(ModelFunction)/sizeof(model_func_t));
 }
@@ -156,7 +158,7 @@ int cpe_get_conf_string(cwmp_t * cwmp, const char * name, char ** value, char * 
 int cpe_set_conf_string(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
 {
     FUNCTION_TRACE();
-    if (value == NULL) 
+    if (value == NULL)
     {
         cwmp_log_error("cpe_set_conf_string: param (%s) value is NULL", name);
 	return FAULT_CODE_9002;
@@ -257,7 +259,7 @@ int cpe_get_nvram_int(cwmp_t * cwmp, const char * name, char ** value, char * ar
     FUNCTION_TRACE();
 
     const char* nvval = cwmp_nvram_pool_get(pool, args);
-    if (nvval == NULL) 
+    if (nvval == NULL)
     {
 	cwmp_log_error("cpe_get_nvram_bool: undefined param (%s)!",args);
 	return FAULT_CODE_9002;
@@ -266,7 +268,7 @@ int cpe_get_nvram_int(cwmp_t * cwmp, const char * name, char ** value, char * ar
     long val = strtol(nvval, NULL, 10);
     char valStr[256];// = pool_palloc(pool, strlen(val));
     snprintf(&valStr[0], 256, "%li",val);
-    
+
 
     *value = pool_pstrdup(pool, &valStr);
 //    cwmp_log_error("cpe_get_igd_lan_hcm_dhcpenabled: value is %s", *value);
@@ -282,7 +284,7 @@ int cpe_set_nvram_string(cwmp_t * cwmp, const char * name, const char * value, i
 {
     FUNCTION_TRACE();
     cwmp_log_error("DEBUG2: cpe_set_nvram_string: %s %s %s", name, value, args);
-    if (value == NULL) 
+    if (value == NULL)
     {
         cwmp_log_error("cpe_set_nvram_string: param (%s) value is NULL", name);
 	return FAULT_CODE_9002;
@@ -296,7 +298,7 @@ int cpe_set_nvram_string(cwmp_t * cwmp, const char * name, const char * value, i
 int cpe_set_nvram_int(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
 {
     FUNCTION_TRACE();
-    if (value == NULL) 
+    if (value == NULL)
     {
         cwmp_log_error("cpe_set_nvram_string: param (%s) value is NULL", name);
 	return FAULT_CODE_9002;
@@ -315,7 +317,7 @@ int cpe_set_nvram_int(cwmp_t * cwmp, const char * name, const char * value, int 
 int cpe_set_nvram_bool(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
 {
     FUNCTION_TRACE();
-    if (value == NULL) 
+    if (value == NULL)
     {
         cwmp_log_error("cpe_set_nvram_string: param (%s) value is NULL", name);
 	return FAULT_CODE_9002;
@@ -330,7 +332,7 @@ int cpe_set_nvram_bool(cwmp_t * cwmp, const char * name, const char * value, int
 int cpe_set_nvram_bool_onoff(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
 {
     FUNCTION_TRACE();
-    if (value == NULL) 
+    if (value == NULL)
     {
         cwmp_log_error("cpe_set_nvram_string: param (%s) value is NULL", name);
 	return FAULT_CODE_9002;

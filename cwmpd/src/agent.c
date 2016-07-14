@@ -156,6 +156,7 @@ int cwmp_agent_get_active_event(cwmp_t *cwmp, cwmp_session_t * session,  event_l
     event_list_t * el;
     event_code_t * ev;
     int i=0;
+
     FUNCTION_TRACE();
 
     el = cwmp_create_event_list(session->env, INFORM_MAX);
@@ -211,8 +212,9 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
     cwmp_session_t * session;
     int session_close = CWMP_NO;
     xmldoc_t * newdoc;
-    FUNCTION_TRACE();
     event_list_t  *evtlist;
+
+    FUNCTION_TRACE();
 
     while (TRUE) {
         if (cwmp->new_request == CWMP_NO) {
@@ -368,8 +370,6 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
 
 int cwmp_agent_analyse_session(cwmp_session_t * session)
 {
-    FUNCTION_TRACE();
-
     pool_t * doctmppool  = NULL;
     char * xmlbuf;
     cwmp_uint32_t len;
@@ -379,6 +379,8 @@ int cwmp_agent_analyse_session(cwmp_session_t * session)
     int rc;
 
     static char * xml_fault = "<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:SOAP-ENC=\"http://schemas.xmlsoap.org/soap/encoding/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:cwmp=\"urn:dslforum-org:cwmp-1-0\" xmlns=\"urn:dslforum-org:cwmp-1-0\"><SOAP-ENV:Body SOAP-ENV:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"  id=\"_0\"><SOAP-ENV:Fault>Error Message</SOAP-ENV:Fault></SOAP-ENV:Body></SOAP-ENV:Envelope>";
+
+    FUNCTION_TRACE();
 
     cwmp_uint32_t msglength = cwmp_chunk_length(session->readers);
 
@@ -537,30 +539,29 @@ finished:
 
 static void print_param(parameter_node_t * param, int level)
 {
-  if(!param) return;
+    if(!param) return;
 
-  parameter_node_t * child;
-  char fmt[64];
-  //cwmp_log_debug("name: %s, type: %s, level: %d", param->name, cwmp_get_type_string(param->type), level);
-//  int i=0;
+    parameter_node_t * child;
+    char fmt[64];
+    //cwmp_log_debug("name: %s, type: %s, level: %d", param->name, cwmp_get_type_string(param->type), level);
+    //  int i=0;
 
-  sprintf(fmt, "|%%-%ds%%s,  get:%%p set:%%p refresh:%%p", level*4);
+    sprintf(fmt, "|%%-%ds%%s,  get:%%p set:%%p refresh:%%p", level*4);
 
-  cwmp_log_debug(fmt, "----", param->name, param->get, param->set, param->refresh);
+    cwmp_log_debug(fmt, "----", param->name, param->get, param->set, param->refresh);
 
+    child = param->child;
 
-  child = param->child;
+    if(!child)
+        return;
+    print_param(child, level+1);
 
-  if(!child)
-    return;
-  print_param(child, level+1);
+    parameter_node_t * next = child->next_sibling;
 
-  parameter_node_t * next = child->next_sibling;
-
-  while(next) {
-    print_param(next, level+1);
-    next = next->next_sibling;
-  }
+    while(next) {
+        print_param(next, level+1);
+        next = next->next_sibling;
+    }
 }
 
 void cwmp_agent_session(cwmp_t * cwmp)
@@ -571,6 +572,8 @@ void cwmp_agent_session(cwmp_t * cwmp)
 
     char * envstr;
     char * encstr;
+
+    FUNCTION_TRACE();
 
     envstr = cwmp_conf_pool_get(cwmp->pool,"cwmp:soap_env");
     encstr = cwmp_conf_pool_get(cwmp->pool,"cwmp:soap_enc");

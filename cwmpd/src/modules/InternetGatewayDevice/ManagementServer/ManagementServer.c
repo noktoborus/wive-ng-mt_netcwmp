@@ -86,7 +86,7 @@ int cpe_set_igd_ms_password(cwmp_t * cwmp, const char * name, const char * value
 //InternetGatewayDevice.ManagementServer.URL
 int cpe_get_igd_ms_url(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-	  *value = cwmp_conf_pool_get(pool, "cwmp:acs_url");
+    *value = cwmp_conf_pool_get(pool, "cwmp:acs_url");
     return FAULT_CODE_OK;
 }
 
@@ -106,7 +106,7 @@ int cpe_get_igd_ms_connectionrequesturl(cwmp_t * cwmp, const char * name, char *
 
     cwmp_log_info("Wan ip is %s",local_ip);
 
-    if (local_ip == 0) 
+    if (local_ip == 0)
     {
 	cpe_get_localip("br0", local_ip);
 	cwmp_log_info("Local ip is %s",local_ip);
@@ -122,7 +122,7 @@ int cpe_get_igd_ms_connectionrequesturl(cwmp_t * cwmp, const char * name, char *
 	local_ip = cwmp_nvram_pool_get(cwmp->pool, "lan_ipaddr");
     }
 
-    if (local_ip == 0) 
+    if (local_ip == 0)
     {
 	cwmp_log_error("Incorrect local ip");
 	return FAULT_CODE_9002;
