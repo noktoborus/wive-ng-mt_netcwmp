@@ -51,6 +51,8 @@ cwmp_loglevel_to_string(int level)
             return "TRACE";
         case CWMP_LOG_DEBUG:
             return "DEBUG";
+        case CWMP_LOG_ALERT:
+            return "ALERT";
         default:
             return "?";
     }
@@ -66,6 +68,7 @@ int cwmp_loglevel_to_syslog_level(int level) {
 	case CWMP_LOG_INFO:  return LOG_INFO;
 	case CWMP_LOG_TRACE: return LOG_DEBUG;
 	case CWMP_LOG_DEBUG: return LOG_DEBUG;
+    case CWMP_LOG_ALERT: return LOG_ALERT;
 	default: return LOG_DEBUG;
     }
 }
