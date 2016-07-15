@@ -64,7 +64,7 @@ int cwmp_conf_get(const char * key, char *value)
     char nvram_val[256] = {};
     //char value[INI_BUFFERSIZE] = {};
 
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(\"%s\", %p)", __func__, key, (void*)value);
 
     if(key == NULL) {
         return CWMP_ERROR;
@@ -81,7 +81,7 @@ int cwmp_conf_get(const char * key, char *value)
     /* 'evn' only from config file */
     if (!TRstrcmp(s, "env")) {
         ini_gets(s, k, NULL, value, INI_BUFFERSIZE, cwmp_conf_handle->filename);
-        cwmp_log_debug("cwmp_conf_get(%s) = '%s': readed from %s",
+        cwmp_log_debug("cwmp_conf_get(%s) = '%s': readed from %s", key, value,
                 cwmp_conf_handle->filename);
         return CWMP_OK;
     }
@@ -92,6 +92,8 @@ int cwmp_conf_get(const char * key, char *value)
     if (!*nvram_val) {
         ini_gets(s, k, NULL, value, INI_BUFFERSIZE, cwmp_conf_handle->filename);
         cwmp_log_debug("cwmp_conf_get(%s) = '%s': write to nvram", key, value);
+        TRstrncpy(nvram_val, value, MIN(INI_BUFFERSIZE, sizeof(nvram_val)));
+        cwmp_nvram_set(nvram_name, nvram_val);
     } else {
         TRstrncpy(value, nvram_val, MIN(INI_BUFFERSIZE, sizeof(nvram_val)));
         cwmp_log_debug("cwmp_conf_get(%s) = '%s': readed from nvram",

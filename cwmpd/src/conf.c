@@ -50,7 +50,7 @@ void cwmp_conf_init(cwmp_t * cwmp)
     	cwmp->cpe_pwd = cwmp_conf_pool_get(pool, "cwmp:cpe_password");
     }
 
-    cwmp->acs_url   =   cwmp_nvram_pool_get(pool, "cwmp_acs_url"); //  "http://192.168.0.69:8000/otnms/acs/webservice.action";//cwmp_nvram_getdup(pool, "cwmp:acs_url");
+    cwmp->acs_url   =   cwmp_conf_pool_get(pool, "cwmp:acs_url"); //  "http://192.168.0.69:8000/otnms/acs/webservice.action";
 
     cwmp->cpe_mf    =   cwmp_conf_pool_get(pool, "cwmp:cpe_manufacture"); //     "ZTE"; //cwmp_nvram_getdup(pool, "cwmp:cpe_manufacture");
 
@@ -58,7 +58,7 @@ void cwmp_conf_init(cwmp_t * cwmp)
 
     cwmp->cpe_sn    =   cwmp_nvram_pool_get(pool, "WAN_MAC_ADDR");//cwmp_conf_pool_get(pool, "cwmp:cpe_sn"); //    "0410400AA11AA2255"; //cwmp_nvram_getdup(pool, "cwmp:cpe_sn");
 
-    cwmp->cpe_name  =   cwmp_conf_pool_get(pool, "cwmp:cpe_name"); //  "00D0D0"; //cwmp_nvram_getdup(pool, "cwmp:cpe_name");
+    cwmp->cpe_name  =   cwmp_conf_pool_get(pool, "cwmp:cpe_name"); //  "00D0D0";
 
     cwmp->cpe_pc    =   cwmp_conf_pool_get(pool, "cwmp:cpe_pc"); //      "ZXECS EBG2100";
 
