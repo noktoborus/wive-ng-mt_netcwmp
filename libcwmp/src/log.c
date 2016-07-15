@@ -59,17 +59,16 @@ cwmp_loglevel_to_string(int level)
 }
 
 int cwmp_loglevel_to_syslog_level(int level) {
-    switch (level)
-    {
-	case CWMP_LOG_CRIT: return LOG_CRIT;
-	case CWMP_LOG_ERROR: return LOG_ERR;
-	case CWMP_LOG_WARN:  return LOG_WARNING;
-	case CWMP_LOG_NOTICE:return LOG_NOTICE;
-	case CWMP_LOG_INFO:  return LOG_INFO;
-	case CWMP_LOG_TRACE: return LOG_DEBUG;
-	case CWMP_LOG_DEBUG: return LOG_DEBUG;
+    switch (level) {
+    case CWMP_LOG_CRIT: return LOG_CRIT;
+    case CWMP_LOG_ERROR: return LOG_ERR;
+    case CWMP_LOG_WARN:  return LOG_WARNING;
+    case CWMP_LOG_NOTICE:return LOG_NOTICE;
+    case CWMP_LOG_INFO:  return LOG_INFO;
+    case CWMP_LOG_TRACE: return LOG_DEBUG;
+    case CWMP_LOG_DEBUG: return LOG_DEBUG;
     case CWMP_LOG_ALERT: return LOG_ALERT;
-	default: return LOG_DEBUG;
+    default: return LOG_DEBUG;
     }
 }
 
