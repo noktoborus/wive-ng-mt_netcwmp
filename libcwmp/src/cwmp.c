@@ -1555,7 +1555,7 @@ parameter_t*  cwmp_parameter_list_add_parameter(env_t * env, pool_t * pool , par
     parameter_t* parameter = cwmp_create_parameter(env ,  name, value, TRstrlen(value), 0);
     if (!parameter)
     {
-        cwmp_log_error("cwmp_parameter_list_add_parameter: unable to create parameter (%s=%s)", name, value);
+        cwmp_log_error("%s: unable to create parameter (%s=%s)", __func__, name, value);
         return NULL;
     }
 
@@ -1564,13 +1564,13 @@ parameter_t*  cwmp_parameter_list_add_parameter(env_t * env, pool_t * pool , par
         parameter->type = pn->type;
 
         if (pn->type == TYPE_OBJECT) {
-            // cwmp_log_error("WARN cwmp_parameter_list_add_parameter: object parameter (%s)", name);
+            // cwmp_log_warn("%s: object parameter (%s)", name);
             return parameter;
         }
     } else {
         //Create Fault code;
         parameter->fault_code = FAULT_CODE_9003;
-        cwmp_log_error("WARN cwmp_parameter_list_add_parameter: can not find parameter node %s.", name);
+        cwmp_log_warn("%s: can not find parameter node %s.", __func__, name);
     }
 
     // Execute getter
@@ -1581,7 +1581,7 @@ parameter_t*  cwmp_parameter_list_add_parameter(env_t * env, pool_t * pool , par
             parameter->fault_code = (*pn->get)(env->cwmp, name, &val, pn->args, pool);
             if(parameter->fault_code != FAULT_CODE_OK) {
                 // fault->fault_code = rc;
-                cwmp_log_error("ERROR cwmp_parameter_list_add_parameter: parameter %s get error.", name);
+                cwmp_log_error("%s: parameter %s get error.", __func__, name);
                 // return CWMP_ERROR;
             } else {
                 parameter = cwmp_create_parameter(env,  name, val, TRstrlen(value), pn->type);
@@ -1589,11 +1589,11 @@ parameter_t*  cwmp_parameter_list_add_parameter(env_t * env, pool_t * pool , par
 
             } else {
                 parameter = cwmp_create_parameter(env ,  name, pn->value, pn->value_length, pn->type);
-                cwmp_log_error("WARN cwmp_parameter_list_add_parameter: parameter %s has no getter.", name);
+                cwmp_log_warn("%s: parameter %s has no getter.", __func__, name);
             }
 
             if (!parameter) {
-                cwmp_log_error("WARN cwmp_parameter_list_add_parameter: parameter %s not available.", name);
+                cwmp_log_warn("%s: parameter %s not available.", __func__, name);
             }
         }
 
@@ -1604,10 +1604,10 @@ parameter_t*  cwmp_parameter_list_add_parameter(env_t * env, pool_t * pool , par
                 parameter->fault_code =  (*pn->set)(env->cwmp, name,  value, TRstrlen(value), pn->args, callback_register_task);
 
                 if (parameter->fault_code == FAULT_CODE_OK) {
-                    cwmp_log_error("INFO cwmp_parameter_list_add_parameter: set parameter value (%s=%s)", name, value);
+                    cwmp_log_debug("%s: set parameter value (%s=%s) [setter: %p]", __func__, name, value, (void*)(*pn->set));
                 }
             } else {
-                cwmp_log_error("WARN cwmp_parameter_list_add_parameter: no setter defined for parameter (%s)", name);
+                cwmp_log_warn("%s: parameter %s has no setter", __func__, name);
                 parameter->fault_code = FAULT_CODE_9008;
             }
         }
@@ -1626,7 +1626,7 @@ parameter_t*  cwmp_parameter_list_add_parameter(env_t * env, pool_t * pool , par
         (*ppl)->count += 1;
     */
         if (cwmp_add_parameter_to_list(env, *ppl, parameter) != CWMP_OK) {
-            cwmp_log_error("ERROR cwmp_parameter_list_add_parameter: parameter %s add error.", name);
+            cwmp_log_error("%s: parameter %s add error.", __func__, name);
         }
         return parameter;
 }
@@ -1709,8 +1709,6 @@ int  cwmp_parse_setparameterattributes_message(env_t * env , xmldoc_t * doc, par
 //cwmp_parse_setparametervalues_message
 int  cwmp_parse_setparametervalues_message(env_t * env , xmldoc_t * doc, parameter_node_t * root, parameter_list_t ** ppl, fault_code_t *fault)
 {
-    cwmp_log_error("cwmp_parse_setparametervalues_message");
-
     xmlnode_t * parameterListNode;
     xmlnode_t * parameterNode;
     parameter_t ** nextpv;
@@ -1718,11 +1716,13 @@ int  cwmp_parse_setparametervalues_message(env_t * env , xmldoc_t * doc, paramet
 
     pool_t * pool = pool_create(POOL_DEFAULT_SIZE);
 
+    cwmp_log_trace("%s(env=%p, doc=%p, root=%p, ppl=%p, fault=%p)",
+            __func__,
+            (void*)env, (void*)doc, (void*)root, (void*)ppl, (void*)fault);
+
     parameterListNode = cwmp_xml_get_child_with_name(cwmp_get_rpc_method_node(doc), "ParameterList");
 
-
-    if (!parameterListNode || !ppl)
-    {
+    if (!parameterListNode || !ppl) {
         return CWMP_ERROR;
     }
 
@@ -1739,33 +1739,29 @@ int  cwmp_parse_setparametervalues_message(env_t * env , xmldoc_t * doc, paramet
     const char * value;
     parameter_t * parameter;
 
-    while (parameterNode)
-    {
-	xmlnode_t * pnode  = parameterNode;
-	parameterNode = XmlNodeGetNextSibling(parameterNode);
+    while (parameterNode) {
+        xmlnode_t * pnode  = parameterNode;
+        parameterNode = XmlNodeGetNextSibling(parameterNode);
 
         name = cwmp_xml_get_node_value(cwmp_xml_get_child_with_name(pnode, "Name"));
         value = cwmp_xml_get_node_value(cwmp_xml_get_child_with_name(pnode, "Value"));
 
-	parameter = cwmp_parameter_list_add_parameter(env, pool, ppl, root, name, value, 0, 1);//Add with setter exec
+        parameter = cwmp_parameter_list_add_parameter(env, pool, ppl, root, name, value, 0, 1);//Add with setter exec
 
-        if(!parameter || parameter->fault_code != FAULT_CODE_OK)
-        {
-	    cwmp_set_faultcode(fault, FAULT_CODE_9003);
-	    cwmp_log_error("cwmp_parse_setparametervalues_message: parameter (%s) setter returned fault code %i", name, parameter->fault_code);
-	    rc = CWMP_ERROR;
-	}
-	else
-	{
-	    //FIXME: D-Link refresh
-	    //parameter_node_t * pn = cwmp_get_parameter_node(root, name);
-	    //if (pn && pn->inform == 0) pn->inform = 2;
-	}
+        if(!parameter || parameter->fault_code != FAULT_CODE_OK) {
+            cwmp_set_faultcode(fault, FAULT_CODE_9003);
+            cwmp_log_error("cwmp_parse_setparametervalues_message: parameter (%s) setter returned fault code %i", name, parameter->fault_code);
+            rc = CWMP_ERROR;
+        } else {
+            //FIXME: D-Link refresh
+            //parameter_node_t * pn = cwmp_get_parameter_node(root, name);
+            //if (pn && pn->inform == 0) pn->inform = 2;
+        }
 
-	if (parameter) {
-    	    *nextpv = parameter;
-	    nextpv++;
-	}
+        if (parameter) {
+                *nextpv = parameter;
+            nextpv++;
+        }
     }
 
 //    //FIXME: D-Link refresh
@@ -1774,7 +1770,7 @@ int  cwmp_parse_setparametervalues_message(env_t * env , xmldoc_t * doc, paramet
 /*    name     = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.AddressingType";//CWMP_APPEND_PARAMETER_NAME(pool, 3, InternetGatewayDeviceModule, ManagementServerModule, URLModule);
     value    = cwmp_data_get_parameter_value(env->cwmp, root, name, env->pool);
     parameter = parameter_list_set_param_value(env, ppl, root, name, value);
-
+s
     if (parameter) {
 	*nextpv = parameter;
 	nextpv++;

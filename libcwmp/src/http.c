@@ -644,7 +644,12 @@ int http_parse_url(http_dest_t * dest, const char * url)
     /* port */
     if(strncmp(url, "https:", 6) == 0)
     {
+#ifdef USE_CWMP_OPENSSL
         dest->port = 443;
+#else
+        cwmp_log_alert("cwmp build without OpenSSL support, force HTTP connection");
+        dest->port = 80;
+#endif
     }
     else
     {

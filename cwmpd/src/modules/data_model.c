@@ -282,12 +282,13 @@ int cpe_get_nvram_int(cwmp_t * cwmp, const char * name, char ** value, char * ar
 //nvram string setter
 int cpe_set_nvram_string(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
 {
-    FUNCTION_TRACE();
-    cwmp_log_error("DEBUG2: cpe_set_nvram_string: %s %s %s", name, value, args);
+    cwmp_log_trace("%s(cwmp=\"%p\", name=\"%s\", value=\"%s\", length=%d, args=\"%s\", callback_reg=%p)",
+            __func__, (void*)cwmp, name, value, length, args, (void*)callback_reg);
+
     if (value == NULL)
     {
-        cwmp_log_error("cpe_set_nvram_string: param (%s) value is NULL", name);
-	return FAULT_CODE_9002;
+        cwmp_log_error("%s: param (%s) value is NULL", __func__, name);
+        return FAULT_CODE_9002;
     }
 
     cwmp_nvram_set(args,value);
@@ -297,11 +298,12 @@ int cpe_set_nvram_string(cwmp_t * cwmp, const char * name, const char * value, i
 //nvram int setter
 int cpe_set_nvram_int(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
 {
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(cwmp=\"%p\", name=\"%s\", value=\"%s\", length=%d, args=\"%s\", callback_reg=%p)",
+            __func__, (void*)cwmp, name, value, length, args, (void*)callback_reg);
     if (value == NULL)
     {
         cwmp_log_error("cpe_set_nvram_string: param (%s) value is NULL", name);
-	return FAULT_CODE_9002;
+        return FAULT_CODE_9002;
     }
 
     long val = strtol(value, NULL, 10);

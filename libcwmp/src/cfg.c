@@ -106,8 +106,11 @@ int cwmp_conf_get(const char * key, char *value)
 int cwmp_conf_set(const char * key, const char * value)
 {
     char * s, *k;
-    char name[INI_BUFFERSIZE] = {0};
-    FUNCTION_TRACE();
+    char name[INI_BUFFERSIZE] = {};
+    char nvram_name[sizeof(name) + 3] = {};
+
+    cwmp_log_trace("%s(\"%s\", \"%s\")", __func__, key, value);
+
     if(key == NULL) {
         return CWMP_ERROR;
     }
@@ -124,8 +127,9 @@ int cwmp_conf_set(const char * key, const char * value)
                 key, value, cwmp_conf_handle->filename);
         return ini_puts(s, k, value, cwmp_conf_handle->filename);
     } else {
+        snprintf(nvram_name, sizeof(nvram_name), "%s_%s", s, k);
         cwmp_log_debug("cwmp_conf_set(%s, %s): write to nvram", key, value);
-        return cwmp_nvram_set(k, value);
+        return cwmp_nvram_set(nvram_name, value);
     }
 }
 
@@ -133,7 +137,7 @@ char * cwmp_conf_pool_get(pool_t * pool, const char * key)
 {
     char value[INI_BUFFERSIZE] = {0};
 
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(%p, \"%s\")", __func__, (void*)pool, key);
 
     cwmp_conf_get(key, value);
 
@@ -142,37 +146,12 @@ char * cwmp_conf_pool_get(pool_t * pool, const char * key)
 
 int cwmp_conf_get_int(const char * key)
 {
-    char * s, *k;
-    char name[INI_BUFFERSIZE] = {};
-    char nvram_name[sizeof(name) + 3] = {};
-    char nvram_val[256] = {};
-    int rval = 0;
+    char val[INI_BUFFERSIZE] = {};
 
-    FUNCTION_TRACE();
-    if(key == NULL) {
-        return 0;
-    }
-    TRstrncpy(name, key, INI_BUFFERSIZE);
-    cwmp_conf_split(name, &s, &k);
+    cwmp_log_trace("%s(\"%s\")", __func__, key);
 
-    /* check value in nvram */
-    TRsnprintf(nvram_name, sizeof(nvram_name), "%s_%s", s, k);
-    cwmp_nvram_get(nvram_name, nvram_val);
-
-    if (!*nvram_val) {
-        /* get from cwmp.cfg and write to nvram */
-        rval = (int)ini_getl(s, k, 0, cwmp_conf_handle->filename);
-        cwmp_log_debug("cwmp_conf_get_int(%s) = %d: write to nvram",
-                key, rval);
-        TRsnprintf(nvram_val, sizeof(nvram_val), "%d", rval);
-        cwmp_nvram_set(nvram_name, nvram_val);
-    } else {
-        /* get from nvram */
-        rval = strtol(nvram_val, NULL, 10);
-        cwmp_log_debug("cwmp_conf_get_int(%s) = %d: readed from nvram",
-                key, rval);
-    }
-    return rval;
+    cwmp_conf_get(key, val);
+    return strtol(val, NULL, 10);
 }
 
 
@@ -182,8 +161,6 @@ int cwmp_nvram_set(const char * key, const char * value)
     //FIXME: libnvram check const!
     return nvram_set(RT2860_NVRAM, (char*) key, (char*) value);
 }
-
-
 
 int cwmp_nvram_get(const char * key, char *value)
 {

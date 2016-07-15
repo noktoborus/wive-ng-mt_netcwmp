@@ -493,8 +493,11 @@ int cwmp_session_create_connection(cwmp_session_t * session)
     {
         if(strncmp(dest->scheme, "https", 5) == 0)
         {
+#ifdef USE_CWMP_OPENSSL
             use_ssl = 1;
-
+#else
+            cwmp_log_alert("Ignoring https scheme, force http");
+#endif
         }
     }
     cwmp_log_info("session connect using ssl: %s", use_ssl==1?"yes":"no");

@@ -93,7 +93,7 @@ int cpe_get_igd_ms_url(cwmp_t * cwmp, const char * name, char ** value, char * a
 //InternetGatewayDevice.ManagementServer.URL
 int cpe_set_igd_ms_url(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
 {
-    //save password to database or config file
+    cwmp_conf_set("cwmp:acs_url", value);
     return FAULT_CODE_OK;
 }
 
