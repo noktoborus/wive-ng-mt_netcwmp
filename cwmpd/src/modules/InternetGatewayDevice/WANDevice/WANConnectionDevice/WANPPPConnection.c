@@ -2,7 +2,7 @@ int cpe_get_igd_wan_ppp_servicename(cwmp_t * cwmp, const char * name, char ** va
 {
 
     char* sername =  cwmp_nvram_pool_get(pool, "vpnService");
-    if (sername == NULL) 
+    if (sername == NULL)
     {
 	*value = pool_pstrdup(pool, "");
 	return FAULT_CODE_OK;
@@ -29,7 +29,7 @@ int cpe_get_igd_wan_ppp_authprot(cwmp_t * cwmp, const char * name, char ** value
 	case 3: stdstr = "MS-CHAP";break;
 	default: stdstr = "AUTO";break;
     }
-    
+
     *value = pool_pstrdup(pool, stdstr);
 
     return FAULT_CODE_OK;

@@ -106,7 +106,6 @@ void cwmp_log_fini()
     {
         fclose(g_cwmp_log_file.file);
     }
-
 }
 
 void cwmp_log_write(int level, cwmp_log_t * log, const char * fmt, va_list ap)
@@ -131,16 +130,13 @@ void cwmp_log_write(int level, cwmp_log_t * log, const char * fmt, va_list ap)
 
         /* syslog-style time */
         strftime(tm_str, sizeof(tm_str), "%b %e %T", tm);
-        fprintf(logger->file, "%s %s [%"PRIuPTR"]: ",
-                tm_str, cwmp_loglevel_to_string(level), (size_t)pid);
+        fprintf(logger->file, "%s - -[%"PRIuPTR"]: %s: ",
+                tm_str, (size_t)pid, cwmp_loglevel_to_string(level));
         vfprintf(logger->file, fmt, ap);
         fprintf(logger->file, "\n");
 
         fflush(logger->file);
     }
-
-
-
 }
 
 void cwmp_log_trace(const char * fmt, ...)
@@ -174,9 +170,6 @@ void cwmp_log_warn(const char * fmt, ...)
     cwmp_log_write(CWMP_LOG_WARN, NULL, fmt, ap);
     va_end(ap);
 }
-
-
-
 
 void cwmp_log_error(const char * fmt, ...)
 {

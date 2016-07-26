@@ -71,7 +71,7 @@ int cwmp_conf_get(const char * key, char *value)
     }
 
     if (cwmp_conf_handle == NULL) {
-        cwmp_log_error("cwmp_conf_get: config file handle is not initialized!");
+        cwmp_log_error("%s: config file handle is not initialized!", __func__);
         return CWMP_ERROR;
     }
 
@@ -81,7 +81,8 @@ int cwmp_conf_get(const char * key, char *value)
     /* 'evn' only from config file */
     if (!TRstrcmp(s, "env")) {
         ini_gets(s, k, NULL, value, INI_BUFFERSIZE, cwmp_conf_handle->filename);
-        cwmp_log_debug("cwmp_conf_get(%s) = '%s': readed from %s", key, value,
+        cwmp_log_debug("%s(\"%s\") = \"%s\": readed from %s",
+                __func__, key, value,
                 cwmp_conf_handle->filename);
         return CWMP_OK;
     }
@@ -91,13 +92,13 @@ int cwmp_conf_get(const char * key, char *value)
 
     if (!*nvram_val) {
         ini_gets(s, k, NULL, value, INI_BUFFERSIZE, cwmp_conf_handle->filename);
-        cwmp_log_debug("cwmp_conf_get(%s) = '%s': write to nvram", key, value);
+        cwmp_log_debug("%s(\"%s\") = \"%s\": write to nvram", key, value);
         TRstrncpy(nvram_val, value, MIN(INI_BUFFERSIZE, sizeof(nvram_val)));
         cwmp_nvram_set(nvram_name, nvram_val);
     } else {
         TRstrncpy(value, nvram_val, MIN(INI_BUFFERSIZE, sizeof(nvram_val)));
-        cwmp_log_debug("cwmp_conf_get(%s) = '%s': readed from nvram",
-                key, value);
+        cwmp_log_debug("%s(\"%s\") = \"%s\": readed from nvram",
+                __func__, key, value);
     }
 
     return CWMP_OK;
@@ -115,7 +116,7 @@ int cwmp_conf_set(const char * key, const char * value)
         return CWMP_ERROR;
     }
     if (cwmp_conf_handle == NULL) {
-        cwmp_log_error("cwmp_conf_get: config file handle is not initialized!");
+        cwmp_log_error("%s: config file handle is not initialized!", __func__);
         return CWMP_ERROR;
     }
 
@@ -123,12 +124,13 @@ int cwmp_conf_set(const char * key, const char * value)
     cwmp_conf_split(name, &s, &k);
 
     if (!TRstrcmp(s, "env")) {
-        cwmp_log_debug("cwmp_conf_set(%s, %s): write to %s",
-                key, value, cwmp_conf_handle->filename);
+        cwmp_log_debug("%s(\"%s\", \"%s\"): write to %s",
+                __func__, key, value, cwmp_conf_handle->filename);
         return ini_puts(s, k, value, cwmp_conf_handle->filename);
     } else {
         snprintf(nvram_name, sizeof(nvram_name), "%s_%s", s, k);
-        cwmp_log_debug("cwmp_conf_set(%s, %s): write to nvram", key, value);
+        cwmp_log_debug("%s(\"%s\", \"%s\"): write to nvram",
+                __func__, key, value);
         return cwmp_nvram_set(nvram_name, value);
     }
 }
@@ -137,7 +139,7 @@ char * cwmp_conf_pool_get(pool_t * pool, const char * key)
 {
     char value[INI_BUFFERSIZE] = {0};
 
-    cwmp_log_trace("%s(%p, \"%s\")", __func__, (void*)pool, key);
+    cwmp_log_trace("%s(pool=%p, \"%s\")", __func__, (void*)pool, key);
 
     cwmp_conf_get(key, value);
 
@@ -157,7 +159,7 @@ int cwmp_conf_get_int(const char * key)
 
 int cwmp_nvram_set(const char * key, const char * value)
 {
-    cwmp_log_debug("cwmp_nvram_set(%s, %s)", key, value);
+    cwmp_log_debug("%s(\"%s\", \"%s\")", __func__, key, value);
     //FIXME: libnvram check const!
     return nvram_set(RT2860_NVRAM, (char*) key, (char*) value);
 }
@@ -167,7 +169,7 @@ int cwmp_nvram_get(const char * key, char *value)
     char* nvval;
     //FIXME: libnvram check const!
     nvval = nvram_get(RT2860_NVRAM, (char*) key);
-    cwmp_log_debug("cwmp_nvram_get(%s) = %s", key, nvval);
+    cwmp_log_debug("%s(\"%s\") = \"%s\"", __func__, key, nvval);
     strcpy(value, nvval);
     return CWMP_OK;//strlen(nvval);
 }
@@ -179,7 +181,7 @@ char * cwmp_nvram_pool_get(pool_t * pool, const char * key)
 //    return cwmp_conf_pool_get(pool, keybuf);
     //FIXME: libnvram check const!
     char* val = nvram_get(RT2860_NVRAM, (char*)key);
-    cwmp_log_debug("cwmp_nvram_pool_get: %s=%s (%i)",key,val, val);
+    cwmp_log_debug("%s(\"%s\") = \"%s\"", __func__, key, val);
 
     return pool_pstrdup(pool,val);
 }
