@@ -92,6 +92,8 @@ model_func_t ModelFunction[] =
     {"cpe_get_igd_l3f_defaultconnection", cpe_get_igd_l3f_defaultconnection},
     {"cpe_set_igd_l3f_defaultconnection", cpe_set_igd_l3f_defaultconnection},
 
+	{"cpe_get_igd_wan_ip", cpe_get_igd_wan_ip},
+
     {"cpe_get_conf_string", cpe_get_conf_string},
     {"cpe_set_conf_string", cpe_set_conf_string},
 

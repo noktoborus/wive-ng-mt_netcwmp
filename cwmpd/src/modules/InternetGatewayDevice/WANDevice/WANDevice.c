@@ -1,3 +1,29 @@
+int cpe_get_igd_wan_ip(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    /* copied from cpe_get_igd_ms_connectionrequesturl() */
+    char* local_ip = getIntIp(pool);
+
+    if (local_ip == 0) {
+        cpe_get_localip("br0", local_ip);
+    }
+
+    if (local_ip == 0) {
+        local_ip = cwmp_nvram_pool_get(cwmp->pool, "wan_ipaddr");
+    }
+
+    if (local_ip == 0) {
+        local_ip = cwmp_nvram_pool_get(cwmp->pool, "lan_ipaddr");
+    }
+
+    if (local_ip == 0) {
+        cwmp_log_error("Incorrect local ip");
+        return FAULT_CODE_9002;
+    }
+
+    *value = PSTRDUP(local_ip);
+    return FAULT_CODE_OK;
+}
+
 
 int  cpe_refresh_igd_wandevice(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_func_t callback_reg)
 {
@@ -19,15 +45,15 @@ int  cpe_refresh_igd_wandevice(cwmp_t * cwmp, parameter_node_t * param_node, cal
             tmp_param = tmp_node;
         }
         child_param->next_sibling = NULL;
-                
+
         parameter_node_t * wan1_param;
         cwmp_model_copy_parameter(param_node, &wan1_param, 1);
-        
+
         parameter_node_t * wan2_param;
         cwmp_model_copy_parameter(param_node, &wan2_param, 2);
-       
-        cwmp_model_refresh_object(cwmp, param_node, 0, callback_reg); 
+
+        cwmp_model_refresh_object(cwmp, param_node, 0, callback_reg);
     }
-    
+
     return FAULT_CODE_OK;
 }

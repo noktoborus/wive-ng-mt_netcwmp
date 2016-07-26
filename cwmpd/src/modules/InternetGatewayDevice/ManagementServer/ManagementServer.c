@@ -1,3 +1,4 @@
+/* vim: set et: */
 int cpe_get_localip(const char * eth_name, char *hostip)
 {
     register int fd,intrface,retn=0;
@@ -100,32 +101,28 @@ int cpe_set_igd_ms_url(cwmp_t * cwmp, const char * name, const char * value, int
 //InternetGatewayDevice.ManagementServer.ConnectionRequestURL
 int cpe_get_igd_ms_connectionrequesturl(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    char buf[256]={0};
-//    char local_ip[32]={0};
+    /* copied to cpe_get_igd_wan_ip() */
+    char buf[256] = {0};
     char* local_ip = getIntIp(pool);
 
     cwmp_log_info("Wan ip is %s",local_ip);
 
-    if (local_ip == 0)
-    {
-	cpe_get_localip("br0", local_ip);
-	cwmp_log_info("Local ip is %s",local_ip);
+    if (local_ip == 0) {
+        cpe_get_localip("br0", local_ip);
+        cwmp_log_info("Local ip is %s",local_ip);
     }
 
-    if (local_ip == 0)
-    {
-	local_ip = cwmp_nvram_pool_get(cwmp->pool, "wan_ipaddr");
+    if (local_ip == 0) {
+        local_ip = cwmp_nvram_pool_get(cwmp->pool, "wan_ipaddr");
     }
 
-    if (local_ip == 0)
-    {
-	local_ip = cwmp_nvram_pool_get(cwmp->pool, "lan_ipaddr");
+    if (local_ip == 0) {
+        local_ip = cwmp_nvram_pool_get(cwmp->pool, "lan_ipaddr");
     }
 
-    if (local_ip == 0)
-    {
-	cwmp_log_error("Incorrect local ip");
-	return FAULT_CODE_9002;
+    if (local_ip == 0) {
+        cwmp_log_error("Incorrect local ip");
+        return FAULT_CODE_9002;
     }
 
     int port = cwmp_conf_get_int("cwmpd:httpd_port");
