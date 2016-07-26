@@ -1971,8 +1971,11 @@ upload_arg_t * cwmp_clone_upload_arg(upload_arg_t * ularg)
 parameter_t* cwmp_create_parameter(env_t * env ,  const char * name, const char * value, size_t value_length, int type)
 {
     parameter_t * pv = XMALLOC(sizeof(parameter_t));
-    if (!pv)
-    {
+
+    cwmp_log_trace("%s(env=%p, name=\"%s\", value=\"%s\", value_length=%"PRIuPTR", type=%d",
+            __func__, (void*)env, name, value, value_length, type);
+
+    if (!pv) {
         return NULL;
     }
 
@@ -1983,7 +1986,6 @@ parameter_t* cwmp_create_parameter(env_t * env ,  const char * name, const char 
 
     pv->type = type;
     pv->fault_code = 0;
-
 
     return pv;
 }

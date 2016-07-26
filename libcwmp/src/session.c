@@ -1,3 +1,4 @@
+/* vim: set et: */
 /************************************************************************
  * Id: session.c                                                        *
  *                                                                      *
@@ -167,22 +168,21 @@ char * cwmp_data_get_parameter_value(cwmp_t * cwmp, parameter_node_t * root, con
     char * value = NULL;
     int rc;
 
+    /*
+    cwmp_log_trace("%s(cwmp=%p, root=%p, name=\"%s\", pool=%p)",
+            __func__, (void*)cwmp, (void*)root, name, (void*)pool)
+    */
 
     node = cwmp_get_parameter_node(root, name);
     if (!node)
         return NULL;
 
-
-     rc = cwmp_get_parameter_node_value(cwmp, node, name, &value, pool);
-     if(rc == 0)
-     {
-	return value;
-     }
-
-     else
-     {
-	return node->value;
-     }
+    rc = cwmp_get_parameter_node_value(cwmp, node, name, &value, pool);
+    if(rc == 0) {
+        return value;
+    } else {
+        return node->value;
+    }
 
 }
 
@@ -194,14 +194,7 @@ int cwmp_data_set_parameter_value(cwmp_t * cwmp, parameter_node_t * root, const 
     if (!node)
         return CWMP_ERROR;
     return cwmp_set_parameter_node_value(cwmp, node, name, value, value_length);
-
 }
-
-
-
-
-
-
 
 char * cwmp_session_get_sequence(pool_t * pool)
  {
