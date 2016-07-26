@@ -1,6 +1,16 @@
 #include "cwmp/model.h"
 #include "data_model.h"
 #include "cwmp_module.h"
+
+
+#define DM_TRACE_SET() \
+    cwmp_log_trace("%s(cwmp=\"%p\", name=\"%s\", value=\"%s\", length=%d, args=\"%s\", callback_reg=%p)",\
+            __func__, (void*)cwmp, name, value, length, args, (void*)callback_reg);
+
+#define DM_TRACE_GET() \
+    cwmp_log_trace("%s(cwmp=\"%p\", name=\"%s\", value=%p, args=\"%s\", pool=%p)",\
+            __func__, (void*)cwmp, name, (void*)value, args, (void*)pool);
+
 #include "InternetGatewayDevice/InternetGatewayDevice.c"
 
 model_func_t ModelFunction[] =
@@ -141,7 +151,7 @@ int cpe_get_const_string(cwmp_t * cwmp, const char * name, char ** value, char *
 //config string getter
 int cpe_get_conf_string(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    FUNCTION_TRACE();
+    DM_TRACE_GET();
 
     char* nvval = cwmp_conf_pool_get(pool, args);
     if (nvval == NULL) {
@@ -157,7 +167,7 @@ int cpe_get_conf_string(cwmp_t * cwmp, const char * name, char ** value, char * 
 //conf string setter
 int cpe_set_conf_string(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
 {
-    FUNCTION_TRACE();
+    DM_TRACE_SET();
     if (value == NULL)
     {
         cwmp_log_error("cpe_set_conf_string: param (%s) value is NULL", name);
@@ -173,7 +183,7 @@ int cpe_set_conf_string(cwmp_t * cwmp, const char * name, const char * value, in
 //nvram string getter
 int cpe_get_nvram_string(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    FUNCTION_TRACE();
+    DM_TRACE_GET();
 
     char* nvval = cwmp_nvram_pool_get(pool, args);
     if (nvval == NULL) {
@@ -189,7 +199,7 @@ int cpe_get_nvram_string(cwmp_t * cwmp, const char * name, char ** value, char *
 int cpe_get_nvram_string_or_empty(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
 
-    FUNCTION_TRACE();
+    DM_TRACE_GET();
 
     char* nvval = cwmp_nvram_pool_get(pool, args);
     if (nvval == NULL) {
@@ -205,7 +215,7 @@ int cpe_get_nvram_string_or_empty(cwmp_t * cwmp, const char * name, char ** valu
 //nvram bool getter
 int cpe_get_nvram_bool(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    FUNCTION_TRACE();
+    DM_TRACE_GET();
 
     const char* nvval = cwmp_nvram_pool_get(pool, args);
     if (nvval == NULL) {
@@ -227,7 +237,7 @@ int cpe_get_nvram_bool(cwmp_t * cwmp, const char * name, char ** value, char * a
 int cpe_get_nvram_bool_onoff(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
 
-    FUNCTION_TRACE();
+    DM_TRACE_GET();
 
     const char* nvval = cwmp_nvram_pool_get(pool, args);
     if (nvval == NULL) {
@@ -256,7 +266,7 @@ int cpe_get_nvram_bool_onoff(cwmp_t * cwmp, const char * name, char ** value, ch
 //nvram bool getter
 int cpe_get_nvram_int(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    FUNCTION_TRACE();
+    DM_TRACE_GET();
 
     const char* nvval = cwmp_nvram_pool_get(pool, args);
     if (nvval == NULL)
@@ -282,8 +292,7 @@ int cpe_get_nvram_int(cwmp_t * cwmp, const char * name, char ** value, char * ar
 //nvram string setter
 int cpe_set_nvram_string(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
 {
-    cwmp_log_trace("%s(cwmp=\"%p\", name=\"%s\", value=\"%s\", length=%d, args=\"%s\", callback_reg=%p)",
-            __func__, (void*)cwmp, name, value, length, args, (void*)callback_reg);
+	DM_TRACE_SET();
 
     if (value == NULL)
     {
@@ -298,8 +307,8 @@ int cpe_set_nvram_string(cwmp_t * cwmp, const char * name, const char * value, i
 //nvram int setter
 int cpe_set_nvram_int(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
 {
-    cwmp_log_trace("%s(cwmp=\"%p\", name=\"%s\", value=\"%s\", length=%d, args=\"%s\", callback_reg=%p)",
-            __func__, (void*)cwmp, name, value, length, args, (void*)callback_reg);
+	DM_TRACE_SET();
+
     if (value == NULL)
     {
         cwmp_log_error("cpe_set_nvram_string: param (%s) value is NULL", name);
@@ -318,7 +327,7 @@ int cpe_set_nvram_int(cwmp_t * cwmp, const char * name, const char * value, int 
 //nvram bool setter
 int cpe_set_nvram_bool(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
 {
-    FUNCTION_TRACE();
+    DM_TRACE_SET();
     if (value == NULL)
     {
         cwmp_log_error("cpe_set_nvram_string: param (%s) value is NULL", name);
@@ -333,7 +342,7 @@ int cpe_set_nvram_bool(cwmp_t * cwmp, const char * name, const char * value, int
 //nvram bool setter
 int cpe_set_nvram_bool_onoff(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
 {
-    FUNCTION_TRACE();
+    DM_TRACE_SET();
     if (value == NULL)
     {
         cwmp_log_error("cpe_set_nvram_string: param (%s) value is NULL", name);

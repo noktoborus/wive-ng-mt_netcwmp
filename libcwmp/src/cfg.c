@@ -64,7 +64,7 @@ int cwmp_conf_get(const char * key, char *value)
     char nvram_val[256] = {};
     //char value[INI_BUFFERSIZE] = {};
 
-    cwmp_log_trace("%s(\"%s\", %p)", __func__, key, (void*)value);
+    cwmp_log_trace("%s(\"%s\", %p) ->", __func__, key, (void*)value);
 
     if(key == NULL) {
         return CWMP_ERROR;
@@ -81,24 +81,25 @@ int cwmp_conf_get(const char * key, char *value)
     /* 'evn' only from config file */
     if (!TRstrcmp(s, "env")) {
         ini_gets(s, k, NULL, value, INI_BUFFERSIZE, cwmp_conf_handle->filename);
-        cwmp_log_debug("%s(\"%s\") = \"%s\": readed from %s",
-                __func__, key, value,
+        cwmp_log_debug("%s(\"%s\", %p) = \"%s\": readed from %s",
+                __func__, key, (void*)value, value,
                 cwmp_conf_handle->filename);
         return CWMP_OK;
     }
     /* get nvram value */
     TRsnprintf(nvram_name, sizeof(nvram_name), "%s_%s", s, k);
     cwmp_nvram_get(nvram_name, nvram_val);
-
     if (!*nvram_val) {
-        ini_gets(s, k, NULL, value, INI_BUFFERSIZE, cwmp_conf_handle->filename);
-        cwmp_log_debug("%s(\"%s\") = \"%s\": write to nvram", key, value);
-        TRstrncpy(nvram_val, value, MIN(INI_BUFFERSIZE, sizeof(nvram_val)));
+        ini_gets(s, k, NULL, nvram_val, sizeof(nvram_val),
+                cwmp_conf_handle->filename);
+        cwmp_log_debug("%s(\"%s\") = \"%s\": write to nvram",
+                __func__, key, nvram_val);
         cwmp_nvram_set(nvram_name, nvram_val);
+        TRstrncpy(value, nvram_val, INI_BUFFERSIZE);
     } else {
         TRstrncpy(value, nvram_val, MIN(INI_BUFFERSIZE, sizeof(nvram_val)));
-        cwmp_log_debug("%s(\"%s\") = \"%s\": readed from nvram",
-                __func__, key, value);
+        cwmp_log_debug("%s(\"%s\", %p) = \"%s\": readed from nvram",
+                __func__, key, (void*)value, value);
     }
 
     return CWMP_OK;
@@ -169,7 +170,8 @@ int cwmp_nvram_get(const char * key, char *value)
     char* nvval;
     //FIXME: libnvram check const!
     nvval = nvram_get(RT2860_NVRAM, (char*) key);
-    cwmp_log_debug("%s(\"%s\") = \"%s\"", __func__, key, nvval);
+    cwmp_log_debug("%s(\"%s\", %p) = \"%s\"",
+            __func__, key, (void*)value, nvval);
     strcpy(value, nvval);
     return CWMP_OK;//strlen(nvval);
 }
