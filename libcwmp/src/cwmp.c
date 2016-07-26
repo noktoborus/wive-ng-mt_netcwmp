@@ -1501,57 +1501,6 @@ int cwmp_parse_getparametervalues_message(env_t * env , xmldoc_t * doc, paramete
 
 parameter_t*  cwmp_parameter_list_add_parameter(env_t * env, pool_t * pool , parameter_list_t ** ppl, parameter_node_t * root, const char * name, const char * value, BOOL exec_get, BOOL exec_set)
 {
-    //dlink ACS fix
-    if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.AddressingType") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.AddressingType";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.Name") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Name";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.MACAddress") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.MACAddress";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.DNSServers") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.DNSServers";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.Enable") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Enable";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.%d.DNSEnabled") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.DNSEnabled";
-    else
-    if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Name") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.Name";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.PPPoEServiceName") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.PPPoEServiceName";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.Username";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Password") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.Password";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.MaxMRUSize") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.MaxMRUSize";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.NATEnabled") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.NATEnabled";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.PPPAuthenticationProtocol") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.PPPAuthenticationProtocol";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.PPPLCPEcho") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.PPPLCPEcho";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.PPPLCPEchoRetry") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.PPPLCPEchoRetry";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Enable") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.Enable";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.TransportType") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.TransportType";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.DefaultGateway") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.DefaultGateway";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.ExternalIPAddress";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.DNSServers") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.DNSServer";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.MACAddress") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.MACAddress";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ConnectionTrigger") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.ConnectionTrigger";
-    else if (strcmp(name,"InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.NATEnabled") == 0)
-        name = "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.NATEnabled";
-
     parameter_t* parameter = cwmp_create_parameter(env ,  name, value, TRstrlen(value), 0);
     if (!parameter)
     {
