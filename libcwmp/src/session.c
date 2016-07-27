@@ -598,7 +598,7 @@ parameter_list_t * cwmp_session_create_inform_parameters(cwmp_session_t * sessio
     char * name;
     char * value;
 
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(session=%p, pool=%p)", __func__, (void*)session, (void*)pool);
 
     pl = cwmp_create_parameter_list(session->env);
 
@@ -607,95 +607,16 @@ parameter_list_t * cwmp_session_create_inform_parameters(cwmp_session_t * sessio
     parameter = cwmp_create_parameter(session->env,  name, value, 0, TYPE_STRING);
     cwmp_add_parameter_to_list(session->env,  pl, parameter);
 
-/*    name    = CWMP_APPEND_PARAMETER_NAME(pool, 3, InternetGatewayDeviceModule, DeviceInfoModule, ManufacturerModule);
-    value   = cwmp_data_get_parameter_value(session->cwmp, session->root, name, pool);
-    parameter = cwmp_create_parameter(session->env,  name, value, 0, TYPE_STRING);
-    cwmp_add_parameter_to_list(session->env,  pl, parameter);
-
-    name    = CWMP_APPEND_PARAMETER_NAME(pool, 3, InternetGatewayDeviceModule, DeviceInfoModule, ManufacturerOUIModule);
-    value   = cwmp_data_get_parameter_value(session->cwmp, session->root, name, pool);
-    parameter = cwmp_create_parameter(session->env,  name, value, 0, TYPE_STRING);
-    cwmp_add_parameter_to_list(session->env,  pl, parameter);
-
-    name    = CWMP_APPEND_PARAMETER_NAME(pool, 3, InternetGatewayDeviceModule, DeviceInfoModule, ProductClassModule);
-    value   = cwmp_data_get_parameter_value(session->cwmp, session->root, name, pool);
-    parameter = cwmp_create_parameter(session->env,  name, value, 0, TYPE_STRING);
-    cwmp_add_parameter_to_list(session->env,  pl, parameter);
-
-    name    = CWMP_APPEND_PARAMETER_NAME(pool, 3, InternetGatewayDeviceModule, DeviceInfoModule, SerialNumberModule);
-    value   = cwmp_data_get_parameter_value(session->cwmp, session->root, name, pool);
-    parameter = cwmp_create_parameter(session->env,  name, value, 0, TYPE_STRING);
-    cwmp_add_parameter_to_list(session->env,  pl, parameter);
-*/
     name    = CWMP_APPEND_PARAMETER_NAME(pool, 3, InternetGatewayDeviceModule, DeviceInfoModule, SpecVersionModule);
     value   = cwmp_data_get_parameter_value(session->cwmp, session->root, name, pool);
     parameter = cwmp_create_parameter(session->env,  name, value, 0, TYPE_STRING);
     cwmp_add_parameter_to_list(session->env,  pl, parameter);
-
-/*    name    = CWMP_APPEND_PARAMETER_NAME(pool, 3, InternetGatewayDeviceModule, DeviceInfoModule, HardwareVersionModule);
-    value   = cwmp_data_get_parameter_value(session->cwmp, session->root, name, pool);
-    parameter = cwmp_create_parameter(session->env,  name, value, 0, TYPE_STRING);
-    cwmp_add_parameter_to_list(session->env,  pl, parameter);
-
-    name    = CWMP_APPEND_PARAMETER_NAME(pool, 3, InternetGatewayDeviceModule, DeviceInfoModule, SoftwareVersionModule);
-    value   = cwmp_data_get_parameter_value(session->cwmp, session->root, name, pool);
-    parameter = cwmp_create_parameter(session->env,  name, value, 0, TYPE_STRING);
-    cwmp_add_parameter_to_list(session->env,  pl, parameter);
-
-    name    = CWMP_APPEND_PARAMETER_NAME(pool, 3, InternetGatewayDeviceModule, DeviceInfoModule, ProvisioningCodeModule);
-    value   = cwmp_data_get_parameter_value(session->cwmp, session->root, name, pool);
-    parameter = cwmp_create_parameter(session->env,  name, value, 0, TYPE_STRING);
-    cwmp_add_parameter_to_list(session->env,  pl, parameter);
-
-    name    = CWMP_APPEND_PARAMETER_NAME(pool, 3, InternetGatewayDeviceModule, ManagementServerModule, ConnectionRequestURLModule);
-    value   = cwmp_data_get_parameter_value(session->cwmp, session->root, name, pool);
-    parameter = cwmp_create_parameter(session->env,  name,	value, 0, TYPE_STRING);
-    cwmp_add_parameter_to_list(session->env,  pl, parameter);
-*/
 
     name    = CWMP_APPEND_PARAMETER_NAME(pool, 3, InternetGatewayDeviceModule, ManagementServerModule, ParameterKeyModule);
     value   = cwmp_data_get_parameter_value(session->cwmp, session->root, name, pool);
     parameter = cwmp_create_parameter(session->env,  name, value, 0, TYPE_STRING);
     cwmp_add_parameter_to_list(session->env,  pl, parameter);
 
-    name    = CWMP_APPEND_PARAMETER_NAME(pool, 3, InternetGatewayDeviceModule, ManagementServerModule, UsernameModule);
-    value   = cwmp_data_get_parameter_value(session->cwmp, session->root, name, pool);
-    parameter = cwmp_create_parameter(session->env,  name, value, 0, TYPE_STRING);
-    cwmp_add_parameter_to_list(session->env,  pl, parameter);
-
-    name    = CWMP_APPEND_PARAMETER_NAME(pool, 3, InternetGatewayDeviceModule, ManagementServerModule, PasswordModule);
-    value   = cwmp_data_get_parameter_value(session->cwmp, session->root, name, pool);
-    parameter = cwmp_create_parameter(session->env,  name, value, 0, TYPE_STRING);
-    cwmp_add_parameter_to_list(session->env,  pl, parameter);
-
-    name    = CWMP_APPEND_PARAMETER_NAME(pool, 3, InternetGatewayDeviceModule, ManagementServerModule, ConnectionRequestUsernameModule);
-    value   = cwmp_data_get_parameter_value(session->cwmp, session->root, name, pool);
-    parameter = cwmp_create_parameter(session->env,  name, value, 0, TYPE_STRING);
-    cwmp_add_parameter_to_list(session->env,  pl, parameter);
-
-    name    = CWMP_APPEND_PARAMETER_NAME(pool, 3, InternetGatewayDeviceModule, ManagementServerModule, ConnectionRequestPasswordModule);
-    value   = cwmp_data_get_parameter_value(session->cwmp, session->root, name, pool);
-    parameter = cwmp_create_parameter(session->env,  name, value, 0, TYPE_STRING);
-    cwmp_add_parameter_to_list(session->env,  pl, parameter);
-
-    name    = CWMP_APPEND_PARAMETER_NAME(pool, 3, InternetGatewayDeviceModule, ManagementServerModule, URLModule);
-    value   = cwmp_data_get_parameter_value(session->cwmp, session->root, name, pool);
-    parameter = cwmp_create_parameter(session->env,  name, value, 0, TYPE_STRING);
-    cwmp_add_parameter_to_list(session->env,  pl, parameter);
-
-
-
-/*    name    = cwmp_conf_pool_get(pool, "cwmp:wan_interface");
-    if (name == NULL || TRstrcmp(name, "") == 0 )
-    {
-        cwmp_log_debug("cwmp:wan_interface name is: [%s]", name);
-        name    = CWMP_APPEND_PARAMETER_NAME(pool, 8, InternetGatewayDeviceModule, WANDeviceModule, "1", WANConnectionDeviceModule, "1", WANIPConnectionModule, "1", ExternalIPAddressModule);
-    }
-    cwmp_log_debug("cwmp:wan_interface new name is: [%s]", name);
-    value   = cwmp_data_get_parameter_value(session->cwmp, session->root, name, pool);
-    parameter = cwmp_create_parameter(session->env,  name, value, 0, TYPE_STRING);
-    cwmp_add_parameter_to_list(session->env,  pl, parameter);
-*/
     return pl;
 }
 
