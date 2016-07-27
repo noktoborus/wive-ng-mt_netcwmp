@@ -74,15 +74,19 @@ int httpd_response_unauthorization(http_socket_t * sock)
 {
 
     char buffer[256];
-    char nonce[33];
+
+    char nonce[16];
+	char nonce_hex[33];
+
     FUNCTION_TRACE();
     AuthNonce ++;
-    TRsnprintf(buffer, 256,  "%d", AuthNonce);
+
+    TRsnprintf(buffer, sizeof(buffer),  "%d", AuthNonce);
     MD5(nonce, buffer, NULL);
 
-    nonce[32] = 0;
+	convert_to_hex(nonce, nonce_hex);
 
-    TRsnprintf(buffer, 256, RESPONSE_401, AuthQop, nonce, AuthOpaque, AuthRealm);
+    TRsnprintf(buffer, 256, RESPONSE_401, AuthQop, nonce_hex, AuthOpaque, AuthRealm);
 
 
     return	http_socket_write(sock, buffer, TRstrlen(buffer));

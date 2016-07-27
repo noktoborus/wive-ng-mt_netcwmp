@@ -88,6 +88,10 @@ typedef size_t (*http_write_callback_pt)(char *data, size_t size, size_t nmemb, 
 struct http_digest_auth_t
 {
 	int		active; //digest auth
+
+	 /* CDRouter will test largest size ConnectionRequest Username */
+	char	username[256];
+
 	char 	realm[MIN_DEFAULT_LEN+1];
     char    uri[MIN_DEFAULT_LEN*4+1];
 

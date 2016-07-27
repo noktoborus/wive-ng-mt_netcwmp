@@ -32,7 +32,7 @@ struct http_sockaddr_t
 };
 
 
-
+int http_calc_digest_response(const char *method, const char * user, const char * pwd, http_digest_auth_t *digest);
 
 
 
@@ -55,7 +55,8 @@ void http_set_variable(http_parser_t *parser, const char *name, const char *valu
 {
     key_value_t *var;
 
-    //FUNCTION_TRACE();
+    cwmp_log_trace("%s(parser=%p, name=\"%s\", value=\"%s\", pool=%p)",
+            __func__, (void*)parser, name, value, (void*)pool);
 
     if (name == NULL || value == NULL)
         return;
@@ -1401,7 +1402,8 @@ void http_digest_calc_ha1(
 	bool md5sess = (TRstrcasecmp(pszAlg, "md5-sess") == 0);
     char HA1[HASHLEN] = {};
 
-	FUNCTION_TRACE();
+    cwmp_log_trace("%s(pszAlg=\"%s\", pszUserName=\"%s\", pszRealm=\"%s\", pszPassword=\"%s\", pszNonce=\"%s\", pszCNonce=\"%s\", SessionKey=\"%p\")",
+            __func__, pszAlg, pszUserName, pszRealm, pszPassword, pszNonce, pszCNonce, (void*)SessionKey);
 
 	MD5(HA1, pszUserName, ":", pszRealm, ":", pszPassword, NULL);
 
@@ -1419,82 +1421,42 @@ void http_digest_calc_ha1(
 int http_check_digest_auth(const char * auth_realm, const char * auth, char * cpeuser, char * cpepwd)
 {
 	/* server-side call */
-    char data[512] = {0};
-    char * s ;
-    char buffer[128];
-	char		realm[256] = {0};
-    char		user[256] = {0}; /*CDRouter will test largest size ConnectionRequest Username*/
-    char		uri[256] = {0};//uri[32768]
-    char		cnonce[33] = {0};
-    char		nonce[33] = {0};
+    http_digest_auth_t digest = {};
 
-    char		qop[16] = {0};
-    char		nc[16] = {0};
+    char response[128] = {};
 
-    char		response[128] = {0};
-//    char		method[16] = {0};
-//    char		resp[33] = {0};
-
-
-    char ha1[HASHHEXLEN+1];
-    char ha2[HASHHEXLEN+1];
-    char validResponse[HASHHEXLEN+1];
-
-    char * end;
+    cwmp_log_trace("%s(auth_realm=\"%s\", auth=\"%s\", cpeuser=\"%s\", cpepwd=\"%s\")",
+            __func__, auth_realm, auth, cpeuser, cpepwd);
 
     if (!auth)
         return -1;
 
-    for (s =  (char*)auth; isspace(*s); s++);
-    strncpy(data, s, 511);
-    s = data;
-    if (TRstrncasecmp(s, "digest", 6) != 0)
+    http_parse_digest_auth(auth, &digest, NULL);
+
+    if (TRstrcmp(cpeuser, digest.username) != 0) {
+        cwmp_log_info("invalid CPE user: %s", digest.username);
         return -1;
-    for (s += 6;  isspace(*s); s++);
-
-    end = s + strlen(s);
-    memset(buffer, 0, 128);
-    while (s<end)
-    {
-        if (!strncmp(s, "username=", 9))
-            http_parse_key_value(&s, user, sizeof(user), 9);
-        else if (! strncmp(s, "nonce=", 6))
-            http_parse_key_value(&s, nonce, sizeof(nonce), 6);
-        else if (! strncmp(s, "response=", 9))
-            http_parse_key_value(&s, response, sizeof(response), 9);
-        else if (! strncmp(s, "uri=", 4))
-            http_parse_key_value(&s, uri, sizeof(uri), 4);
-        else if (! strncmp(s, "qop=", 4))
-            http_parse_key_value(&s, qop, sizeof(qop), 4);
-        else if (! strncmp(s, "cnonce=", 7))
-            http_parse_key_value(&s, cnonce, sizeof(cnonce), 7);
-        else if (! strncmp(s, "nc=", 3))
-            http_parse_key_value(&s, nc, sizeof(nc), 3);
-		else if (! strncmp(s, "realm=", 6))
-            http_parse_key_value(&s, realm, sizeof(nc), 6);
-
-
-        s ++;
     }
-    cwmp_log_info("user[%s], nonce[%s], response[%s], uri[%s], qop[%s], cnonce[%s], nc[%s]\n",
-                  user, nonce, response, uri, qop, cnonce, nc);
 
-    if (TRstrcmp(cpeuser, user) != 0)
+    if (TRstrcmp(digest.realm, auth_realm)) {
+        cwmp_log_info("invalid CPE realm: %s", digest.realm);
         return -1;
+    }
 
-    http_digest_calc_ha1("MD5", cpeuser, realm, cpepwd, nonce, cnonce, ha1);
+    /* copy ASC response */
+    TRstrncpy(response, digest.response, sizeof(response));
 
-    MD5(ha2, "GET", ":", uri, NULL);
-    MD5(validResponse, ha1, ":", nonce, ":", nc, ":", cnonce, ":", qop, ":", ha2, NULL);
+    /* calc valid response */
+    http_calc_digest_response("GET", digest.username, cpepwd, &digest);
 
-
-    if (TRstrcasecmp(validResponse, response) == 0)
-	{
-		cwmp_log_info("auth ok. [%s] [%s]\n", validResponse, response);
+    if (TRstrcasecmp(response, digest.response) == 0) {
+		cwmp_log_info("[response: %s] CPE auth ok", digest.response);
         return 0;
-	}
-    else
+	} else {
+        cwmp_log_info("[response: %s, expected: %s] CPE auth fail",
+                response, digest.response);
         return -1;
+    }
 }
 
 int http_calc_digest_response(const char *method,
@@ -1506,7 +1468,8 @@ int http_calc_digest_response(const char *method,
 	char ha2hex[HASHHEXLEN+1] = {};
     char valid_response[HASHLEN] = {};
 
-	FUNCTION_TRACE();
+	cwmp_log_trace("%s(method=\"%s\", user=\"%s\", pwd=\"%s\", digest=%p)",
+            __func__, method, user, pwd, (void*)digest);
 
     http_digest_calc_ha1("MD5",
 			user, digest->realm, pwd, digest->nonce, digest->cnonce, ha1hex);
@@ -1543,13 +1506,13 @@ int http_calc_digest_response(const char *method,
 
 int http_parse_digest_auth(const char * auth, http_digest_auth_t * digest_auth, const char *back_uri)
 {
-	/* client-side call */
+	/* client-side and server-side call */
     char data[512] = {0};
     char * s ;
     char buffer[128];
     char * end;
 
-    char		user[256] = {}; /*CDRouter will test largest size ConnectionRequest Username*/
+    char		user[sizeof(digest_auth->username)] = {};
     char		uri[256] = {};//uri[32768]
     char		nonce[33] = {};
     char		cnonce[33] = {};
@@ -1563,7 +1526,8 @@ int http_parse_digest_auth(const char * auth, http_digest_auth_t * digest_auth, 
 	bool		rfc2617 = false;
 
 
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(auth=\"%s\", digest_auth=%p, back_uri=\"%s\")",
+            __func__, auth, (void*)digest_auth, back_uri);
 
     if (!auth)
         return CWMP_ERROR;
@@ -1579,7 +1543,9 @@ int http_parse_digest_auth(const char * auth, http_digest_auth_t * digest_auth, 
     memset(buffer, 0, 128);
     while (s<end)
     {
-        if (!strncmp(s, "realm=", 6))
+        if (!strncmp(s, "username=", 9))
+            http_parse_key_value(&s, user, sizeof(user), 9);
+        else if (!strncmp(s, "realm=", 6))
             http_parse_key_value(&s, realm, sizeof(realm), 6);
         else if (! strncmp(s, "nonce=", 6))
             http_parse_key_value(&s, nonce, sizeof(nonce), 6);
@@ -1616,17 +1582,22 @@ int http_parse_digest_auth(const char * auth, http_digest_auth_t * digest_auth, 
     TRstrncpy(digest_auth->cnonce, cnonce, MIN_DEFAULT_LEN);
     TRstrncpy(digest_auth->qop, "auth", MIN_DEFAULT_LEN);
 	if (!*nc) {
-		TRstrncpy(digest_auth->nc_hex, nc, MIN_DEFAULT_LEN);
 		digest_auth->nc = 1;
 	} else {
+		TRstrncpy(digest_auth->nc_hex, nc, MIN_DEFAULT_LEN);
+        /* server-side flag: use only nc_hex value */
 		digest_auth->nc = 0;
 	}
+    if (*response) {
+        TRstrncpy(digest_auth->response, response, sizeof(digest_auth->response));
+    }
 	TRstrncpy(digest_auth->opaque, opaque, MIN_DEFAULT_LEN);
+    TRstrncpy(digest_auth->username, user, sizeof(user));
 
     cwmp_log_info("user[%s], realm[%s], "
 			"nonce[%s], response[%s], uri[%s], "
 			"qop[%s], cnonce[%s], nc[%s:%"PRIuPTR"], opaque[%s]\n",
-                  user,
+                  digest_auth->username,
 				  digest_auth->realm,
 				  digest_auth->nonce,
 				  digest_auth->response,
