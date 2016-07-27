@@ -1,3 +1,4 @@
+/* vim: set et: */
 ///////////////////////////////////////////////////////////////////////////
 //
 // Copyright (c) 2000-2003 Intel Corporation
@@ -3286,6 +3287,10 @@ char * XmlStrduptrim(Pool * pool, const char * data)
     if (!data)
     {
         return NULL;
+    }
+    else if (!*data)
+    {
+        return PSTRDUP("");
     }
 
     memset(buffer, 0, XML_VALUE_SIZE_MAX);
