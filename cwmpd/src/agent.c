@@ -372,7 +372,6 @@ int cwmp_agent_analyse_session(cwmp_session_t * session)
 {
     pool_t * doctmppool  = NULL;
     char * xmlbuf;
-    cwmp_uint32_t len;
     xmldoc_t *  doc;
     char * method;
     xmldoc_t *   newdoc = NULL;
@@ -380,7 +379,7 @@ int cwmp_agent_analyse_session(cwmp_session_t * session)
 
     static char * xml_fault = "<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:SOAP-ENC=\"http://schemas.xmlsoap.org/soap/encoding/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:cwmp=\"urn:dslforum-org:cwmp-1-0\" xmlns=\"urn:dslforum-org:cwmp-1-0\"><SOAP-ENV:Body SOAP-ENV:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"  id=\"_0\"><SOAP-ENV:Fault>Error Message</SOAP-ENV:Fault></SOAP-ENV:Body></SOAP-ENV:Envelope>";
 
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(session=%p)", __func__, (void*)session);
 
     cwmp_uint32_t msglength = cwmp_chunk_length(session->readers);
 
@@ -396,9 +395,7 @@ int cwmp_agent_analyse_session(cwmp_session_t * session)
 
     xmlbuf = pool_palloc(doctmppool, msglength+32);
 
-    len = sprintf(xmlbuf,"<cwmp>");
-    cwmp_chunk_copy(xmlbuf + len, session->readers, msglength);
-    strcpy(xmlbuf+len+msglength, "</cwmp>");
+    cwmp_chunk_copy(xmlbuf, session->readers, msglength);
 
     cwmp_log_debug("agent analyse xml: \n%s", xmlbuf);
 

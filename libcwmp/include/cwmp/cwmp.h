@@ -562,7 +562,7 @@ xmldoc_t * cwmp_xml_parse_buffer(pool_t * pool, char * buffer);
 xmlnode_t * cwmp_xml_get_child_with_name(void * nodeptr, const char * nodeName);
 
 
-#define XmlNodeGetDocRoot(docptr)    XmlNodeGetFirstChild(XmlNodeGetFirstChild(& (docptr)->node))
+#define XmlNodeGetDocRoot(docptr)   XmlNodeGetFirstChild(& (docptr)->node)
 
 
 
