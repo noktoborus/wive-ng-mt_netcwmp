@@ -1944,6 +1944,10 @@ XMLParserGetNextToken(
         {
             tokenLength = 1;    // '<' found, so return '<' token
         }
+        else if ( temp == '?' )
+        {
+            tokenLength = 2; // XML Declaration
+        }
         else
         {
             return 0;           //error
@@ -1953,9 +1957,9 @@ XMLParserGetNextToken(
     {
         tokenLength = 1;
     }
-    else if ( *( xmlParser->curPtr ) == SLASH )
+    else if ( *( xmlParser->curPtr ) == SLASH || *( xmlParser->curPtr ) == '?' )
     {
-        if ( *( xmlParser->curPtr + 1 ) == GREATERTHAN )    // token '/>' found
+        if ( *( xmlParser->curPtr + 1 ) == GREATERTHAN ) // token '/>' or '?>'
         {
             tokenLength = 2;
             xmlParser->savePtr = xmlParser->curPtr; // fix
