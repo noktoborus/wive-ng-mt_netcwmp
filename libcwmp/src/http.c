@@ -293,6 +293,7 @@ int http_socket_connect(http_socket_t * sock, const char * host, int port)
             cwmp_log_info("connect(): %s", strerror(errno));
             goto gai_error;
         }
+        break;
     }
 
     freeaddrinfo(result);
