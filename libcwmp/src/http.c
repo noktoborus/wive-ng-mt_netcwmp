@@ -575,7 +575,9 @@ int http_parse_url(http_dest_t * dest, const char * url)
     /* allocate struct url */
     //char urlbuf[1024] = {0};
     //strncpy(urlbuf, url, strlen(url));
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(dst=%p, url=\"%s\")",
+            __func__, (void*)dest, url);
+
     uri = url;
     /* scheme name */
     if ((p = strstr(url, ":/")))
@@ -593,6 +595,9 @@ int http_parse_url(http_dest_t * dest, const char * url)
     else
     {
         p = uri;
+        *dest->scheme = '\0';
+        /* default scheme: http */
+        TRstrncpy(dest->scheme, "http", sizeof(dest->scheme));
     }
     if (!*uri || *uri == '/' || *uri == '.')
         goto nohost;
@@ -644,7 +649,7 @@ int http_parse_url(http_dest_t * dest, const char * url)
 
 
     /* port */
-    if(strncmp(url, "https:", 6) == 0)
+    if(TRstrcasecmp(dest->scheme, "https") == 0)
     {
 #ifdef USE_CWMP_OPENSSL
         dest->port = 443;
