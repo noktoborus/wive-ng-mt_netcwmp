@@ -2,8 +2,6 @@
 <cwmp>
 	<model>
 		<object name="InternetGatewayDevice">
-
-
 			<object name="DeviceInfo">
 				<param name="Manufacturer" inform="1" get_func="cpe_get_igd_di_manufacturer"/>
 				<param name="OUI" inform="1" get_func="cpe_get_igd_di_manufactureroui"/>
@@ -14,29 +12,22 @@
 				<param name="ProductClass" inform="1" get_func="cpe_get_igd_di_productclass"/>
 				<param name="DeviceLog" inform="0" get_func="cpe_get_igd_di_devicelog"/>
 			</object>
-
 			<object name="ManagementServer">
 				<param name="ConnectionRequestURL" inform="1" get_func="cpe_get_igd_ms_connectionrequesturl"/>
 				<param name="ConnectionRequestUsername" rw="1" get_func="cpe_get_igd_ms_connectionrequestusername" set_func="cpe_set_igd_ms_connectionrequestusername"/>
 				<param name="ConnectionRequestPassword" rw="1" get_func="cpe_get_igd_ms_connectionrequestpassword" set_func="cpe_set_igd_ms_connectionrequestpassword"/>
-
 				<param name="URL" inform="1" get_func="cpe_get_igd_ms_url" set_func="cpe_set_igd_ms_url"/>
 				<param name="Username" rw="1" get_func="cpe_get_igd_ms_username" set_func="cpe_set_igd_ms_username"/>
 				<param name="Password" rw="1" get_func="cpe_get_igd_ms_password" set_func="cpe_set_igd_ms_password"/>
 			</object>
-
-
 			<object name="Services">
 				<object name="X_COM_IPTV">
 					<param name="IGMPVersion" noti_rw="1" rw="1" get_func="cpe_get_igd_lan_igmp_version" args="" set_func="cpe_set_igd_lan_igmp_version"/>
 				</object>
 			</object>
-
 			<object name="Layer3Forwarding">
 				<param name="DefaultConnectionService" get_func="cpe_get_igd_l3f_defaultconnection" args="" set_func="cpe_set_igd_l3f_defaultconnection"/>
 			</object>
-
-
 			<object name="LANDevice">
 			<object name="1">
 				<object name="LANEthernetInterfaceConfig">
@@ -48,7 +39,6 @@
 						<param name="PacketsReceived" get_func="cpe_get_const_string" args="1"/>
 					</object>
 					</object>
-
 					<object name="2">
 					<object name="Stats">
 						<param name="BytesSent" get_func="cpe_get_const_string" args="1"/>
@@ -57,7 +47,6 @@
 						<param name="PacketsReceived" get_func="cpe_get_const_string" args="1"/>
 					</object>
 					</object>
-
 					<object name="3">
 					<object name="Stats">
 						<param name="BytesSent" get_func="cpe_get_const_string" args="1"/>
@@ -66,7 +55,6 @@
 						<param name="PacketsReceived" get_func="cpe_get_const_string" args="1"/>
 					</object>
 					</object>
-
 					<object name="4">
 					<object name="Stats">
 						<param name="BytesSent" get_func="cpe_get_const_string" args="1"/>
@@ -75,7 +63,6 @@
 						<param name="PacketsReceived" get_func="cpe_get_const_string" args="1"/>
 					</object>
 					</object>
-
 					<object name="5">
 					<object name="Stats">
 						<param name="BytesSent" get_func="cpe_get_const_string" args="1"/>
@@ -84,7 +71,6 @@
 						<param name="PacketsReceived" get_func="cpe_get_const_string" args="1"/>
 					</object>
 					</object>
-
 					<object name="6">
 					<object name="Stats">
 						<param name="BytesSent" get_func="cpe_get_const_string" args="1"/>
@@ -93,20 +79,16 @@
 						<param name="PacketsReceived" get_func="cpe_get_const_string" args="1"/>
 					</object>
 					</object>
-
 				</object>
-
 				<object name="X_COM_IgmpSnoopingConfig">
 					<param name="Enable" noti_rw="1" rw="1" get_func="cpe_get_igd_lan_igmp_enabled" set_func="cpe_set_igd_lan_igmp_enabled"/>
 				</object>
-
 				<object name="LANHostConfigManagement">
 					<object name="IPInterface">
 					<object name="1">
 						<param name="IPInterfaceIPAddress" noti_rw="1" rw="1" get_func="cpe_get_nvram_string" args="lan_ipaddr" set_func="cpe_set_nvram_string"/>
 					</object>
 					</object>
-
 					<param name="SubnetMask" noti_rw="1" rw="1" get_func="cpe_get_nvram_string" args="lan_netmask" set_func="cpe_set_nvram_string"/>
 					<param name="DHCPServerEnable" noti_rw="1" rw="1" get_func="cpe_get_nvram_bool" args="dhcpEnabled" set_func="cpe_set_nvram_bool"/>
 					<param name="DHCPRelay" noti_rw="1" rw="1" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
@@ -114,7 +96,6 @@
 					<param name="MaxAddress" noti_rw="1" rw="1" get_func="cpe_get_nvram_string" args="dhcpEnd" set_func="cpe_set_nvram_string"/>
 					<param name="DHCPLeaseTime" noti_rw="1" rw="1" get_func="cpe_get_nvram_int" args="dhcpLease" set_func="cpe_set_nvram_string"/>
 				</object>
-
 				<object name="WLANConfiguration">
 				<object name="1">
 					<param name="Enable" noti_rw="1" rw="1" get_func="cpe_get_nvram_bool" args="RadioOn" set_func="cpe_set_nvram_bool"/>
@@ -133,18 +114,11 @@
 				</object>
 			</object>
 			</object>
-
-
 			<object name="WANDevice">
 				<object name="1">
-
-
-
 					<object name="WANConnectionDevice" rw="1">
-
 						<object name="1" rw="1">
 							<object name="WANIPConnection" rw="1" add_func="cpe_add_null">
-
 								<object name="1">
 									<param name="Name" rw="1" type="s" get_func="cpe_get_const_string" args="WAN" set_func="cpe_set_null"/>
 									<param name="DNSEnabled" rw="1" type="s" get_func="cpe_get_const_string" args="1" set_func="cpe_set_igd_wan_ip_dnsenabled"/>
@@ -167,16 +141,13 @@
 									</object>
 								</object>
 							</object>
-
 							<object name="WANPPPConnection" rw="1" add_func="cpe_add_null">
 								<object name="1">
 									<param name="PPPAuthenticationProtocol" rw="1" type="s" get_func="cpe_get_igd_wan_ppp_authprot" args="" set_func="cpe_set_igd_wan_ppp_authprot"/>
 									<param name="PPPLCPEcho" rw="1" type="1" get_func="cpe_get_nvram_int" args="vpnLCPInterval" set_func="cpe_set_nvram_int"/>
 									<param name="PPPLCPEchoRetry" rw="1" type="1" get_func="cpe_get_nvram_int" args="vpnLCPFailure" set_func="cpe_set_nvram_int"/>
-
 									<param name="MaxMRUSize" rw="1" type="1" get_func="cpe_get_nvram_int" args="vpnMTU" set_func="cpe_set_nvram_int"/>
 									<param name="NATEnabled" rw="1" type="1" get_func="cpe_get_nvram_bool" args="natEnabled" set_func="cpe_set_nvram_bool"/>
-
 									<param name="PPPoEServiceName" rw="1" type="s" get_func="cpe_get_igd_wan_ppp_servicename" args="vpnService" set_func="cpe_set_nvram_string"/>
 									<param name="Name" rw="1" type="s" get_func="cpe_get_const_string" args="VPN" set_func="cpe_set_null"/>
 									<param name="TransportType" noti_rw="1" rw="1" type="s" get_func="cpe_get_const_string" args="PPPoE" set_func="cpe_set_null"/>
@@ -190,15 +161,12 @@
 									<param name="ConnectionTrigger" rw="1" get_func="cpe_get_const_string" set_func="AlwaysOn"/>
 								</object> 
 							</object> 
-
-
 						</object>
-
-
 					</object>
 				</object>
 			</object>
 			<object name="IPPingDiagnostics">
+				<param name="DSCP" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
 				<param name="Host" get_func="cpe_get_const_string" args="127.0.0.1" set_func="cpe_set_null"/>
 				<param name="Interface" get_func="cpe_get_const_string" args="lo" set_func="cpe_set_null"/>
 				<param name="NumberOfRepetitions" get_func="cpe_get_const_string" args="5" set_func="cpe_set_null"/>
@@ -210,6 +178,24 @@
 				<param name="AverageResponseTime" get_func="cpe_get_const_string" args="10" set_func="cpe_set_null"/>
 				<param name="MinimumResponseTime" get_func="cpe_get_const_string" args="9" set_func="cpe_set_null"/>
 				<param name="MaximumResponseTime" get_func="cpe_get_const_string" args="11" set_func="cpe_set_null"/>
+			</object>
+			<object name="TraceRouteDiagnostics">
+				<param name="DiagnosticsState" get_func="cpe_get_const_string" args="Complete" set_func="cpe_set_null"/>
+
+				<param name="Host" get_func="cpe_get_const_string" args="127.0.0.1" set_func="cpe_set_null"/>
+				<param name="Timeout" get_func="cpe_get_const_string" args="10" set_func="cpe_set_null"/>
+				<param name="DataBlockSize" get_func="cpe_get_const_string" args="1000" set_func="cpe_set_null"/>
+				<param name="MaxHopCount" get_func="cpe_get_const_string" args="30" set_func="cpe_set_null"/>
+				<param name="DSCP" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
+				<!-- RO-only result  -->
+				<param name="ResponseTime" get_func="cpe_get_const_string" args="10"/>
+				<param name="NumberOfRouteHops" get_func="cpe_get_const_string" args="1"/>
+				<object name="RouteHops">
+					<!-- RO-only dynamically generated list -->
+					<object name="1">
+						<param name="HopHost" get_func="cpe_get_conf_string" args="127.0.0.1"/>
+					</object>
+				</object>
 			</object>
 		</object>
 	</model>
