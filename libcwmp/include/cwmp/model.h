@@ -16,6 +16,7 @@ struct model_func_st
    void * func;
 };
 
+const char *cwmp_model_ptr_to_func(void *p);
 int cwmp_model_load_xml(cwmp_t * cwmp, const char * xmlfile, model_func_t * func_list, int func_count);
 int cwmp_model_copy_parameter(parameter_node_t * param, parameter_node_t ** new_param, int instance_number);
 int cwmp_model_delete_parameter(parameter_node_t * param);

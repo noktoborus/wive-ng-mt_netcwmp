@@ -32,6 +32,7 @@
 #include <cwmp/session.h>
 #include <cwmp/http.h>
 #include "modules/data_model.h"
+#include <cwmp/model.h>
 
 #define CWMP_TRUE   1
 
@@ -539,13 +540,61 @@ static void print_param(parameter_node_t * param, int level)
     if(!param) return;
 
     parameter_node_t * child;
-    char fmt[64];
+    char func[64] = {};
+    char log[256] = {};
     //cwmp_log_debug("name: %s, type: %s, level: %d", param->name, cwmp_get_type_string(param->type), level);
     //  int i=0;
 
-    sprintf(fmt, "|%%-%ds%%s,  get:%%p set:%%p refresh:%%p", level*4);
+    snprintf(log, sizeof(log), "|%%-%ds%%s: ", level * 4);
 
-    cwmp_log_debug(fmt, "----", param->name, param->get, param->set, param->refresh);
+    if (param->get) {
+        snprintf(func, sizeof(func), "get=%p[%s]%s",
+                (void*)param->get,
+                cwmp_model_ptr_to_func(param->get),
+                param->set ? ", " : ""
+                );
+        strncat(log, func, sizeof(log));
+    }
+    if (param->set) {
+        snprintf(func, sizeof(func), "set=%p[%s]%s",
+                (void*)param->set,
+                cwmp_model_ptr_to_func(param->set),
+                param->notify ? ", " : ""
+                );
+        strncat(log, func, sizeof(log));
+    }
+    if (param->notify) {
+        snprintf(func, sizeof(func), "notify=%p[%s]%s",
+                (void*)param->notify,
+                cwmp_model_ptr_to_func(param->notify),
+                param->add ? ", " : ""
+                );
+        strncat(log, func, sizeof(log));
+    }
+    if (param->add) {
+        snprintf(func, sizeof(func), "add=%p[%s]%s",
+                (void*)param->add,
+                cwmp_model_ptr_to_func(param->add),
+                param->del ?  ", " : ""
+                );
+        strncat(log, func, sizeof(log));
+   }
+   if (param->del) {
+        snprintf(func, sizeof(func), "del=%p[%s]%s",
+                (void*)param->del,
+                cwmp_model_ptr_to_func(param->del),
+                param->refresh ?  ", " : ""
+                );
+        strncat(log, func, sizeof(log));
+   }
+   if (param->refresh) {
+        snprintf(func, sizeof(func), "refresh=%p[%s]",
+                (void*)param->refresh,
+                cwmp_model_ptr_to_func(param->refresh));
+        strncat(log, func, sizeof(log));
+    }
+
+    cwmp_log_debug(log, "----", param->name);
 
     child = param->child;
 

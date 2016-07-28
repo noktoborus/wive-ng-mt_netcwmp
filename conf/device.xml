@@ -159,6 +159,8 @@
 									<param name="DNSServers" rw="1" type="s" get_func="cpe_get_nvram_string" args="wan_primary_dns" set_func="cpe_set_nvram_string"/>
 									<param name="MACAddress" rw="1" type="s" get_func="cpe_get_nvram_string" args="WAN_MAC_ADDR" set_func="cpe_set_nvram_string"/>
 									<param name="ConnectionTrigger" rw="1" get_func="cpe_get_const_string" set_func="AlwaysOn"/>
+									<object name="PortMapping" rw="1">
+									</object>
 								</object> 
 							</object> 
 						</object>

@@ -1,3 +1,4 @@
+/* vim: set et: */
 #include "cwmp/model.h"
 #include "data_model.h"
 #include "cwmp_module.h"
@@ -118,6 +119,21 @@ model_func_t ModelFunction[] =
     {"cpe_set_null", cpe_set_null},
     {"cpe_add_null", cpe_add_null},
 };
+
+const char *cwmp_model_ptr_to_func(void *p)
+{
+    int n = (sizeof(ModelFunction) / sizeof(*ModelFunction));
+
+    if (!p) {
+        return "null";
+    }
+
+    while (n-- > 0) {
+        if (ModelFunction[n].func == p)
+            return ModelFunction[n].name;
+    }
+    return "?";
+}
 
 int get_index_after_paramname(parameter_node_t * param, const char * tag_name)
 {
