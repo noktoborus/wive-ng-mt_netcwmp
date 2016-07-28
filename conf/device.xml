@@ -166,13 +166,22 @@
 				</object>
 			</object>
 			<object name="IPPingDiagnostics">
+				<!--
+					DiagnosticsState values:
+						None: default value
+						Requested: only this value allowed to set
+						Complete
+						Error_CannotResolveHostName
+						Error_Internal
+						Error_Other
+				-->
+				<param name="DiagnosticsState" get_func="cpe_get_const_string" args="Complete" set_func="cpe_set_null"/>
 				<param name="DSCP" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
 				<param name="Host" get_func="cpe_get_const_string" args="127.0.0.1" set_func="cpe_set_null"/>
 				<param name="Interface" get_func="cpe_get_const_string" args="lo" set_func="cpe_set_null"/>
 				<param name="NumberOfRepetitions" get_func="cpe_get_const_string" args="5" set_func="cpe_set_null"/>
 				<param name="DataBlockSize" get_func="cpe_get_const_string" args="1000" set_func="cpe_set_null"/>
 				<param name="Timeout" get_func="cpe_get_const_string" args="10" set_func="cpe_set_null"/>
-				<param name="DiagnosticsState" get_func="cpe_get_const_string" args="Complete" set_func="cpe_set_null"/>
 				<param name="SuccessCount" get_func="cpe_get_const_string" args="10" set_func="cpe_set_null"/>
 				<param name="FailureCount" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
 				<param name="AverageResponseTime" get_func="cpe_get_const_string" args="10" set_func="cpe_set_null"/>
@@ -180,6 +189,16 @@
 				<param name="MaximumResponseTime" get_func="cpe_get_const_string" args="11" set_func="cpe_set_null"/>
 			</object>
 			<object name="TraceRouteDiagnostics">
+				<!--
+					DiagnosticsState values:
+						None: default value
+						Requested: only this value allowed to set
+						Complete
+						Error_CannotResolveHostName
+						Error_MaxHopCountExceeded
+						Error_Internal
+						Error_Other
+				-->
 				<param name="DiagnosticsState" get_func="cpe_get_const_string" args="Complete" set_func="cpe_set_null"/>
 
 				<param name="Host" get_func="cpe_get_const_string" args="127.0.0.1" set_func="cpe_set_null"/>
