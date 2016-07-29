@@ -33,11 +33,13 @@ static struct ping_values_t {
 	unsigned data_size; /* range: 1-65535 (default: 1) */
 	unsigned dscp; /* range: 0-63 (default: 0) */
 
-	unsigned success;
-	unsigned failure;
-	unsigned average;
-	unsigned minimum;
-	unsigned maximum;
+	struct {
+		unsigned success;
+		unsigned failure;
+		unsigned average;
+		unsigned minimum;
+		unsigned maximum;
+	} r;
 } ping_values = {.repeat = 1u, .timeout = 1u, .data_size = 1u};
 
 static const char *
@@ -88,6 +90,24 @@ string_to_state(const char *string)
 void
 perform_ping()
 {
+	char iface_info[256] = {};
+	if (*ping_values.iface) {
+		snprintf(iface_info, sizeof(iface_info),
+				", Interface=\"%s\"", ping_values.iface);
+	}
+	cwmp_log_debug("IPPingDiagnostics("
+			"Host=\"%s\"%s, "
+			"NumberOfRepetitions=%u, "
+			"Timeout=%u, "
+			"DataBlockSize=%u, "
+			"DSCP=%u)",
+			ping_values.host,
+			iface_info,
+			ping_values.repeat,
+			ping_values.timeout,
+			ping_values.data_size,
+			ping_values.dscp);
+	memset(&ping_values.r, 0u, sizeof(ping_values.r));
 }
 
 /* result values */
@@ -95,7 +115,7 @@ int
 cpe_get_igd_ping_success(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
 	char v[32] = {};
-	snprintf(v, sizeof(v), "%u", ping_values.success);
+	snprintf(v, sizeof(v), "%u", ping_values.r.success);
 	*value = pool_pstrdup(pool, v);
 	return FAULT_CODE_OK;
 }
@@ -104,7 +124,7 @@ int
 cpe_get_igd_ping_failure(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
 	char v[32] = {};
-	snprintf(v, sizeof(v), "%u", ping_values.failure);
+	snprintf(v, sizeof(v), "%u", ping_values.r.failure);
 	*value = pool_pstrdup(pool, v);
 	return FAULT_CODE_OK;
 }
@@ -113,7 +133,7 @@ int
 cpe_get_igd_ping_average(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
 	char v[32] = {};
-	snprintf(v, sizeof(v), "%u", ping_values.average);
+	snprintf(v, sizeof(v), "%u", ping_values.r.average);
 	*value = pool_pstrdup(pool, v);
 	return FAULT_CODE_OK;
 }
@@ -122,7 +142,7 @@ int
 cpe_get_igd_ping_minimum(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
 	char v[32] = {};
-	snprintf(v, sizeof(v), "%u", ping_values.minimum);
+	snprintf(v, sizeof(v), "%u", ping_values.r.minimum);
 	*value = pool_pstrdup(pool, v);
 	return FAULT_CODE_OK;
 }
@@ -131,7 +151,7 @@ int
 cpe_get_igd_ping_maximum(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
 	char v[32] = {};
-	snprintf(v, sizeof(v), "%u", ping_values.maximum);
+	snprintf(v, sizeof(v), "%u", ping_values.r.maximum);
 	*value = pool_pstrdup(pool, v);
 	return FAULT_CODE_OK;
 }
