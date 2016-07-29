@@ -118,6 +118,26 @@ model_func_t ModelFunction[] =
 
     {"cpe_set_null", cpe_set_null},
     {"cpe_add_null", cpe_add_null},
+
+    {"cpe_get_igd_ping_success", cpe_get_igd_ping_success},
+    {"cpe_get_igd_ping_failure", cpe_get_igd_ping_failure},
+    {"cpe_get_igd_ping_average", cpe_get_igd_ping_average},
+    {"cpe_get_igd_ping_minimum", cpe_get_igd_ping_minimum},
+    {"cpe_get_igd_ping_maximum", cpe_get_igd_ping_maximum},
+    {"cpe_set_igd_ping_state", cpe_set_igd_ping_state},
+    {"cpe_set_igd_ping_dscp", cpe_set_igd_ping_dscp},
+    {"cpe_set_igd_ping_host", cpe_set_igd_ping_host},
+    {"cpe_set_igd_ping_iface", cpe_set_igd_ping_iface},
+    {"cpe_set_igd_ping_repeat", cpe_set_igd_ping_repeat},
+    {"cpe_set_igd_ping_data_size", cpe_set_igd_ping_data_size},
+    {"cpe_set_igd_ping_timeout", cpe_set_igd_ping_timeout},
+    {"cpe_get_igd_ping_state", cpe_get_igd_ping_state},
+    {"cpe_get_igd_ping_dscp", cpe_get_igd_ping_dscp},
+    {"cpe_get_igd_ping_host", cpe_get_igd_ping_host},
+    {"cpe_get_igd_ping_iface", cpe_get_igd_ping_iface},
+    {"cpe_get_igd_ping_repeat", cpe_get_igd_ping_repeat},
+    {"cpe_get_igd_ping_data_size", cpe_get_igd_ping_data_size},
+    {"cpe_get_igd_ping_timeout", cpe_get_igd_ping_timeout},
 };
 
 const char *cwmp_model_ptr_to_func(void *p)

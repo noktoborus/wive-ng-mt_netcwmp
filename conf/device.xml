@@ -168,25 +168,19 @@
 				</object>
 			</object>
 			<object name="IPPingDiagnostics">
-				<!--
-					DiagnosticsState values:
-						None: default value
-						Requested: only this value allowed to set
-						Complete
-						Error_CannotResolveHostName
-				-->
-				<param name="DiagnosticsState" get_func="cpe_get_const_string" args="Complete" set_func="cpe_set_null"/>
-				<param name="DSCP" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
-				<param name="Host" get_func="cpe_get_const_string" args="127.0.0.1" set_func="cpe_set_null"/>
-				<param name="Interface" get_func="cpe_get_const_string" args="lo" set_func="cpe_set_null"/>
-				<param name="NumberOfRepetitions" get_func="cpe_get_const_string" args="5" set_func="cpe_set_null"/>
-				<param name="DataBlockSize" get_func="cpe_get_const_string" args="1000" set_func="cpe_set_null"/>
-				<param name="Timeout" get_func="cpe_get_const_string" args="10" set_func="cpe_set_null"/>
-				<param name="SuccessCount" get_func="cpe_get_const_string" args="10" set_func="cpe_set_null"/>
-				<param name="FailureCount" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
-				<param name="AverageResponseTime" get_func="cpe_get_const_string" args="10" set_func="cpe_set_null"/>
-				<param name="MinimumResponseTime" get_func="cpe_get_const_string" args="9" set_func="cpe_set_null"/>
-				<param name="MaximumResponseTime" get_func="cpe_get_const_string" args="11" set_func="cpe_set_null"/>
+				<param name="DiagnosticsState" get_func="cpe_get_igd_ping_state" set_func="cpe_set_igd_ping_state"/>
+				<param name="Interface" get_func="cpe_get_igd_ping_iface" set_func="cpe_set_igd_ping_iface"/>
+				<param name="Host" get_func="cpe_get_igd_ping_host" set_func="cpe_set_igd_ping_host"/>
+				<param name="NumberOfRepetitions" get_func="cpe_get_igd_ping_repeat" set_func="cpe_set_igd_ping_repeat"/>
+				<param name="Timeout" get_func="cpe_get_igd_ping_timeout" set_func="cpe_set_igd_ping_timeout"/>
+				<param name="DataBlockSize" get_func="cpe_get_igd_ping_data_size" set_func="cpe_set_igd_ping_data_size"/>
+				<param name="DSCP" get_func="cpe_get_igd_ping_dscp" set_func="cpe_set_igd_ping_dscp"/>
+				<!-- result parameters -->
+				<param name="SuccessCount" get_func="cpe_get_igd_ping_success"/>
+				<param name="FailureCount" get_func="cpe_get_igd_ping_failure"/>
+				<param name="AverageResponseTime" get_func="cpe_get_igd_ping_average"/>
+				<param name="MinimumResponseTime" get_func="cpe_get_igd_ping_minimum"/>
+				<param name="MaximumResponseTime" get_func="cpe_get_igd_ping_maximum"/>
 			</object>
 		</object>
 	</model>

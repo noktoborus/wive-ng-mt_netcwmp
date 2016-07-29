@@ -58,8 +58,9 @@ typedef enum
 #define TASK_UPLOAD_TAG  2
 #define TASK_REBOOT_TAG  3
 #define TASK_FACTORYRESET_TAG 4
-#define TASK_CALLBACK_TAG 5 
+#define TASK_CALLBACK_TAG 5
 #define TASK_NOTIFY_TAG 6
+#define TASK_PING_TAG 7
 
 
 struct event_code_st
@@ -72,7 +73,7 @@ struct event_code_st
     int      	ref;        /*事件发送次数*/
     int      	fault_code;
     time_t	start;
-    time_t	end;	
+    time_t	end;
 };
 
 
@@ -92,8 +93,8 @@ typedef struct event_global_st
     char   	event_key[COMMAND_KEY_LEN+1]; /* command key */
     int      	fault_code;
     time_t	start;
-    time_t	end;	
-	
+    time_t	end;
+
 }event_global_t;
 
 
