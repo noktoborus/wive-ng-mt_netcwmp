@@ -183,7 +183,14 @@ perform_ping()
 		snprintf(iface_info, sizeof(iface_info),
 				", Interface=\"%s\"", ping_values.iface);
 	}
-	cwmp_log_debug("IPPingDiagnostics("
+
+	if (!*ping_values.host) {
+		cwmp_log_info("IPPingDiagnostics: no host defined");
+		ping_values.state = PING_ERROR_RESOLVE;
+		return;
+	}
+
+	cwmp_log_debug("IPPingDiagnostics run("
 			"Host=\"%s\"%s, "
 			"NumberOfRepetitions=%u, "
 			"Timeout=%u, "
