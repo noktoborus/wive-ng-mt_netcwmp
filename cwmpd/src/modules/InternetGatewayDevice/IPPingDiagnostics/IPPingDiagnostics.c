@@ -86,10 +86,98 @@ string_to_state(const char *string)
 	return state;
 }
 
+/* ping execution */
+enum ping_version {
+	PING_UNKNOWN,
+	PING_IPUTILS,
+	PING_BUSYBOX
+};
+
+static void
+read_ping_data(FILE *f)
+{
+	long transmitted = 0u;
+	long received = 0u;
+	float minimum = 0.f;
+	float average = 0.f;
+	float maximum = 0.f;
+
+	char *line = NULL;
+	size_t size = 0u;
+	size_t len = 0u;
+
+	enum ping_version pv = PING_UNKNOWN;
+	int line_stage = 0;
+
+	while(getline(&line, &size, f) != -1) {
+		len = strlen(line);
+		/* check header */
+		if (len && pv == PING_UNKNOWN) {
+			if (!strncmp(&line[len - 11], "data bytes\n", 11)) {
+				/* busybox: "PING localhost (127.0.0.1): 56 data bytes\n" */
+				pv = PING_BUSYBOX;
+			} else if (!strncmp(&line[len - 15], "bytes of data.\n", 15)) {
+				/* iputils: "PING localhost (127.0.0.1) 56(84) bytes of data.\n" */
+				pv = PING_IPUTILS;
+			} else {
+				cwmp_log_error("IPPingDiagnostics: Unknown ping version\n");
+				break;
+			}
+		}
+
+		if (line_stage == 1) {
+			line_stage++;
+			if (pv == PING_IPUTILS) {
+				/* 2 packets transmitted, 2 received, 0% packet loss, time 999ms */
+				sscanf(line,
+						"%ld packets transmitted, %ld received",
+						&transmitted, &received);
+			} else if (pv == PING_BUSYBOX) {
+				/* 2 packets transmitted, 2 packets received, 0% packet loss */
+				sscanf(line,
+						"%ld packets transmitted, %ld packets received",
+						&transmitted, &received);
+			}
+		} else if (line_stage == 2) {
+			if (pv == PING_IPUTILS) {
+				/* rtt min/avg/max/mdev = 0.052/0.053/0.054/0.001 ms */
+				sscanf(line, "rtt min/avg/max/mdev = %f/%f/%f",
+						&minimum, &average, &maximum);
+			} else if (pv == PING_BUSYBOX) {
+				/* round-trip min/avg/max = 0.201/0.264/0.327 ms */
+				sscanf(line,
+						"round-trip min/avg/max = %f/%f/%f",
+						&minimum, &average, &maximum);
+			}
+		} else if (line_stage == 0) {
+			if (!strncmp("---", line, 3)) {
+				line_stage++;
+			}
+		}
+	}
+
+	if (line)
+		free(line);
+
+	cwmp_log_debug("ping data: min/avg/max: %f/%f/%f, "
+			"transmitted/received: %ld/%ld\n",
+			minimum, average, maximum, transmitted, received);
+
+	ping_values.r.success = (unsigned)received;
+	ping_values.r.failure = (unsigned)(transmitted - received);
+	ping_values.r.minimum = (unsigned)minimum;
+	ping_values.r.average = (unsigned)average;
+	ping_values.r.maximum = (unsigned)maximum;
+}
+
+/* */
+
 /* internal values */
 void
 perform_ping()
 {
+	char buf[512] = {};
+	FILE *f = NULL;
 	char iface_info[256] = {};
 	if (*ping_values.iface) {
 		snprintf(iface_info, sizeof(iface_info),
@@ -108,6 +196,23 @@ perform_ping()
 			ping_values.data_size,
 			ping_values.dscp);
 	memset(&ping_values.r, 0u, sizeof(ping_values.r));
+
+	/* FIXME: iface not used */
+
+	/* run popen */
+	snprintf(buf, sizeof(buf), "ping -q '%s' -c '%u' -W '%u' -s '%u'",
+			ping_values.host,
+			ping_values.repeat,
+			ping_values.timeout,
+			ping_values.data_size);
+
+	f = popen(buf, "r");
+	read_ping_data(f);
+	if (f) {
+		fclose(f);
+	} else {
+		cwmp_log_error("IPPingDiagnostics: popen() -> %s", strerror(errno));
+	}
 }
 
 /* result values */
@@ -184,6 +289,10 @@ cpe_set_igd_ping_host(cwmp_t *cwmp, const char *name, const char *value, int len
 		cwmp_log_error("IPPingDiagnostics.Host zero-length host not allowed");
 		return FAULT_CODE_9007;
 	}
+	if (strchr(value, '\'')) {
+		cwmp_log_error("IPPingDiagnostics.Host invalid value: %s", value);
+		return FAULT_CODE_9007;
+	}
 	strncpy(ping_values.host, value, sizeof(ping_values.host));
 	return FAULT_CODE_OK;
 }
@@ -191,12 +300,19 @@ cpe_set_igd_ping_host(cwmp_t *cwmp, const char *name, const char *value, int len
 int
 cpe_set_igd_ping_iface(cwmp_t *cwmp, const char *name, const char *value, int length, callback_register_func_t callback_reg)
 {
+	parameter_node_t *p = NULL;
 	if (!length) {
 		memset(ping_values.iface, 0u, sizeof(ping_values.iface));
 		return FAULT_CODE_OK;
 	}
 
-	/* TODO: check iface name */
+	p = cwmp_get_parameter_node(cwmp->root, value);
+	if (!p) {
+		cwmp_log_error("IPPingDiagnostics.Interface invalid value: '%s'",
+				value);
+		return FAULT_CODE_9007;
+	}
+
 	strncpy(ping_values.iface, value, sizeof(ping_values.iface));
 	return FAULT_CODE_OK;
 }
