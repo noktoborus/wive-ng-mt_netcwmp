@@ -63,12 +63,12 @@ set_integer(const char *name, unsigned *target, const char *value,
 	if (pend && *pend) {
 		cwmp_log_error("IPPingDiagnostics.%s not a number: '%s'",
 				name, value);
-		return FAULT_CODE_9007;
+		return FAULT_CODE_OK; /* return FAULT_CODE_9007; */
 	}
 	if (v < range_min || v > range_max) {
 		cwmp_log_error("IPPingDiagnostics.%s value '%s' not in range %u-%u",
 			   name, value, range_min, range_max);
-		return FAULT_CODE_9007;
+		return FAULT_CODE_OK; /* return FAULT_CODE_9007; */
 	}
 	*target = (unsigned)v;
 	return FAULT_CODE_OK;
@@ -185,12 +185,6 @@ perform_ping(cwmp_t *cwmp)
 				", Interface=\"%s\"", ping_values.iface);
 	}
 
-	if (!*ping_values.host) {
-		cwmp_log_info("IPPingDiagnostics: no host defined");
-		ping_values.state = PING_ERROR_RESOLVE;
-		return;
-	}
-
 	cwmp_log_debug("IPPingDiagnostics run("
 			"Host=\"%s\"%s, "
 			"NumberOfRepetitions=%u, "
@@ -204,6 +198,33 @@ perform_ping(cwmp_t *cwmp)
 			ping_values.data_size,
 			ping_values.dscp);
 	memset(&ping_values.r, 0u, sizeof(ping_values.r));
+
+	/* check values:
+	 * ACS not waited Fault Codes, check values and set DiagnosticsState
+	 */
+	if (!*ping_values.host) {
+		cwmp_log_warn("IPPingDiagnostics: no host defined");
+		ping_values.state = PING_ERROR_RESOLVE;
+		return;
+	}
+
+	if (ping_values.data_size < 1 || ping_values.data_size > 65535) {
+		cwmp_log_warn(
+				"IPPingDiagnostics.DataBlockSize value %u not in range 1-65535",
+				ping_values.data_size);
+		return;
+	}
+	if (ping_values.repeat < 1) {
+		cwmp_log_warn(
+				"IPPingDiagnostics.NumberOfRepetitions invalid value: %u",
+				ping_values.repeat);
+		return;
+	}
+	if (ping_values.dscp > 63) {
+		cwmp_log_warn("IPPingDiagnostics.DSCP value %u not in range 0-63",
+				ping_values.dscp);
+		return;
+	}
 
 	/* FIXME: iface not used */
 
@@ -276,7 +297,7 @@ cpe_set_igd_ping_state(cwmp_t *cwmp, const char *name, const char *value, int le
 	enum ping_state state = string_to_state(value);
 	if (state != PING_REQUESTED) {
 		cwmp_log_error("IPPingDiagnostics.DiagnosticsState invalid value: '%s'", value);
-		return FAULT_CODE_9007;
+		return FAULT_CODE_OK; /* return FAULT_CODE_9007; */
 	}
 	ping_values.state = state;
 
@@ -295,11 +316,11 @@ cpe_set_igd_ping_host(cwmp_t *cwmp, const char *name, const char *value, int len
 {
 	if (!length) {
 		cwmp_log_error("IPPingDiagnostics.Host zero-length host not allowed");
-		return FAULT_CODE_9007;
+		return FAULT_CODE_OK; /* return FAULT_CODE_9007; */
 	}
 	if (strchr(value, '\'')) {
 		cwmp_log_error("IPPingDiagnostics.Host invalid value: %s", value);
-		return FAULT_CODE_9007;
+		return FAULT_CODE_OK; /* return FAULT_CODE_9007; */
 	}
 	strncpy(ping_values.host, value, sizeof(ping_values.host));
 	return FAULT_CODE_OK;
@@ -318,7 +339,7 @@ cpe_set_igd_ping_iface(cwmp_t *cwmp, const char *name, const char *value, int le
 	if (!p) {
 		cwmp_log_error("IPPingDiagnostics.Interface invalid value: '%s'",
 				value);
-		return FAULT_CODE_9007;
+		return FAULT_CODE_OK; /* return FAULT_CODE_9007; */
 	}
 
 	strncpy(ping_values.iface, value, sizeof(ping_values.iface));
