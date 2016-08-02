@@ -318,7 +318,7 @@ cpe_set_igd_ping_host(cwmp_t *cwmp, const char *name, const char *value, int len
 		cwmp_log_error("IPPingDiagnostics.Host zero-length host not allowed");
 		return FAULT_CODE_OK; /* return FAULT_CODE_9007; */
 	}
-	if (strchr(value, '\'')) {
+	if (strchr(value, '\'') || strchr(value, '`')) {
 		cwmp_log_error("IPPingDiagnostics.Host invalid value: %s", value);
 		return FAULT_CODE_OK; /* return FAULT_CODE_9007; */
 	}
