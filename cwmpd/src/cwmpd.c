@@ -1,3 +1,4 @@
+/* vim: set et: */
 /************************************************************************
  *                                                                      *
  * Netcwmp/Opencwmp Project                                             *
@@ -60,7 +61,7 @@ int cwmp_set_var(cwmp_t * cwmp)
 
 
     cwmp_bzero(cwmp, sizeof(cwmp_t));
-    cwmp->new_request = CWMP_TRUE;
+	cwmp_set_request(cwmp, CWMP_TRUE);
     pool_t * pool = pool_create(POOL_DEFAULT_SIZE);
     cwmp->pool = pool;
 

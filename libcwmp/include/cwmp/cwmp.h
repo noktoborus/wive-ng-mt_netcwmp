@@ -462,6 +462,7 @@ struct fault_code_st
 
 typedef struct  envelope_t envelope_t;
 
+void cwmp_set_request(cwmp_t *cwmp, int state);
 
 void cwmp_set_envelope_ns(const char * envstr, const char * encstr);
 

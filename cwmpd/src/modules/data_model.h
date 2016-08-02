@@ -3,7 +3,7 @@
 
 #include <cwmp/cwmp.h>
 
-void perform_ping();
+void perform_ping(cwmp_t *cwmp);
 
 int get_index_after_paramname(parameter_node_t * param, const char * tag_name);
 void cwmp_model_load(cwmp_t * cwmp, const char * xmlfile);

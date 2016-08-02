@@ -168,18 +168,18 @@ read_ping_data(FILE *f)
 	ping_values.r.minimum = (unsigned)minimum;
 	ping_values.r.average = (unsigned)average;
 	ping_values.r.maximum = (unsigned)maximum;
-	cwmp_event_set_value(cwmp, INFORM_DIAGNOSTICSCOMPLETE, 1, NULL, 0, 0, 0);
 }
 
 /* */
 
 /* internal values */
 void
-perform_ping()
+perform_ping(cwmp_t *cwmp)
 {
 	char buf[512] = {};
 	FILE *f = NULL;
 	char iface_info[256] = {};
+
 	if (*ping_values.iface) {
 		snprintf(iface_info, sizeof(iface_info),
 				", Interface=\"%s\"", ping_values.iface);

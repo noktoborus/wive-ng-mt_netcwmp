@@ -236,7 +236,7 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
             cwmp_log_error("### ### ### New request from ACS ### ### ###");
         }
 
-        cwmp->new_request = CWMP_NO;
+        cwmp_set_request(cwmp, CWMP_NO);
         session = cwmp_session_create(cwmp);
         session_close  = CWMP_NO;
         session->timeout = cwmp_conf_get_int("cwmpd:http_timeout");
@@ -364,7 +364,7 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
         int newtaskres = cwmp_agent_run_tasks(cwmp);
         if(newtaskres == CWMP_YES)
         {
-            cwmp->new_request = CWMP_YES;
+            cwmp_set_request(cwmp, CWMP_YES);
         }
     }//end while(TRUE)
 }
@@ -807,8 +807,17 @@ int cwmp_agent_run_tasks(cwmp_t * cwmp)
         switch(tasktype)
         {
             case TASK_PING_TAG:
-                perform_ping();
-                break;
+                {
+                    time_t starttime = 0;
+                    time_t endtime = 0;
+
+                    starttime = time(NULL);
+                    perform_ping(cwmp);
+                    endtime = time(NULL);
+
+                    cwmp_event_set_value(cwmp, INFORM_DIAGNOSTICSCOMPLETE, 1, NULL, 0, starttime, endtime);
+                    break;
+                }
             case TASK_DOWNLOAD_TAG:
                 {
                     download_arg_t * dlarg = (download_arg_t*)data;
@@ -853,7 +862,7 @@ int cwmp_agent_run_tasks(cwmp_t * cwmp)
 
             case TASK_NOTIFY_TAG:
                 {
-                    cwmp->new_request = CWMP_YES;
+                    cwmp_set_request(cwmp, CWMP_YES);
                     cwmp_event_set_value(cwmp, INFORM_VALUECHANGE, 1, NULL, 0, 0, 0);
                 }
                 break;

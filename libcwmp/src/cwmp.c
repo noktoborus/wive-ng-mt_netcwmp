@@ -74,9 +74,13 @@ static char SOAP_ENC_ARRAYTYPE[CWMP_NAME_MAX] = {0};
 
 #define CWMP_TYPE(x) cwmp_get_type_string(x)
 
-
-
-
+void cwmp_set_request(cwmp_t *cwmp, int state)
+{
+    cwmp_log_trace("%s(cwmp=%p, state=%s): change from %s",
+            __func__, (void*)cwmp, state ? "yes" : "no",
+            cwmp->new_request ? "yes" : "no");
+    cwmp->new_request = state;
+}
 
 static char * cwmp_get_format_string(const char * fmt, ...)
 {

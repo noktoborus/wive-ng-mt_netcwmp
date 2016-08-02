@@ -1,3 +1,4 @@
+/* vim: set et: */
 /************************************************************************
  *                                                                      *
  * Netcwmp/Opencwmp Project                                             *
@@ -269,8 +270,7 @@ int httpd_build_server(cwmp_t * cwmp)
                 httpd_response_ok(s);
 
                 //get a new request from acs
-                cwmp->new_request = CWMP_YES;
-				cwmp_log_debug("set cwmp new request to %d\n", cwmp->new_request);
+				cwmp_set_request(cwmp, CWMP_YES);
 				cwmp_event_set_value(cwmp, INFORM_CONNECTIONREQUEST, 1, NULL, 0, 0, 0);
 faild:
 
