@@ -168,6 +168,7 @@ read_ping_data(FILE *f)
 	ping_values.r.minimum = (unsigned)minimum;
 	ping_values.r.average = (unsigned)average;
 	ping_values.r.maximum = (unsigned)maximum;
+	cwmp_event_set_value(cwmp, INFORM_DIAGNOSTICSCOMPLETE, 1, NULL, 0, 0, 0);
 }
 
 /* */
