@@ -1024,9 +1024,13 @@ cwmp_get_parameter_fullpath(parameter_node_t *param, char *out, size_t out_size)
         return CWMP_ERROR;
     }
 
-    while (len < out_size && p) {
-        len = snprintf(tmp, out_size, "%s.%s", p->name, out);
-        memcpy(out, tmp, len);
+    while (len < out_size && p && p->name) {
+        if (!*out) {
+            len = snprintf(out, out_size, "%s", p->name);
+        } else {
+            len = snprintf(tmp, out_size, "%s.%s", p->name, out);
+            memcpy(out, tmp, len);
+        }
         p = p->parent;
     }
     free(tmp);
