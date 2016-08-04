@@ -1012,7 +1012,26 @@ char * cwmp_get_parameter_nodename(const char * name, char * buffer)
     return p;
 }
 
+int
+cwmp_get_parameter_fullpath(parameter_node_t *param, char *out, size_t out_size)
+{
+    parameter_node_t *p = param;
+    size_t len = 0u;
+    char *tmp = calloc(1, out_size);
 
+    if (!tmp) {
+        cwmp_log_error("malloc() error: %s", strerror(errno));
+        return CWMP_ERROR;
+    }
+
+    while (len < out_size && p) {
+        len = snprintf(tmp, out_size, "%s.%s", p->name, out);
+        memcpy(out, tmp, len);
+        p = p->parent;
+    }
+    free(tmp);
+    return CWMP_OK;
+}
 
 
 parameter_node_t * cwmp_get_parameter_node(parameter_node_t * root, const char * param_name)
@@ -1059,50 +1078,35 @@ parameter_node_t * cwmp_get_parameter_path_node(parameter_node_t * parent, const
     parameter_node_t * param_node = parent;
     const char * dot;
     char  name[256];
-    cwmp_log_debug("cwmp_get_parameter_path_node ...\n");
+    cwmp_log_trace("%s(parent=%p, param_name=\"%s\")",
+            __func__, (void*)parent, param_name);
 
     if ((!param_node) || (!param_name))
         return NULL;
 
     dot = (char *)param_name;
-    while (*dot)
-    {
-
+    while (*dot) {
         dot = cwmp_get_parameter_nodename(dot, name);
-
-        while (param_node && param_node->name)
-        {
-	    if(TRstrcmp(param_node->name, "{i}") == 0)
-            {
-		param_node = param_node->next_sibling;
-		continue;
+        while (param_node && param_node->name) {
+            if(TRstrcmp(param_node->name, "{i}") == 0) {
+                param_node = param_node->next_sibling;
+                continue;
             }
 
-
-            if (TRstrcmp(param_node->name, name) == 0)
-            {
+            if (TRstrcmp(param_node->name, name) == 0) {
                 //cwmp_log_debug("Found param node: %s\n", name);
                 break;
             }
-            if (param_node->next_sibling)
-            {
+            if (param_node->next_sibling) {
                 param_node = param_node->next_sibling;
-            }
-            else
-            {
-                if (*dot != 0)
-                {
+            } else {
+                if (*dot != 0) {
                     cwmp_log_error("Error param node path. %s\n", param_name);
                     return NULL;
-                }
-                else
-                {
-                    if (param_node->parent)
-                    {
+                } else {
+                    if (param_node->parent) {
                         //cwmp_log_debug("Found param node path: %s.\n", param_node->parent->name);
-                    }
-                    else
-                    {
+                    } else {
                         cwmp_log_info("Not found param node parent path: %s.\n", param_name);
                     }
                     return param_node->parent;
@@ -1110,35 +1114,26 @@ parameter_node_t * cwmp_get_parameter_path_node(parameter_node_t * parent, const
             }
         }
 
-        if (!param_node)
-        {
+        if (!param_node) {
             return NULL;
         }
 
-        if ((dot) && (*dot == 0))
-        {
+        if ((dot) && (*dot == 0)) {
             break;
         }
-        if (param_node->child)
-        {
+        if (param_node->child) {
             param_node = param_node->child;
-        }
-        else
-        {
+        } else {
             break;
         }
 
     }
-    if (param_node)
-    {
+    if (param_node) {
         cwmp_log_debug("Found param node path: %s.\n", param_node->name);
-    }
-    else
-    {
+    } else {
         cwmp_log_error("Not found param node path: %s.\n", param_name);
     }
     return param_node;
-
 }
 
 int cwmp_get_parameter_node_value(cwmp_t * cwmp, parameter_node_t * node, const char * name, char ** value, pool_t * pool)

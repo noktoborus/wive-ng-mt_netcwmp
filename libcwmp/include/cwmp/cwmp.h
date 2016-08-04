@@ -552,6 +552,8 @@ char *  cwmp_get_type_string(int type);
 int	cwmp_get_type_value(char * type);
 char *  cwmp_get_fault_string(int code);
 
+int cwmp_get_parameter_fullpath(parameter_node_t *param, char *out, size_t out_size);
+
 parameter_node_t * cwmp_get_parameter_node(parameter_node_t * root, const char * param_name);
 parameter_node_t * cwmp_get_parameter_path_node(parameter_node_t * parent, const char * param_name);
 
