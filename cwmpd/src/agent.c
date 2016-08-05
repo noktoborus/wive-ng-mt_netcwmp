@@ -535,17 +535,19 @@ finished:
     return rc;
 }
 
-static void print_param(parameter_node_t * param, int level)
+static void _print_param(parameter_node_t * param, int level)
 {
     if(!param) return;
 
     parameter_node_t * child;
     char func[64] = {};
     char log[256] = {};
-    //cwmp_log_debug("name: %s, type: %s, level: %d", param->name, cwmp_get_type_string(param->type), level);
-    //  int i=0;
 
-    snprintf(log, sizeof(log), "|%%-%ds%%s: ", level * 4);
+    snprintf(log, sizeof(log), "|%-*s%s (%s): ",
+            level * 4,
+            "----",
+            param->name,
+            param->parent ? param->parent->name : "-");
 
     if (param->get) {
         snprintf(func, sizeof(func), "get=%p[%s]%s",
@@ -578,36 +580,44 @@ static void print_param(parameter_node_t * param, int level)
                 param->del ?  ", " : ""
                 );
         strncat(log, func, sizeof(log));
-   }
-   if (param->del) {
+    }
+    if (param->del) {
         snprintf(func, sizeof(func), "del=%p[%s]%s",
                 (void*)param->del,
                 cwmp_model_ptr_to_func(param->del),
                 param->refresh ?  ", " : ""
                 );
         strncat(log, func, sizeof(log));
-   }
-   if (param->refresh) {
+    }
+    if (param->refresh) {
         snprintf(func, sizeof(func), "refresh=%p[%s]",
                 (void*)param->refresh,
                 cwmp_model_ptr_to_func(param->refresh));
         strncat(log, func, sizeof(log));
     }
 
-    cwmp_log_debug(log, "----", param->name);
+    cwmp_log_debug(log);
 
     child = param->child;
 
     if(!child)
         return;
-    print_param(child, level+1);
+
+    _print_param(child, level+1);
 
     parameter_node_t * next = child->next_sibling;
 
     while(next) {
-        print_param(next, level+1);
+        _print_param(next, level+1);
         next = next->next_sibling;
     }
+}
+
+static void print_param(parameter_node_t *param)
+{
+    cwmp_log_trace("%s(param=%p [name=%s])",
+            __func__, (void*)param, (param ? param->name : NULL));
+    _print_param(param, 1);
 }
 
 void cwmp_agent_session(cwmp_t * cwmp)
@@ -619,7 +629,7 @@ void cwmp_agent_session(cwmp_t * cwmp)
     char * envstr;
     char * encstr;
 
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(cwmp=%p)", __func__, (void*)cwmp);
 
     envstr = cwmp_conf_pool_get(cwmp->pool,"cwmp:soap_env");
     encstr = cwmp_conf_pool_get(cwmp->pool,"cwmp:soap_enc");
@@ -632,7 +642,7 @@ void cwmp_agent_session(cwmp_t * cwmp)
         exit(-1);
     }
 
-    print_param(cwmp->root, 0);
+    print_param(cwmp->root);
 
     CWMP_SPRINTF_PARAMETER_NAME(name, 3, InternetGatewayDeviceModule, ManagementServerModule, URLModule);
     cwmp_data_set_parameter_value(cwmp, cwmp->root, name, cwmp->acs_url, TRstrlen(cwmp->acs_url), cwmp->pool);
