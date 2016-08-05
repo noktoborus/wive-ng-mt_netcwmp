@@ -138,6 +138,12 @@ model_func_t ModelFunction[] =
     {"cpe_get_igd_ping_repeat", cpe_get_igd_ping_repeat},
     {"cpe_get_igd_ping_data_size", cpe_get_igd_ping_data_size},
     {"cpe_get_igd_ping_timeout", cpe_get_igd_ping_timeout},
+
+    {"cpe_get_pm", cpe_get_pm},
+    {"cpe_set_pm", cpe_set_pm},
+    {"cpe_add_pm", cpe_add_pm},
+    {"cpe_del_pm", cpe_del_pm},
+    {"cpe_refresh_pm", cpe_refresh_pm}
 };
 
 const char *cwmp_model_ptr_to_func(void *p)

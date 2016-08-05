@@ -61,6 +61,11 @@ int cwmp_model_copy_parameter_object(parameter_node_t * object_param, parameter_
 int cwmp_model_copy_parameter(parameter_node_t * param, parameter_node_t ** new_param, int instance_number){
 
     int rv;
+
+	cwmp_log_trace("%s(param=%p [name=%s], new_param=%p, instance_number=%d",
+			__func__, (void*)param, (param ? param->name : NULL),
+			(void*)new_param, instance_number);
+
     if(!param)
         return CWMP_OK;
 
@@ -121,6 +126,10 @@ int cwmp_model_delete_parameter(parameter_node_t * param)
 {
     parameter_node_t     *tmp_param = NULL;
     parameter_node_t     *parent = NULL;
+
+	cwmp_log_trace("%s(param=%p [name=%s])",
+			__func__, (void*)param, (param ? param->name : NULL));
+
     if(!param)
     {
         return CWMP_OK;

@@ -3,6 +3,7 @@
 
 #include <cwmp/cwmp.h>
 
+/* execute ping  */
 void perform_ping(cwmp_t *cwmp);
 
 int get_index_after_paramname(parameter_node_t * param, const char * tag_name);

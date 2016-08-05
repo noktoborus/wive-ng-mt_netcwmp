@@ -1,3 +1,4 @@
+#include "WANDevice/WANConnectionDevice/PortMapping.c"
 #include "IPPingDiagnostics/IPPingDiagnostics.c"
 #include "DeviceInfo/DeviceInfo.c"
 #include "ManagementServer/ManagementServer.c"

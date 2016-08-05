@@ -139,6 +139,20 @@
 										<param name="EthernetPacketsSent" get_func="cpe_get_igd_wan_ip_rxtxbytes" args="tx"/>
 										<param name="EthernetPacketsReceived" get_func="cpe_get_igd_wan_ip_rxtxbytes" args="rx"/>
 									</object>
+									<object name="PortMapping" rw="1" add_func="cpe_add_pm" del_func="cpe_del_pm" refresh_func="cpe_refresh_pm">
+										<object name="{i}">
+											<param name="PortMappingEnabled" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="Alias" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="PortMappingLeaseDuration" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="RemoteHost" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="ExternalPort" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="ExternalPortEndRange" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="InternalPort" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="PortMappingProtocol" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="InternalClient" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="PortMappingDescription" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+										</object>
+									</object>
 								</object>
 							</object>
 							<object name="WANPPPConnection" rw="1" add_func="cpe_add_null">
@@ -159,7 +173,19 @@
 									<param name="DNSServers" rw="1" type="s" get_func="cpe_get_nvram_string" args="wan_primary_dns" set_func="cpe_set_nvram_string"/>
 									<param name="MACAddress" rw="1" type="s" get_func="cpe_get_nvram_string" args="WAN_MAC_ADDR" set_func="cpe_set_nvram_string"/>
 									<param name="ConnectionTrigger" rw="1" get_func="cpe_get_const_string" set_func="AlwaysOn"/>
-									<object name="PortMapping" rw="1">
+									<object name="PortMapping" rw="1" add_func="cpe_add_pm" del_func="cpe_del_pm" refresh_func="cpe_refresh_pm">
+										<object name="{i}">
+											<param name="PortMappingEnabled" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="Alias" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="PortMappingLeaseDuration" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="RemoteHost" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="ExternalPort" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="ExternalPortEndRange" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="InternalPort" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="PortMappingProtocol" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="InternalClient" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="PortMappingDescription" rw="1" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+										</object>
 									</object>
 								</object> 
 							</object> 
