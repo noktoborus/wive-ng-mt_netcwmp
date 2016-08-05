@@ -6,7 +6,12 @@ enum pm_type {
 	PM_WAN = 1,
 	PM_VPN
 };
-struct pm_rule *rules[3] = {};
+
+/* lists of pm rules */
+static struct pm_rule *rules[3] = {};
+/* lengths of rules lists */
+static size_t rules_s[sizeof(rules)] = {};
+
 
 /* internal lib */
 #include <regex.h>
@@ -189,6 +194,7 @@ cpe_refresh_pm(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_f
 
 	free(rules[ift_i]);
 	rules[ift_i] = NULL;
+	rules_s[ift_i] = 0u;
 
 	/* generate new list */
 	pm_line = cwmp_nvram_get("PortForwardRules");
@@ -206,6 +212,7 @@ cpe_refresh_pm(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_f
 				ift, rules_c * sizeof(struct pm_rule), strerror(errno));
 		return FAULT_CODE_9002;
 	}
+	rules_s[ift_i] = rules_c;
 
 	rules_c = 0u;
 	while (pm_line) {
