@@ -56,6 +56,25 @@ rule_count(const char *rules, const char *ift)
 	return cc;
 }
 
+static const char *
+nodename_to_ift(const char *nodename, enum pm_type *ift_i)
+{
+	if (!strncmp(nodename, "WANIPConnection", 15)) {
+		if (ift_i)
+			*ift_i = PM_WAN;
+		return "WAN";
+	} else if (!strncmp(nodename, "WANPPPConnection", 16)) {
+		if (ift_i)
+			*ift_i = PM_VPN;
+		return "VPN";
+	} else {
+		cwmp_log_warn("PortMapping: unknown model node: %s. "
+				"Expect WANIPConnection or WANPPPConnection",
+				nodename);
+		return NULL;
+	}
+}
+
 bool
 pm_parse(const char *in, struct pm_rule *rule, char **next)
 {
@@ -236,6 +255,55 @@ cpe_refresh_pm(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_f
 	return FAULT_CODE_OK;
 }
 
+
+struct pm_rule *
+name_to_rule(cwmp_t *cwmp, const char *fullpath, char *out_name, size_t out_len)
+{
+	/* InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.PortMapping.1.InternalPort */
+	parameter_node_t *pn = NULL;
+	size_t rule_no = 0u;
+	const char *ift = NULL;
+	enum pm_type ift_i = PM_NONE;
+
+	pn = cwmp_get_parameter_path_node(cwmp->root, fullpath);
+	if (!pn) {
+		return NULL;
+	}
+
+	/* copy name (InternalPort) */
+	*out_name = '\0';
+	strncpy(out_name, pn->name, out_len - 1);
+
+	/* rule's number (1) */
+	pn = pn->parent;
+	rule_no = ((size_t)strtoul(pn->name, NULL, 10));
+
+	/* skip module name (PortMapping) */
+	pn = pn->parent;
+
+	/* skip device number (1) */
+	pn = pn->parent;
+	/* ... */
+
+	/* device type (WANIPConnection) */
+	pn = pn->parent;
+	ift = nodename_to_ift(pn->name, &ift_i);
+	if (!ift) {
+		return NULL;
+	}
+
+	if (rule_no > rules_s[ift_i]) {
+		cwmp_log_warn("PortMapping: unknown rule %"PRIuPTR" for device %s. "
+				"Rule count: %"PRIuPTR,
+				rule_no, ift, rules_s[ift_i]);
+		return NULL;
+	}
+
+	cwmp_log_debug("PortMapping: rule %"PRIuPTR" for device %s", rule_no, ift);
+
+	return &rules[ift_i][rule_no - 1];
+}
+
 int
 cpe_set_pm(cwmp_t *cwmp, const char *name, const char *value, int length, callback_register_func_t callback_reg)
 {
@@ -245,6 +313,52 @@ cpe_set_pm(cwmp_t *cwmp, const char *name, const char *value, int length, callba
 int
 cpe_get_pm(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
+	struct pm_rule *rule = NULL;
+	char param[64] = {};
+	char buf[128] = {};
+
+	rule = name_to_rule(cwmp, name, param, sizeof(param));
+
+	if (!rule)
+		return FAULT_CODE_9002;
+
+	if (!strcmp("PortMappingEnabled", param)) {
+		/* TODO: nvram PortForwardEnable */
+		*value = "true";
+	} else if (!strcmp("Alias", param)) {
+		*value = pool_pstrdup(pool, "");
+	} else if (!strcmp("PortMappingLeaseDuration", param)) {
+		/* not supported timed rules */
+		*value = "0";
+	} else if (!strcmp("RemoteHost", param)) {
+		*value = pool_pstrdup(pool, rule->addr);
+	} else if (!strcmp("ExternalPort", param)) {
+		snprintf(buf, sizeof(buf), "%u", rule->dport_min);
+		*value = pool_pstrdup(pool, buf);
+	} else if (!strcmp("ExternalPortEndRange", param)) {
+		snprintf(buf, sizeof(buf), "%u", rule->dport_max);
+		*value = pool_pstrdup(pool, buf);
+	} else if (!strcmp("InternalPort", param)) {
+		snprintf(buf, sizeof(buf), "%u", rule->sport_max);
+		*value = pool_pstrdup(pool, buf);
+	} else if (!strcmp("PortMappingProtocol", param)) {
+		switch (rule->proto) {
+			case PM_TCP:
+				*value = "TCP";
+				break;
+			case PM_UDP:
+				*value = "UDP";
+				break;
+			default:
+				return FAULT_CODE_9002;
+		}
+	} else if (!strcmp("InternalClient", param)) {
+		/* not supported: address must be getted from device (VPN or WAN) */
+		*value = "0.0.0.0";
+	} else if (!strcmp("PortMappingDescription", param)) {
+		*value = pool_pstrdup(pool, rule->description);
+	}
+
 	return FAULT_CODE_OK;
 }
 
