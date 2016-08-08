@@ -93,13 +93,13 @@ pm_parse(const char *in, struct pm_rule *rule, char **next)
 	memset(rule, 0u, sizeof(*rule));
 	rc = regcomp(&preg, pattern, 0);
 	if (rc != 0) {
-		cwmp_log_warn("regcomp(\"%s\") failed: %d\n", pattern, rc);
+		cwmp_log_warn("PortMapping: regcomp(\"%s\") failed: %d\n", pattern, rc);
 		return false;
 	}
 
 	rc = regexec(&preg, in, sizeof(pmatch) / sizeof(*pmatch), pmatch, 0);
 	if (rc != 0) {
-		cwmp_log_warn("regexec(\"%s\", \"%s\") failed: %d\n", pattern, in, rc);
+		cwmp_log_warn("PortMapping: regexec(\"%s\", \"%s\") failed: %d\n", pattern, in, rc);
 		return false;
 	}
 
@@ -129,17 +129,17 @@ pm_parse(const char *in, struct pm_rule *rule, char **next)
 	/* check values */
 	if (rule->dport_max > 0 || rule->sport_max > 0) {
 		if (rule->sport_max && rule->sport_max < rule->sport_min) {
-			cwmp_log_warn("src-port-max can't be less src-port-min\n");
+			cwmp_log_warn("PortMapping: src-port-max can't be less src-port-min\n");
 			return false;
 		}
 
 		if (rule->dport_max && rule->dport_max < rule->dport_min) {
-			cwmp_log_warn("dst-port-max can't be less dst-port-min\n");
+			cwmp_log_warn("PortMapping: dst-port-max can't be less dst-port-min\n");
 			return false;
 		}
 
 		if (rule->dport_max - rule->dport_min != rule->sport_max - rule->sport_min) {
-				cwmp_log_warn("dst-port and src-port ranges not match\n");
+				cwmp_log_warn("PortMapping: dst-port and src-port ranges not match\n");
 			return false;
 		}
 	}
@@ -181,21 +181,13 @@ cpe_refresh_pm(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_f
 
 	parent_name = pn_tmp->name;
 
-	if (!strcmp(parent_name, "WANIPConnection")) {
-		ift = "WAN";
-		ift_i = PM_WAN;
-	} else if (!strcmp(parent_name, "WANPPPConnection")) {
-		ift = "VPN";
-		ift_i = PM_VPN;
-	} else {
-		cwmp_log_error("PortMapping: Unknown model node: %s. "
-				"Except WANIPConnection or WANPPPConnection",
-				parent_name);
+	ift = nodename_to_ift(parent_name, &ift_i);
+	if (!ift) {
 		return FAULT_CODE_9002;
 	}
 
-	cwmp_log_debug("refresh (%s) PortMapping for %s (type: %s)",
-			param_node->name, parent_name, ift);
+	cwmp_log_debug("PortMapping[%s]: refresh (%s) for %s",
+			ift, param_node->name, parent_name);
 
 	/* remove old list  */
 	pn_tmp = param_node->child;
