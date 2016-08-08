@@ -39,19 +39,31 @@ struct pm_rule
 	char description[256];
 };
 
-static unsigned
-rule_count(const char *rules, const char *ift)
-{
-	unsigned cc = 0u;
-	const char *p = rules;
+bool
+pm_parse(const char *in, struct pm_rule *rule, char **next);
 
-	if (!p)
+static unsigned
+rule_count(const char *pm_line, const char *ift)
+{
+	struct pm_rule rule = {};
+
+	unsigned cc = 0u;
+
+	if (!pm_line)
 		return 0u;
 
-	while ((p = (strstr(p, ift))) != NULL) {
-		cc++;
-		/* skip header */
-		p++;
+	while(pm_line) {
+		if (!pm_parse(pm_line, &rule, (char**)&pm_line)) {
+			continue;
+		}
+		/* count rules */
+		if (!strcmp(rule.iface, ift)) {
+			cc++;
+		}
+		/* explain UDP&TCP line to UDP and TCP */
+		if (rule.proto == PM_UDPTCP) {
+			cc++;
+		}
 	}
 	return cc;
 }
@@ -99,7 +111,8 @@ pm_parse(const char *in, struct pm_rule *rule, char **next)
 
 	rc = regexec(&preg, in, sizeof(pmatch) / sizeof(*pmatch), pmatch, 0);
 	if (rc != 0) {
-		cwmp_log_warn("PortMapping: regexec(\"%s\", \"%s\") failed: %d\n", pattern, in, rc);
+		cwmp_log_warn("PortMapping: regexec(\"%s\", \"%s\") failed: %d\n",
+				pattern, in, rc);
 		return false;
 	}
 
@@ -230,6 +243,7 @@ cpe_refresh_pm(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_f
 		if (!pm_parse(pm_line, &rule, (char**)&pm_line)) {
 			cwmp_log_info("PortMapping[%s]: parse error, next val: %s",
 					ift, pm_line);
+			continue;
 		}
 
 		/* skip values for another iface */
@@ -240,6 +254,13 @@ cpe_refresh_pm(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_f
 		cwmp_model_copy_parameter(param_node, &pn, (rules_c + 1));
 		/* save data (from 0 to infinity) */
 		memcpy(&rules[ift_i][rules_c], &rule, sizeof(rule));
+		/* fix rules */
+		if (rule.proto == PM_UDPTCP) {
+			rules[ift_i][rules_c].proto = PM_UDP;
+			memcpy(&rules[ift_i][++rules_c], &rule, sizeof(rule));
+			cwmp_model_copy_parameter(param_node, &pn, (rules_c + 1));
+			rules[ift_i][rules_c].proto = PM_TCP;
+		}
 
 		rules_c++;
 	}
