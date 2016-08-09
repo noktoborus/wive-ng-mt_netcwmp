@@ -83,13 +83,13 @@ perform_pm_save(cwmp_t *cwmp)
 			if (!*rules[ift_i][i].iface)
 				continue;
 
-			if (rules[ift_i][i].sport_max) {
+			if (rules[ift_i][i].sport_max > rules[ift_i][i].sport_min) {
 				snprintf(sport, sizeof(sport), "%u", rules[ift_i][i].sport_max);
 			} else {
 				*sport = '\0';
 			}
 
-			if (rules[ift_i][i].dport_max) {
+			if (rules[ift_i][i].dport_max > rules[ift_i][i].dport_min) {
 				snprintf(dport, sizeof(dport), "%u", rules[ift_i][i].dport_max);
 			} else {
 				*dport = '\0';
@@ -590,7 +590,11 @@ cpe_get_pm(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *poo
 		snprintf(buf, sizeof(buf), "%u", rule->sport_min);
 		*value = pool_pstrdup(pool, buf);
 	} else if (!strcmp("ExternalPortEndRange", param)) {
-		snprintf(buf, sizeof(buf), "%u", rule->sport_max);
+		if (!rule->sport_max) {
+			snprintf(buf, sizeof(buf), "%u", rule->sport_min);
+		} else {
+			snprintf(buf, sizeof(buf), "%u", rule->sport_max);
+		}
 		*value = pool_pstrdup(pool, buf);
 	} else if (!strcmp("InternalPort", param)) {
 		snprintf(buf, sizeof(buf), "%u", rule->dport_max);
