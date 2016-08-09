@@ -828,7 +828,11 @@ xmlnode_t * cwmp_get_header_node(xmldoc_t *  doc)
 {
     xmlnode_t *  node;
     xmlnode_t *  root;
-    ASSERT(doc != NULL);
+
+    if (doc == NULL) {
+        cwmp_log_error("xml is null");
+        return NULL;
+    }
 
     if (! (root = XmlNodeGetDocRoot(doc)))
     {
@@ -849,7 +853,12 @@ xmlnode_t * cwmp_get_body_node(xmldoc_t *  doc)
 {
     xmlnode_t *  node;
     xmlnode_t *  root;
-    ASSERT(doc != NULL);
+
+    if (doc == NULL) {
+        cwmp_log_error("xml is null");
+        return NULL;
+    }
+
     if (! (root = XmlNodeGetDocRoot(doc)))
     {
         cwmp_log_error("xml document root is null!");

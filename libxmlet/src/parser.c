@@ -561,6 +561,8 @@ static int
 XMLParserIsValidEndElement( XMLParser * xmlParser,
                             XmlNode *   newNode )
 {
+    if (!xmlParser->pCurElement)
+        return 0;
     return ( strcmp( xmlParser->pCurElement->element, newNode->nodeName )
              == 0 );
 }
