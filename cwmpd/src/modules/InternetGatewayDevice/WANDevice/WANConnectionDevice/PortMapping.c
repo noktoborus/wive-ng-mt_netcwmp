@@ -39,6 +39,19 @@ struct pm_rule
 };
 
 static void
+normilize_buf(char *buf)
+{
+	/* replace [;,] to safe symbols */
+	size_t _p = 0u;
+	while(buf[_p]) {
+		if (buf[_p] == ',' || buf[_p] == ';') {
+			buf[_p] = ' ';
+		}
+		_p++;
+	}
+}
+
+static void
 notify_save(cwmp_t *cwmp)
 {
 	queue_push(cwmp->queue, NULL, TASK_PORTMAP_TAG);
@@ -81,6 +94,8 @@ perform_pm_save(cwmp_t *cwmp)
 			} else {
 				*dport = '\0';
 			}
+
+			normilize_buf(rules[ift_i][i].description);
 
 			snprintf(crule, sizeof(crule),
 					"%s,%d,%u,%s,%s,%u,%s,%c,%s;",
@@ -526,6 +541,12 @@ cpe_set_pm(cwmp_t *cwmp, const char *name, const char *value, int length, callba
 			return FAULT_CODE_9003;
 		}
 	} else if (!strcmp("InternalClient", param)) {
+		if (strchr(value, ',') || strchr(value, ';')) {
+			cwmp_log_warn("PortMapping: "
+					"invalid InternalClient value: %s (invalid symbos: ,;)",
+					value);
+			return FAULT_CODE_9003;
+		}
 		snprintf(rule->addr, sizeof(rule->addr), "%s", value);
 	} else if (!strcmp("PortMappingDescription", param)) {
 		snprintf(rule->description, sizeof(rule->description), "%s", value);
