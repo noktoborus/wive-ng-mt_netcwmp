@@ -12,7 +12,6 @@ static struct pm_rule *rules[3] = {};
 /* lengths of rules lists */
 static size_t rules_s[sizeof(rules)] = {};
 
-
 /* internal lib */
 #include <regex.h>
 #ifndef MIN
@@ -59,10 +58,10 @@ rule_count(const char *pm_line, const char *ift)
 		/* count rules */
 		if (!strcmp(rule.iface, ift)) {
 			cc++;
-		}
-		/* explain UDP&TCP line to UDP and TCP */
-		if (rule.proto == PM_UDPTCP) {
-			cc++;
+			/* explain UDP&TCP line to UDP and TCP */
+			if (rule.proto == PM_UDPTCP) {
+				cc++;
+			}
 		}
 	}
 	return cc;
@@ -162,12 +161,86 @@ pm_parse(const char *in, struct pm_rule *rule, char **next)
 int
 cpe_add_pm(cwmp_t *cwmp, parameter_node_t *param_node, int *pinstance_number, callback_register_func_t callback_reg)
 {
+	const char *ift = NULL;
+	enum pm_type ift_i = 0u;
+	parameter_node_t *pn = param_node;
+	void *tmp = NULL;
+	cwmp_log_trace("%s(cwmp=%p, param_node=%p [name=%s], pinstance_number=%p, callback_reg=%p)",
+			__func__, (void*)cwmp, (void*)param_node,
+			param_node ? param_node->name : "",
+			(void*)pinstance_number, (void*)callback_reg);
+
+	/* interface number */
+	pn = pn->parent;
+	/* interface type */
+	pn = pn->parent;
+
+	ift = nodename_to_ift(pn->name, &ift_i);
+	if (!ift) {
+		return FAULT_CODE_9005;
+	}
+
+	cwmp_log_debug("PortMapping[%s]: append new rule. Counter: %"PRIuPTR,
+			ift, rules_s[ift_i]);
+
+	tmp = realloc(rules[ift_i], (rules_s[ift_i] + 1) * sizeof(struct pm_rule));
+	if (!tmp) {
+		cwmp_log_debug("PortMapping[%s]: realloc(%d) failed: %s",
+				ift, (rules_s[ift_i] + 1) * sizeof(struct pm_rule),
+				strerror(errno));
+		return FAULT_CODE_9002;
+	}
+
+	rules[ift_i] = tmp;
+
+	memset(&rules[ift_i][rules_s[ift_i]], 0u, sizeof(struct pm_rule));
+
+	rules_s[ift_i]++;
+	cwmp_model_copy_parameter(param_node, &pn, rules_s[ift_i]);
+	*pinstance_number = rules_s[ift_i];
 	return FAULT_CODE_OK;
 }
 
 int
 cpe_del_pm(cwmp_t *cwmp, parameter_node_t *param_node, int instance_number, callback_register_func_t callback_reg)
 {
+	const char *ift = NULL;
+	enum pm_type ift_i = 0u;
+	parameter_node_t *pn = param_node;
+	size_t rule_no = 0u;
+
+	cwmp_log_trace(
+			"%s(cwmp=%p, param_node=%p [name=%s], "
+			"instance_number=%d, callback_reg=%p)",
+			__func__, (void*)cwmp, (void*)param_node,
+			param_node ? param_node->name : "",
+			instance_number, (void*)callback_reg);
+
+	/* PortMapping node */
+	pn = pn->parent;
+	/* Interface number */
+	pn = pn->parent;
+	/* Interface type */
+	pn = pn->parent;
+
+	ift = nodename_to_ift(pn->name, &ift_i);
+	if (!ift) {
+		return FAULT_CODE_9005;
+	}
+
+	rule_no = strtoul(param_node->name, NULL, 10);
+	if (rule_no > rules_s[ift_i]) {
+		cwmp_log_warn("PortMapping[%s]: unknown rule number %"PRIuPTR". "
+				"Rule count: %"PRIuPTR,
+				ift, rule_no, rules_s[ift_i]);
+		return FAULT_CODE_9005;
+	}
+
+	cwmp_log_debug("PortMapping[%s]: remove rule %"PRIuPTR, ift, rule_no);
+
+	memset(&rules[ift_i][rule_no - 1], 0, sizeof(struct pm_rule));
+	cwmp_model_delete_parameter(param_node);
+
 	return FAULT_CODE_OK;
 }
 
@@ -306,13 +379,13 @@ name_to_rule(cwmp_t *cwmp, const char *fullpath, char *out_name, size_t out_len)
 	}
 
 	if (rule_no > rules_s[ift_i]) {
-		cwmp_log_warn("PortMapping: unknown rule %"PRIuPTR" for device %s. "
-				"Rule count: %"PRIuPTR,
-				rule_no, ift, rules_s[ift_i]);
+		cwmp_log_warn("PortMapping[%s]: unknown rule number %"PRIuPTR". "
+				"Rule count: %"PRIuPTR, ift,
+				rule_no, rules_s[ift_i]);
 		return NULL;
 	}
 
-	cwmp_log_debug("PortMapping: rule %"PRIuPTR" for device %s", rule_no, ift);
+	cwmp_log_debug("PortMapping[%s]: work with rule %"PRIuPTR, ift, rule_no);
 
 	return &rules[ift_i][rule_no - 1];
 }

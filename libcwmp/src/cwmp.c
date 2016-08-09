@@ -1872,8 +1872,7 @@ int cwmp_parse_deleteobject_message(env_t * env , xmldoc_t *doc, parameter_node_
         return CWMP_ERROR;
     }
 
-    parameter_node_t * parent = param->parent;
-    if(! parent->del)
+    if(! param->del)
     {
         cwmp_log_error("could not find %s delete object function\n", object_name);
         cwmp_set_faultcode(fault, FAULT_CODE_9005);
