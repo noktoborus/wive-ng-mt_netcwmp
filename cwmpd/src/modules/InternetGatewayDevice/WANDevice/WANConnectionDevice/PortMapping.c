@@ -403,14 +403,21 @@ cpe_get_pm(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *poo
 	char param[64] = {};
 	char buf[128] = {};
 
+	const char *enabled = "";
+
 	rule = name_to_rule(cwmp, name, param, sizeof(param));
 
 	if (!rule)
 		return FAULT_CODE_9002;
 
+	enabled = cwmp_nvram_get("PortForwardEnable");
+
 	if (!strcmp("PortMappingEnabled", param)) {
-		/* TODO: nvram PortForwardEnable */
-		*value = "true";
+		if (*enabled == '1' || *enabled == 't') {
+			*value = "true";
+		} else {
+			*value = "false";
+		}
 	} else if (!strcmp("Alias", param)) {
 		*value = pool_pstrdup(pool, "");
 	} else if (!strcmp("PortMappingLeaseDuration", param)) {
