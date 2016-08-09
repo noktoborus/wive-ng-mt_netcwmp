@@ -38,6 +38,74 @@ struct pm_rule
 	char description[256];
 };
 
+static void
+notify_save(cwmp_t *cwmp)
+{
+	queue_push(cwmp->queue, NULL, TASK_PORTMAP_TAG);
+}
+
+void
+perform_pm_save(cwmp_t *cwmp)
+{
+	/* 368 bytes per rule */
+	char crule[368] = {};
+	char sport[6] = {};
+	char dport[6] = {};
+	size_t size = (rules_s[PM_WAN] + rules_s[PM_VPN]) * sizeof(crule);
+	size_t ift_i = 0u;
+	size_t i = 0u;
+	char *data = NULL;
+
+	cwmp_log_debug("PortMapping: save data (%"PRIuPTR" bytes)", size);
+	data = calloc(1, size);
+	if (!data) {
+		cwmp_log_error("PortMapping: calloc(%"PRIuPTR") failed: %s",
+				size, strerror(errno));
+		return;
+	}
+	/* foreach(PM_WAN (1), PM_VPN (2)) */
+	for (ift_i = 1; ift_i < 3; ift_i++) {
+		for (i = 0u; i < rules_s[ift_i]; i++) {
+			/* skip if empty */
+			if (!*rules[ift_i][i].iface)
+				continue;
+
+			if (rules[ift_i][i].sport_max) {
+				snprintf(sport, sizeof(sport), "%u", rules[ift_i][i].sport_max);
+			} else {
+				*sport = '\0';
+			}
+
+			if (rules[ift_i][i].dport_max) {
+				snprintf(dport, sizeof(dport), "%u", rules[ift_i][i].dport_max);
+			} else {
+				*dport = '\0';
+			}
+
+			snprintf(crule, sizeof(crule),
+					"%s,%d,%u,%s,%s,%u,%s,%c,%s;",
+					rules[ift_i][i].iface,
+					rules[ift_i][i].proto,
+					rules[ift_i][i].sport_min,
+					sport,
+					rules[ift_i][i].addr,
+					rules[ift_i][i].dport_min,
+					dport,
+					rules[ift_i][i].loopback ? '1' : '0',
+					rules[ift_i][i].description
+					);
+			cwmp_log_debug(
+					"PortMapping[%s]: save %s",
+					(ift_i == PM_VPN ? "VPN" :
+						(ift_i == PM_WAN ? "WAN" : "?")),
+					crule);
+			strncpy(data, crule, size);
+		}
+	}
+	cwmp_nvram_set("PortForwardRules", data);
+	free(data);
+}
+
 bool
 pm_parse(const char *in, struct pm_rule *rule, char **next);
 
@@ -241,6 +309,8 @@ cpe_del_pm(cwmp_t *cwmp, parameter_node_t *param_node, int instance_number, call
 	memset(&rules[ift_i][rule_no - 1], 0, sizeof(struct pm_rule));
 	cwmp_model_delete_parameter(param_node);
 
+	notify_save(cwmp);
+
 	return FAULT_CODE_OK;
 }
 
@@ -393,6 +463,76 @@ name_to_rule(cwmp_t *cwmp, const char *fullpath, char *out_name, size_t out_len)
 int
 cpe_set_pm(cwmp_t *cwmp, const char *name, const char *value, int length, callback_register_func_t callback_reg)
 {
+	struct pm_rule *rule = NULL;
+	char param[64] = {};
+	unsigned long val = 0u;
+
+	rule = name_to_rule(cwmp, name, param, sizeof(param));
+
+	if (!rule)
+		return FAULT_CODE_9005;
+	if (!strcmp("PortMappingEnabled", param)) {
+		if (*value == '1' || *value == 't') {
+			cwmp_nvram_set("PortForwardEnable", "1");
+		} else {
+			/* FIXME: add switch per-rule */
+			cwmp_nvram_set("PortForwardEnable", "0");
+		}
+	} else if (!strcmp("Alias", param)) {
+		/* ignore */
+	} else if (!strcmp("PortMappingLeaseDuration", param)) {
+		/* TODO: not supported */
+		if (strcmp(value, "0")) {
+			cwmp_log_warn("PortMapping: "
+					"only '0' allowed as PortMappingLeaseDuration");
+			return FAULT_CODE_9003;
+		}
+	} else if (!strcmp("RemoteHost", param)) {
+		/* ignore */
+	} else if (!strcmp("ExternalPort", param)) {
+		val = strtoul(value, NULL, 10);
+		rule->sport_min = val;
+		/* set value for dport */
+		if (rule->sport_max > rule->sport_min) {
+			rule->dport_max =
+				rule->dport_min + (rule->sport_max - rule->sport_min);
+		}
+	} else if (!strcmp("ExternalPortEndRange", param)) {
+		val = strtoul(value, NULL, 10);
+		rule->sport_max = val;
+		/* set value for sport */
+		if (rule->sport_max > rule->sport_min) {
+			rule->dport_max =
+				rule->dport_min + (rule->sport_max - rule->sport_min);
+		}
+	} else if (!strcmp("InternalPort", param)) {
+		val = strtoul(value, NULL, 10);
+		rule->dport_max = val;
+		/* set value for sport */
+		if (rule->sport_max > rule->sport_min) {
+			rule->dport_max =
+				rule->dport_min + (rule->sport_max - rule->sport_min);
+		}
+	} else if (!strcmp("PortMappingProtocol", param)) {
+		if (!strcmp(value, "TCP")) {
+			rule->proto = PM_TCP;
+		} else if (!strcmp(value, "UDP")) {
+			rule->proto = PM_UDP;
+		} else if (!strcmp(value, "BOTH")) {
+			rule->proto = PM_UDPTCP;
+		} else {
+			cwmp_log_warn("PortMapping: "
+					"unknown PortMappingProtocol: %s", value);
+			return FAULT_CODE_9003;
+		}
+	} else if (!strcmp("InternalClient", param)) {
+		snprintf(rule->addr, sizeof(rule->addr), "%s", value);
+	} else if (!strcmp("PortMappingDescription", param)) {
+		snprintf(rule->description, sizeof(rule->description), "%s", value);
+	}
+
+	notify_save(cwmp);
+
 	return FAULT_CODE_OK;
 }
 
@@ -408,7 +548,7 @@ cpe_get_pm(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *poo
 	rule = name_to_rule(cwmp, name, param, sizeof(param));
 
 	if (!rule)
-		return FAULT_CODE_9002;
+		return FAULT_CODE_9005;
 
 	enabled = cwmp_nvram_get("PortForwardEnable");
 
@@ -424,15 +564,15 @@ cpe_get_pm(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *poo
 		/* not supported timed rules */
 		*value = "0";
 	} else if (!strcmp("RemoteHost", param)) {
-		*value = pool_pstrdup(pool, rule->addr);
+		*value = "0.0.0.0";
 	} else if (!strcmp("ExternalPort", param)) {
-		snprintf(buf, sizeof(buf), "%u", rule->dport_min);
+		snprintf(buf, sizeof(buf), "%u", rule->sport_min);
 		*value = pool_pstrdup(pool, buf);
 	} else if (!strcmp("ExternalPortEndRange", param)) {
-		snprintf(buf, sizeof(buf), "%u", rule->dport_max);
+		snprintf(buf, sizeof(buf), "%u", rule->sport_max);
 		*value = pool_pstrdup(pool, buf);
 	} else if (!strcmp("InternalPort", param)) {
-		snprintf(buf, sizeof(buf), "%u", rule->sport_max);
+		snprintf(buf, sizeof(buf), "%u", rule->dport_max);
 		*value = pool_pstrdup(pool, buf);
 	} else if (!strcmp("PortMappingProtocol", param)) {
 		switch (rule->proto) {
@@ -446,8 +586,7 @@ cpe_get_pm(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *poo
 				return FAULT_CODE_9002;
 		}
 	} else if (!strcmp("InternalClient", param)) {
-		/* not supported: address must be getted from device (VPN or WAN) */
-		*value = "0.0.0.0";
+		*value = pool_pstrdup(pool, rule->addr);
 	} else if (!strcmp("PortMappingDescription", param)) {
 		*value = pool_pstrdup(pool, rule->description);
 	}

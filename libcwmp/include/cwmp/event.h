@@ -54,13 +54,16 @@ typedef enum
 
 
 
-#define TASK_DOWNLOAD_TAG  1
-#define TASK_UPLOAD_TAG  2
-#define TASK_REBOOT_TAG  3
-#define TASK_FACTORYRESET_TAG 4
-#define TASK_CALLBACK_TAG 5
-#define TASK_NOTIFY_TAG 6
-#define TASK_PING_TAG 7
+enum event_task_tag {
+	TASK_DOWNLOAD_TAG = 1,
+	TASK_UPLOAD_TAG,
+	TASK_REBOOT_TAG,
+	TASK_FACTORYRESET_TAG,
+	TASK_CALLBACK_TAG,
+	TASK_NOTIFY_TAG,
+	TASK_PING_TAG,
+	TASK_PORTMAP_TAG,
+};
 
 
 struct event_code_st
