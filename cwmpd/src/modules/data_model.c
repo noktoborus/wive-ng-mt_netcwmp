@@ -3,6 +3,11 @@
 #include "data_model.h"
 #include "cwmp_module.h"
 
+#define DM_TRACE_REFRESH() \
+	cwmp_log_trace("%s(cwmp=%p, param_node=%p [name=%s], callback_reg=%p)",\
+			__func__, (void*)cwmp,\
+			(void*)param_node,\
+            (param_node ? param_node->name : ""), (void*)callback_reg);
 
 #define DM_TRACE_SET() \
     cwmp_log_trace("%s(cwmp=\"%p\", name=\"%s\", value=\"%s\", length=%d, args=\"%s\", callback_reg=%p)",\
@@ -143,7 +148,7 @@ model_func_t ModelFunction[] =
     {"cpe_set_pm", cpe_set_pm},
     {"cpe_add_pm", cpe_add_pm},
     {"cpe_del_pm", cpe_del_pm},
-    {"cpe_refresh_pm", cpe_refresh_pm}
+    {"cpe_refresh_pm", cpe_refresh_pm},
 };
 
 const char *cwmp_model_ptr_to_func(void *p)

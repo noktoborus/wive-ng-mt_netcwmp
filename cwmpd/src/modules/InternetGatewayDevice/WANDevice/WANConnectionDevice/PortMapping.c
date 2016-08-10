@@ -342,9 +342,7 @@ cpe_refresh_pm(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_f
 	parameter_node_t *pn_tmp = param_node->parent;
 	parameter_node_t *pn = NULL;
 
-	cwmp_log_trace("%s(cwmp=%p, param_node=%p [name=%s], callback_reg=%p)",
-			__func__, (void*)cwmp,
-			(void*)param_node, param_node->name, (void*)callback_reg);
+	DM_TRACE_REFRESH();
 
 	if (pn_tmp == NULL || (pn_tmp = pn_tmp->parent) == NULL) {
 		return FAULT_CODE_9002;
@@ -476,11 +474,13 @@ name_to_rule(cwmp_t *cwmp, const char *fullpath, char *out_name, size_t out_len)
 }
 
 int
-cpe_set_pm(cwmp_t *cwmp, const char *name, const char *value, int length, callback_register_func_t callback_reg)
+cpe_set_pm(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
 {
 	struct pm_rule *rule = NULL;
 	char param[64] = {};
 	unsigned long val = 0u;
+
+	DM_TRACE_SET();
 
 	rule = name_to_rule(cwmp, name, param, sizeof(param));
 
@@ -565,6 +565,8 @@ cpe_get_pm(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *poo
 	char buf[128] = {};
 
 	const char *enabled = "";
+
+	DM_TRACE_GET();
 
 	rule = name_to_rule(cwmp, name, param, sizeof(param));
 
