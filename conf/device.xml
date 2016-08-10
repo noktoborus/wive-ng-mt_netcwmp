@@ -2,6 +2,18 @@
 <cwmp>
 	<model>
 		<object name="InternetGatewayDevice">
+			<object name="Time">
+				<param name="Enable" rw="1" get_func="cpe_get_nvram_bool" set_func="cpe_set_nvram_bool" args="NTPEnabled"/>
+				<param name="Status" get_func="cpe_get_time_status"/>
+				<param name="NTPServer1" rw="1" get_func="cpe_get_nvram_string_or_empty" set_func="cpe_set_nvram_string" args="NTPServerIP"/>
+				<param name="NTPServer2" rw="1" get_func="cpe_get_const_string" set_func="cpe_set_null"/>
+				<param name="NTPServer3" rw="1" get_func="cpe_get_const_string" set_func="cpe_set_null"/>
+				<param name="NTPServer4" rw="1" get_func="cpe_get_const_string" set_func="cpe_set_null"/>
+				<param name="NTPServer5" rw="1" get_func="cpe_get_const_string" set_func="cpe_set_null"/>
+				<param name="CurrentLocalTime" get_func="cpe_get_time_localtime"/>
+				<param name="LocalTimeZoneName" rw="1" get_func="cpe_get_time_zonename" set_func="cpe_set_nvram_string" args="TZ"/>
+				<!-- params: LocalTimeZone, DaylightSavingsUsed, DaylightSavingsStart, DaylightSavingsEnd are OBSOLETED -->
+			</object>
 			<object name="DeviceInfo">
 				<param name="Manufacturer" inform="1" get_func="cpe_get_igd_di_manufacturer"/>
 				<param name="OUI" inform="1" get_func="cpe_get_igd_di_manufactureroui"/>

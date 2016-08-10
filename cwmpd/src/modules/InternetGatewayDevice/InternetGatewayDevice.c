@@ -1,3 +1,4 @@
+#include "Time/Time.c"
 #include "WANDevice/WANConnectionDevice/PortMapping.c"
 #include "IPPingDiagnostics/IPPingDiagnostics.c"
 #include "DeviceInfo/DeviceInfo.c"
