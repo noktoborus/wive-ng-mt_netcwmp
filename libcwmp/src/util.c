@@ -147,7 +147,7 @@ char *strip_space(char *str)
     return str;
 }
 
-
+/*
 int getIfIp(char *ifname, char *if_addr)
 {
 	struct ifreq ifr;
@@ -169,7 +169,7 @@ int getIfIp(char *ifname, char *if_addr)
 	close(skfd);
 	return 0;
 }
-
+*/
 
 char* getWanIfName(pool_t * pool)
 {
@@ -296,8 +296,8 @@ int getHWStatistic(unsigned long long* rxtx_count) {
 
 	return 0;
 }
-
-int getIfMac(char *ifname, char *if_hw)
+/*
+int getIfMac(char *ifname, char *if_hw, char separator)
 {
 	struct ifreq ifr;
 	char *ptr;
@@ -316,14 +316,22 @@ int getIfMac(char *ifname, char *if_hw)
 	}
 
 	ptr = (char *)&ifr.ifr_addr.sa_data;
-	sprintf(if_hw, "%02X%02X%02X%02X%02X%02X",
+	if (separator) {
+		sprintf(if_hw, "%02X%02X%02X%02X%02X%02X",
 			(ptr[0] & 0377), (ptr[1] & 0377), (ptr[2] & 0377),
 			(ptr[3] & 0377), (ptr[4] & 0377), (ptr[5] & 0377));
+	}
+	else
+	{
+		sprintf(if_hw, "%02X%c%02X%c%02X%c%02X%c%02X%c%02X",
+			(ptr[0] & 0377), separator, (ptr[1] & 0377), separator, (ptr[2] & 0377), separator,
+			(ptr[3] & 0377), separator, (ptr[4] & 0377), separator, (ptr[5] & 0377));
+	}
 
 	close(skfd);
 	return 0;
 }
-
+*/
 ////////////////////////////////////////////////////////
 
 //#ifdef UPLOAD_FIRMWARE_SUPPORT

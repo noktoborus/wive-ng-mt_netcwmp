@@ -221,6 +221,7 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
         if (cwmp->new_request == CWMP_NO) {
             cwmp_log_debug("No new request from ACS");
             sleep(2);
+
             periodic++;
 
             if (periodic < 10) {
@@ -233,7 +234,7 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
                 periodic = 0;
             }
         } else {
-            cwmp_log_error("### ### ### New request from ACS ### ### ###");
+            cwmp_log_info("### ### ### New request from ACS ### ### ###");
         }
 
         cwmp_set_request(cwmp, CWMP_NO);
@@ -246,7 +247,7 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
 
         while (!session_close) {
             cwmp_log_info("session status: %d (%s)",
-            session->status, cwmp_status_string(session->status));
+                session->status, cwmp_status_string(session->status));
 
             switch (session->status) {
             case CWMP_ST_START:
@@ -352,12 +353,12 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
 
 
             default:
-                cwmp_log_debug("Unknown session stutus");
+				cwmp_log_error("ERROR: Unknown session status! (%i)", session->status);
                 break;
             }//end switch
         }//end while(!session_close)
 
-        cwmp_log_info("session stutus: EXIT");
+        cwmp_log_debug("session status: EXIT");
         cwmp_session_free(session);
         session = NULL;
 
@@ -387,9 +388,8 @@ int cwmp_agent_analyse_session(cwmp_session_t * session)
     if (msglength<= 0)
     {
         session->newdata = CWMP_NO;
-        cwmp_log_debug("analyse receive length is 0");
-    cwmp_log_debug("cwmp_agent_analyse_session ERROR 1");
-    goto eventcheck;
+        cwmp_log_error("ERROR: cwmp_agent_analyse_session receive length is ZERO");
+        goto eventcheck;
     }
 
     doctmppool = pool_create(POOL_DEFAULT_SIZE);
@@ -411,7 +411,7 @@ int cwmp_agent_analyse_session(cwmp_session_t * session)
 
     method = cwmp_get_rpc_method_name(doc);
 
-    cwmp_log_info("analyse method is: %s", method);
+    cwmp_log_debug("analyse method is: %s", method);
 
     cwmp_chunk_clear(session->writers);
     pool_clear(session->envpool);
@@ -487,7 +487,7 @@ int cwmp_agent_analyse_session(cwmp_session_t * session)
     cwmp_t * cwmp = session->cwmp;
     if(newdoc == NULL)
     {
-        cwmp_log_warn("agent analyse newdoc is null. ");
+        cwmp_log_debug("agent analyse newdoc is null. ");
 eventcheck:
     {
         cwmp_log_debug("agent analyse begin check global event, %d", cwmp->event_global.event_flag);
@@ -689,7 +689,7 @@ int cwmp_agent_download_file(download_arg_t * dlarg)
         return 9001;
     }
 
-    cwmp_log_info("FILETYPE: %s", dlarg->filetype);
+    cwmp_log_debug("FILETYPE: %s", dlarg->filetype);
 
     if(strcmp(dlarg->filetype, "1 Firmware Upgrade Image") == 0)
     {
@@ -866,7 +866,7 @@ int cwmp_agent_run_tasks(cwmp_t * cwmp)
             case TASK_REBOOT_TAG:
                 {
                     //begin reboot system
-                    cwmp_log_debug("reboot ...");
+                    cwmp_log_info("reboot ...");
                     cwmp_event_set_value(cwmp, INFORM_MREBOOT, 1, NULL, 0, 0, 0);
                     cwmp_event_clear_active(cwmp);
                     system("reboot");

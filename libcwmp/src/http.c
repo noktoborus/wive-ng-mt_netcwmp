@@ -964,8 +964,9 @@ int http_read_request(http_socket_t * sock, http_request_t * request, pool_t * p
     cwmp_chunk_create(&header, pool);
 
     rc = http_read_header(sock, header, pool);
-    if (rc <= 0) {
-        cwmp_log_debug("http_read_request ERR %i",rc);
+    if (rc <= 0)
+    {
+        if (rc != 0) cwmp_log_error("ERROR: http_read_request ERR %i",rc);
         return rc;
     }
 
@@ -1295,7 +1296,7 @@ int http_read_response(http_socket_t * sock, http_response_t * response, pool_t 
     rc = http_read_header(sock, header, pool);
     if (rc <= 0)
     {
-        cwmp_log_debug("http_read_response ERROR 1");
+        cwmp_log_error("http_read_response ERROR 1");
         return -1;
     }
 
@@ -1364,11 +1365,10 @@ int http_read_response(http_socket_t * sock, http_response_t * response, pool_t 
     rc = http_read_body(sock, cont_len);//, &body, pool);
     if (rc < 0 || (code != 200 && code != 204))
     {
-        cwmp_log_info("Http read response code is (%d)\n", code);
+        cwmp_log_debug("Http read response code is (%d)\n", code);
     }
-
-	cwmp_log_debug("http_read_response OK");
-     return code;
+    cwmp_log_debug("http_read_response OK");
+    return code;
 
 }
 
@@ -1789,7 +1789,7 @@ int http_send_file_request(http_socket_t * sock , http_request_t * request, cons
     fseek(tf,0L,SEEK_END);
     len2 = ftell(tf);
     fseek(tf,0L,SEEK_SET);
-    cwmp_log_debug("http_send_file_request FILE LEN %lu",len2);
+    cwmp_log_info("http_send_file_request FILE LEN %lu",len2);
 
 
     len1 = TRsnprintf(buffer, HTTP_DEFAULT_LEN, header_fmt,
@@ -1847,7 +1847,7 @@ int http_send_file_request(http_socket_t * sock , http_request_t * request, cons
     }
 
 
-    cwmp_log_info("INFO: http_send_file_request OK (len: %i)",totallen);
+    cwmp_log_debug("INFO: http_send_file_request OK (len: %i)",totallen);
     return totallen;
 }
 

@@ -178,13 +178,9 @@ char *cwmp_nvram_get(const char * key)
 
 char * cwmp_nvram_pool_get(pool_t * pool, const char * key)
 {
-//    char keybuf[1024];
-//    sprintf(keybuf,"nvram:%s",key);
-//    return cwmp_conf_pool_get(pool, keybuf);
     //FIXME: libnvram check const!
     char* val = nvram_get(RT2860_NVRAM, (char*)key);
     cwmp_log_debug("%s(\"%s\") = \"%s\"", __func__, key, val);
-
     return pool_pstrdup(pool,val);
 }
 
