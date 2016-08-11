@@ -15,7 +15,7 @@
 #include "cwmp/log.h"
 #include "cwmp/event.h"
 #include "cwmp_private.h"
-
+#include "cwmp/model.h"
 
 
 
@@ -1006,11 +1006,7 @@ char * cwmp_get_parameter_nodename(const char * name, char * buffer)
     char *p = (char *)name;
     char *q = buffer;
 
-    while (*p)
-    {
-        if (*p == '.')
-            break;
-
+    while (*p || *p == '.') {
         *q++ = *p++;
     }
 
@@ -1513,9 +1509,19 @@ int cwmp_parse_getparametervalues_message(env_t * env , xmldoc_t * doc, paramete
 
 parameter_t*  cwmp_parameter_list_add_parameter(env_t * env, pool_t * pool , parameter_list_t ** ppl, parameter_node_t * root, const char * name, const char * value, BOOL exec_get, BOOL exec_set)
 {
-    parameter_t* parameter = cwmp_create_parameter(env ,  name, value, TRstrlen(value), 0);
-    if (!parameter)
-    {
+    parameter_t* parameter = NULL;
+
+    cwmp_log_trace("%s(env=%p, pool=%p, ppl=%p, root=%p [name=%s], "
+            "name=%s, value=%s, exec_get=%s, exec_set=%s)",
+            __func__, (void*)env, (void*)pool, (void*)ppl,
+            (void*)root, root ? root->name : "",
+            name, value,
+            exec_get ? "true" : "false",
+            exec_set ? "true" : "false"
+            );
+
+    parameter = cwmp_create_parameter(env, name, value, TRstrlen(value), 0);
+    if (!parameter) {
         cwmp_log_error("%s: unable to create parameter (%s=%s)", __func__, name, value);
         return NULL;
     }
@@ -1565,27 +1571,14 @@ parameter_t*  cwmp_parameter_list_add_parameter(env_t * env, pool_t * pool , par
                 parameter->fault_code =  (*pn->set)(env->cwmp, name,  value, TRstrlen(value), pn->args, callback_register_task);
 
                 if (parameter->fault_code == FAULT_CODE_OK) {
-                    cwmp_log_debug("%s: set parameter value (%s=%s) [setter: %p]", __func__, name, value, (void*)(*pn->set));
+                    cwmp_log_debug("%s: set parameter value (%s=%s) [setter: %s]", __func__, name, value, cwmp_model_ptr_to_func((void*)pn->set);
                 }
             } else {
                 cwmp_log_warn("%s: parameter %s has no setter", __func__, name);
                 parameter->fault_code = FAULT_CODE_9008;
             }
         }
-/*
-        if ((*ppl)->count >= (*ppl)->size - 1)
-        {
-                parameter_t ** pp = XREALLOC((*ppl)->parameters, (*ppl)->size * sizeof(parameter_t*), sizeof(parameter_t*) * ((*ppl)->size + CWMP_RENEW_SIZE));
-                if (!pp)
-                {
-//                    continue;
-                    return NULL;
-                }
-                (*ppl)->parameters = pp;
-                (*ppl)->size += CWMP_RENEW_SIZE;
-        }
-        (*ppl)->count += 1;
-    */
+
         if (cwmp_add_parameter_to_list(env, *ppl, parameter) != CWMP_OK) {
             cwmp_log_error("%s: parameter %s add error.", __func__, name);
         }
@@ -2257,49 +2250,43 @@ int cwmp_create_inform_message_parameter_iterator(env_t * env, parameter_list_t 
     parameter_node_t * parameterNode = upperLevelNode->child;
     while (parameterNode)
     {
-	parameter_node_t * pnode  = parameterNode;
+        parameter_node_t * pnode  = parameterNode;
         parameterNode = parameterNode->next_sibling;
 
-	char cname[1024];
+        char cname[1024];
         char * name = &cname[0];
 
-	if (nodePath != NULL)
-	{
-		strncpy(name,nodePath,1024);
-		strncat(name,".",1024);
-		strncat(name,pnode->name,1024);
-	}
-	else
-	{
-		strncat(name,pnode->name,1024);
-	}
+        if (nodePath != NULL) {
+            strncpy(name,nodePath,1024);
+            strncat(name,".",1024);
+            strncat(name,pnode->name,1024);
+        } else {
+            strncat(name,pnode->name,1024);
+        }
 
+        // cwmp_log_debug("cwmp_parameter_list_add_parameter: param name %s .", name);
+        if (pnode->inform > 0 && pnode->inform_sort == sortFilter) {
+            if (pnode->inform == 2)
+                pnode->inform = 0;
 
-//	cwmp_log_debug("cwmp_parameter_list_add_parameter: param name %s .", name);
+            cwmp_log_debug("INFORM PARAM: %s \n", name);
+            parameter_t * parameter = cwmp_parameter_list_add_parameter(env, pool, ppl, rootNode, name, NULL, 1, 0);//Add with getter exec
 
-	if (pnode->inform > 0 && pnode->inform_sort == sortFilter)
-	{
-	    if (pnode->inform == 2) pnode->inform = 0;
+            if(!parameter || parameter->fault_code != FAULT_CODE_OK) {
+                // cwmp_set_faultcode(fault, FAULT_CODE_9003);
+                cwmp_log_error("%s: parameter (%s) getter returned fault code %i",
+                        __func__, name, parameter->fault_code);
+                rc = CWMP_ERROR;
+                continue;
+            }
+        }
 
-	    cwmp_log_debug("INFORM PARAM: %s \n", name);
-	    parameter_t * parameter = cwmp_parameter_list_add_parameter(env, pool, ppl, rootNode, name, NULL, 1, 0);//Add with getter exec
-
-    	    if(!parameter || parameter->fault_code != FAULT_CODE_OK)
-    	    {
-//	    	cwmp_set_faultcode(fault, FAULT_CODE_9003);
-		cwmp_log_error("cwmp_parse_getparametervalues_message: parameter (%s) getter returned fault code %i", name, parameter->fault_code);
-		rc = CWMP_ERROR;
-		continue;
-	    }
-	}
-
-	if (pnode->child != NULL) {
-	    cwmp_create_inform_message_parameter_iterator(env, ppl, rootNode, pnode, name, sortFilter, pool);
-	}
+        if (pnode->child != NULL) {
+            cwmp_create_inform_message_parameter_iterator(env, ppl, rootNode, pnode, name, sortFilter, pool);
+        }
     }
 
     return rc;
-
 }
 
 /*
@@ -2331,12 +2318,17 @@ xmldoc_t* cwmp_create_inform_message(env_t * env ,  header_t * header,
     xmlnode_t * informNode;
     xmlnode_t * headerNode;
     xmlnode_t * deviceIdNode, *eventsNode, *maxenvNode, *currtimeNode, *retryCountNode, *paramlistNode;
+    xmldoc_t * doc = NULL;
 
-    cwmp_log_debug("DEBUG: cwmp_create_inform_message");
+    cwmp_log_trace(
+            "%s(env=%p, deviceid=%p, events=%p, "
+            "currentt=%p, max_envelope=%u, retry_count=%u,"
+            "pl=%p, root=%p [name=%s])",
+            __func__, (void*)header, (void*)deviceid, (void*)events,
+            (void*)currentt, max_envelope, retry_count,
+            (void*)pl, (void*)root, (root ? root->name : ""));
 
-
-    xmldoc_t * doc = XmlDocCreateDocument(env->pool );
-    FUNCTION_TRACE();
+    doc = XmlDocCreateDocument(env->pool);
 
     envelopeNode    = cwmp_create_envelope_node(env ,  & doc->node);
 
@@ -2347,7 +2339,6 @@ xmldoc_t* cwmp_create_inform_message(env_t * env ,  header_t * header,
 
     bodyNode        = cwmp_create_body_node(env ,  envelopeNode);
 
-//    cwmp_create_inform_message_iterate_parameters(env, root, pl);
     int n = -2;
     int k = 0;
     while (pl->count > n)
