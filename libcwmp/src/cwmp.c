@@ -1571,7 +1571,7 @@ parameter_t*  cwmp_parameter_list_add_parameter(env_t * env, pool_t * pool , par
                 parameter->fault_code =  (*pn->set)(env->cwmp, name,  value, TRstrlen(value), pn->args, callback_register_task);
 
                 if (parameter->fault_code == FAULT_CODE_OK) {
-                    cwmp_log_debug("%s: set parameter value (%s=%s) [setter: %s]", __func__, name, value, cwmp_model_ptr_to_func((void*)pn->set);
+                    cwmp_log_debug("%s: set parameter value (%s=%s) [setter: %s]", __func__, name, value, cwmp_model_ptr_to_func((void*)pn->set));
                 }
             } else {
                 cwmp_log_warn("%s: parameter %s has no setter", __func__, name);
