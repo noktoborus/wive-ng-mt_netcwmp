@@ -1,7 +1,10 @@
 int cpe_get_igd_wan_ppp_servicename(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
 
-    char* sername =  cwmp_nvram_pool_get(pool, "vpnService");
+    char* sername = NULL;
+
+	DM_TRACE_GET();
+	sername = cwmp_nvram_pool_get(pool, "vpnService");
     if (sername == NULL)
     {
 	*value = pool_pstrdup(pool, "");
@@ -18,8 +21,10 @@ int cpe_get_igd_wan_ppp_servicename(cwmp_t * cwmp, const char * name, char ** va
 int cpe_get_igd_wan_ppp_authprot(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
 
-    int authProt =  cwmp_nvram_get_int("vpnAuthProtocol", 0);
+    int authProt =  0;
 
+	DM_TRACE_GET();
+	authProt = cwmp_nvram_get_int("vpnAuthProtocol", 0);
     char* stdstr;
 
     switch (authProt) {
@@ -35,11 +40,12 @@ int cpe_get_igd_wan_ppp_authprot(cwmp_t * cwmp, const char * name, char ** value
     return FAULT_CODE_OK;
 }
 
-int cpe_set_igd_wan_ppp_authprot(cwmp_t * cwmp, const char * name, const char * value, int length, callback_register_func_t callback_reg)
+int cpe_set_igd_wan_ppp_authprot(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
-    FUNCTION_TRACE();
 
     char* valStr = "0";
+
+    DM_TRACE_SET();
 
     if (strcmp(value,"PAP") == 0) valStr = "1"; else
     if (strcmp(value,"CHAP") == 0) valStr = "2"; else

@@ -1,7 +1,10 @@
 int cpe_get_igd_wan_ip(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
     /* copied from cpe_get_igd_ms_connectionrequesturl() */
-    char* local_ip = getIntIp(pool);
+    char* local_ip = NULL;
+
+	DM_TRACE_GET();
+	local_ip = getIntIp(pool);
 
     if (local_ip == 0) {
         cpe_get_localip("br0", local_ip);
@@ -27,7 +30,7 @@ int cpe_get_igd_wan_ip(cwmp_t * cwmp, const char * name, char ** value, char * a
 
 int  cpe_refresh_igd_wandevice(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_func_t callback_reg)
 {
-    FUNCTION_TRACE();
+    DM_TRACE_REFRESH();
 
     if(!param_node)
     {

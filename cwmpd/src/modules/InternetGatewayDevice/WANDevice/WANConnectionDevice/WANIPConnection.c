@@ -1,15 +1,15 @@
 int cpe_get_igd_wan_ip_dnsservers(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    FUNCTION_TRACE();
+    DM_TRACE_GET();
 
     *value = cwmp_nvram_pool_get(pool, "wan_primary_dns");
 
     return FAULT_CODE_OK;
 }
 
-int cpe_set_igd_wan_ip_dnsservers(cwmp_t * cwmp, const char * name, const char * value, int length, callback_register_func_t callback_reg)
+int cpe_set_igd_wan_ip_dnsservers(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
-    FUNCTION_TRACE();
+    DM_TRACE_SET();
 
     cwmp_nvram_set("wan_primary_dns", value);
     cwmp_nvram_set("wan_static_dns", "on");
@@ -18,9 +18,9 @@ int cpe_set_igd_wan_ip_dnsservers(cwmp_t * cwmp, const char * name, const char *
 }
 
 
-int cpe_set_igd_wan_ip_dnsenabled(cwmp_t * cwmp, const char * name, const char * value, int length, callback_register_func_t callback_reg)
+int cpe_set_igd_wan_ip_dnsenabled(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
-    FUNCTION_TRACE();
+    DM_TRACE_SET();
 
     if (value[0] == '1') cwmp_nvram_set("wan_static_dns", "off");
 
@@ -30,6 +30,9 @@ int cpe_set_igd_wan_ip_dnsenabled(cwmp_t * cwmp, const char * name, const char *
 
 int cpe_get_igd_wan_ip_rxtxbytes(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool) {
     unsigned long long rxtx[12];
+
+	DM_TRACE_GET();
+
     getHWStatistic(&rxtx[0]);
 
     int i;
@@ -62,8 +65,11 @@ int cpe_get_igd_wan_ip_rxtxbytes(cwmp_t * cwmp, const char * name, char ** value
 
 int cpe_get_igd_wan_ip_addrtype(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
+	const char* authType = NULL;
 
-   const char* authType = cwmp_nvram_pool_get(pool, "wanConnectionMode");
+	DM_TRACE_GET();
+
+	authType = cwmp_nvram_pool_get(pool, "wanConnectionMode");
     if (authType == NULL) {
 	cwmp_log_error("cpe_get_igd_wan_ip_addrtype: undefined wanConnectionMode param!");
 	return FAULT_CODE_9002;
@@ -74,18 +80,17 @@ int cpe_get_igd_wan_ip_addrtype(cwmp_t * cwmp, const char * name, char ** value,
     if (strcmp(authType,"STATIC") == 0) tpstr = "Static"; else
     if (strcmp(authType,"DHCP") == 0) tpstr = "DHCP"; else
     if (strcmp(authType,"ZERO") == 0) tpstr = "AutoIP";
-    
+
     *value = pool_pstrdup(pool, tpstr);
 
     return FAULT_CODE_OK;
 }
 
-int cpe_set_igd_wan_ip_addrtype(cwmp_t * cwmp, const char * name, const char * value, int length, callback_register_func_t callback_reg)
+int cpe_set_igd_wan_ip_addrtype(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
-    FUNCTION_TRACE();
-
     char* valStr;
-    cwmp_log_debug("DEBUG: cpe_set_igd_wan_ip_addrtype: value is %s \n",value);
+
+	DM_TRACE_SET();
 
     switch (value[0]) {
 	case 'S': valStr = "STATIC"; break;
@@ -108,7 +113,7 @@ int cpe_set_igd_wan_ip_addrtype(cwmp_t * cwmp, const char * name, const char * v
 
 int  cpe_refresh_igd_wanipconnection(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_func_t callback_reg)
 {
-    FUNCTION_TRACE();
+    DM_TRACE_REFRESH();
 
     if(!param_node)
     {
@@ -127,26 +132,26 @@ int  cpe_refresh_igd_wanipconnection(cwmp_t * cwmp, parameter_node_t * param_nod
         }
         child_param->next_sibling = NULL;
 
-        int wan_index = get_index_after_paramname(param_node, "WANDevice"); 
-        int wan_conn_dev_index = get_index_after_paramname(param_node, "WANConnectionDevice"); 
+        int wan_index = get_index_after_paramname(param_node, "WANDevice");
+        int wan_conn_dev_index = get_index_after_paramname(param_node, "WANConnectionDevice");
 
         if(wan_index == 1)
         {
             parameter_node_t * ipconn_param;
             switch(wan_conn_dev_index)
             {
-                case 1: 
+                case 1:
                     cwmp_model_copy_parameter(param_node, &ipconn_param, 1);
                     break;
 
                 case 2:
-                    cwmp_model_copy_parameter(param_node, &ipconn_param, 1); 
+                    cwmp_model_copy_parameter(param_node, &ipconn_param, 1);
                     cwmp_model_copy_parameter(param_node, &ipconn_param, 2);
                     break;
 
             }
-            
-            
+
+
         }
         else
         if(wan_index == 2)
@@ -154,7 +159,7 @@ int  cpe_refresh_igd_wanipconnection(cwmp_t * cwmp, parameter_node_t * param_nod
             //don't support
         }
 
-        cwmp_model_refresh_object(cwmp, param_node, 0, callback_reg); 
+        cwmp_model_refresh_object(cwmp, param_node, 0, callback_reg);
     }
 
     return FAULT_CODE_OK;

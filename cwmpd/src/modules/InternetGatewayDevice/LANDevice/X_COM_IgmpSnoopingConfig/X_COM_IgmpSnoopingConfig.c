@@ -2,35 +2,38 @@
 //InternetGatewayDevice.LANDevice.X_COM_IgmpSnoopingConfig.Enabled
 int cpe_get_igd_lan_igmp_enabled(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    FUNCTION_TRACE();
-    int igmp_enabled = cwmp_nvram_get_int("igmpEnabled", 0);
+    int igmp_enabled = 0;
 
+	DM_TRACE_GET();
+
+	igmp_enabled = cwmp_nvram_get_int("igmpEnabled", 0);
     *value = pool_pstrdup(pool, igmp_enabled?"1":"0");
     return FAULT_CODE_OK;
 }
 
-int cpe_set_igd_lan_igmp_enabled(cwmp_t * cwmp, const char * name, const char * value, int length, callback_register_func_t callback_reg)
+int cpe_set_igd_lan_igmp_enabled(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
-    FUNCTION_TRACE();
+    DM_TRACE_SET();
 
     cwmp_nvram_set("igmpEnabled", (value[0]=='0')?"0":"1");
-
     return FAULT_CODE_OK;
 }
 
 int cpe_get_igd_lan_igmp_version(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
 
-    FUNCTION_TRACE();
-    int igmp_enabled = cwmp_nvram_get_int("igmpEnabled", 0);
+    int igmp_enabled = 0;
 
+	DM_TRACE_GET();
+
+	igmp_enabled = cwmp_nvram_get_int("igmpEnabled", 0);
     *value = pool_pstrdup(pool, igmp_enabled?"2":"0");
     return FAULT_CODE_OK;
 }
 
-int cpe_set_igd_lan_igmp_version(cwmp_t * cwmp, const char * name, const char * value, int length, callback_register_func_t callback_reg)
+int cpe_set_igd_lan_igmp_version(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
-    FUNCTION_TRACE();
+    DM_TRACE_SET();
 
     cwmp_nvram_set("igmpEnabled", (value[0]=='0')?"0":"1");
     return FAULT_CODE_OK;
@@ -63,7 +66,7 @@ int cpe_get_igd_lan_wlan_standard(cwmp_t * cwmp, const char * name, char ** valu
 	case 9: stdstr = "b/g/n";break;
 	default: stdstr = "b/g/n";break;
     }
-    
+
     *value = pool_pstrdup(pool, stdstr);
 
     return FAULT_CODE_OK;
@@ -73,8 +76,8 @@ int cpe_set_igd_lan_wlan_standard(cwmp_t * cwmp, const char * name, const char *
 {
     FUNCTION_TRACE();
 
-    
-    
+
+
 
     return FAULT_CODE_OK;
 }
