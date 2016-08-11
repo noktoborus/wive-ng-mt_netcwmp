@@ -719,6 +719,7 @@ parameter_node_t * cwmp_initialize_parameter_node(env_t * env ,
         parameter_notify_handler_pt notify)
 {
     parameter_node_t * node;
+    char tmp[42];
     char * nodename;
     cwmp_log_debug("cwmp_initialize_parameter_node ...\n");
     if (cwmp_create_parameter_node(env ,  &node, name) != 0)
@@ -736,6 +737,8 @@ parameter_node_t * cwmp_initialize_parameter_node(env_t * env ,
         node->name = XSTRDUP(name);
     }
 
+    snprintf(tmp, sizeof(tmp), "cpe-%s", node->name);
+    node->alias = XSTRDUP(tmp);
 
     node->rw = rw;
     node->type = type;
@@ -1102,7 +1105,8 @@ parameter_node_t * cwmp_get_parameter_path_node(parameter_node_t * parent, const
                 continue;
             }
 
-            if (TRstrcmp(param_node->name, name) == 0) {
+            if (TRstrcmp(param_node->name, name) == 0 ||
+                    TRstrcmp(param_node->alias, name) == 0) {
                 //cwmp_log_debug("Found param node: %s\n", name);
                 break;
             }
@@ -2188,14 +2192,18 @@ xmlnode_t * cwmp_create_retry_count_node(env_t * env ,  xmlnode_t * parent, unsi
 
 int cwmp_create_parameter_node(env_t * env ,  parameter_node_t ** news, const char * name)
 {
-    parameter_node_t * param_node = XMALLOC(sizeof(parameter_node_t));
-    cwmp_log_debug("cwmp_create_parameter_node ...\n");
+    parameter_node_t * param_node = NULL;
+
+    cwmp_log_trace("%s(env=%p, news=%p, name=\"%s\")",
+            __func__, (void*)env, (void*)news, name);
+    param_node = XMALLOC(sizeof(parameter_node_t));
     if (!param_node)
     {
         return CWMP_ERROR;
     }
     //param_node->full_name = XSTRDUP(name);
     param_node->name = NULL;
+    param_node->alias = NULL;
     param_node->rw = 0;
     param_node->type = 0;
     //param_node->type = NULL;

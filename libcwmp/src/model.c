@@ -5,7 +5,7 @@
 
 int cwmp_model_copy_parameter_object(parameter_node_t * object_param, parameter_node_t * new_node, int instance_number)
 {
-
+	char tmp[42] = {};
     parameter_node_t * tmp_node, *curr_node, *next_newnode;
     if(!object_param || !new_node)
     {
@@ -14,7 +14,10 @@ int cwmp_model_copy_parameter_object(parameter_node_t * object_param, parameter_
     if(instance_number > 0)
     {
         memcpy(new_node, object_param, sizeof(parameter_node_t));
+		/* TODO: load alias */
+		TRsnprintf(tmp, sizeof(tmp), "cpe-%d", instance_number);
         new_node->name = TRstrdup(TRitoa(instance_number));
+		new_node->alias = TRstrdup(tmp);
 
         new_node->child = NULL;
         new_node->next_sibling = NULL;
@@ -35,6 +38,7 @@ int cwmp_model_copy_parameter_object(parameter_node_t * object_param, parameter_
         next_newnode = MALLOC(sizeof(parameter_node_t));
         memcpy(next_newnode, tmp_node, sizeof(parameter_node_t));
         next_newnode->name = TRstrdup(tmp_node->name);
+		next_newnode->alias = TRstrdup(tmp_node->alias);
         next_newnode->parent = new_node;
         next_newnode->child = NULL;
         next_newnode->next_sibling = NULL;
@@ -81,6 +85,7 @@ int cwmp_model_copy_parameter(parameter_node_t * param, parameter_node_t ** new_
     }
 
     new_node->name = NULL;
+	new_node->alias = NULL;
     new_node->rw = 0;
     new_node->inform = 0;
     new_node->inform_sort = 0;
@@ -116,6 +121,7 @@ int cwmp_model_free_parameter(parameter_node_t * param)
         cwmp_model_delete_parameter(tmp_param);
     }
 
+	free(param->alias);
     free(param->name);
     free(param);
 
@@ -178,6 +184,7 @@ int cwmp_model_init_parameter(parameter_node_t * param, xmlnode_t * node, model_
     param->del = NULL;
     param->refresh = NULL;
     param->args = NULL;
+	char tmp[42] = {};
 
     if(!node)
     {
@@ -209,7 +216,9 @@ int cwmp_model_init_parameter(parameter_node_t * param, xmlnode_t * node, model_
     }
 
     param->name = TRstrdup(name);
-
+	/* TODO: load alias */
+	snprintf(tmp, sizeof(tmp), "cpe-%s", param->name);
+	param->alias = TRstrdup(tmp);
 
     value = cwmp_xml_get_node_attribute(node, "rw");
     if(value)

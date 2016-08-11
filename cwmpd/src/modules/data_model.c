@@ -18,9 +18,12 @@
             __func__, (void*)cwmp, name, (void*)value, args, (void*)pool);
 
 #include "InternetGatewayDevice/InternetGatewayDevice.c"
+#include "alias.c"
 
 model_func_t ModelFunction[] =
 {
+    {"cpe_get_alias", cpe_get_alias},
+    {"cpe_set_alias", cpe_set_alias},
     {"cpe_get_igd_di_manufacturer", cpe_get_igd_di_manufacturer},
     {"cpe_get_igd_di_manufactureroui", cpe_get_igd_di_manufactureroui},
     {"cpe_get_igd_di_productclass", cpe_get_igd_di_productclass},

@@ -381,6 +381,7 @@ struct parameter_node_attr_st
 struct parameter_node_st
 {
 	char *    name;
+	char *    alias;
 	cwmp_byte_t	rw;	//read / writable
 	cwmp_byte_t     type;
 	cwmp_byte_t	inform;	//informable parameter
