@@ -386,8 +386,12 @@ struct parameter_node_st
 	cwmp_byte_t	inform;	//informable parameter
 	cwmp_byte_t	inform_sort;	//informable parameter sorting
 
+	/* failback value field
+	 * use if setter not defined and getter returns fault code
+	 */
 	size_t		value_length;
 	char *          value;
+
 	parameter_node_attr_t attr;
 
 	parameter_node_t * parent;
