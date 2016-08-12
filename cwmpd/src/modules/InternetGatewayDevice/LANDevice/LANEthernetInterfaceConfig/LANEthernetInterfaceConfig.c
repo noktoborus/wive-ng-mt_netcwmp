@@ -5,7 +5,15 @@
 int
 cpe_refresh_LEIC(cwmp_t *cwmp, parameter_node_t *param_node, callback_register_func_t callback_reg)
 {
+
 	DM_TRACE_REFRESH();
+
+	/* remove old list  */
+	cwmp_model_delete_object_child(cwmp, param_node);
+
+	/* populate new */
+	/* TODO: use portstatus from libwive */
+
 	return FAULT_CODE_OK;
 }
 
