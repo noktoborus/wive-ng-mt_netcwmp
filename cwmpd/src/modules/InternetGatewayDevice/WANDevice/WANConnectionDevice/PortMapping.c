@@ -338,39 +338,25 @@ cpe_refresh_pm(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_f
 	enum pm_type ift_i = PM_NONE;
 	unsigned rules_c = 0u;
 
-	char *parent_name = NULL;
-	parameter_node_t *pn_tmp = param_node->parent;
 	parameter_node_t *pn = NULL;
 
 	DM_TRACE_REFRESH();
 
-	if (pn_tmp == NULL || (pn_tmp = pn_tmp->parent) == NULL) {
+	if (param_node->parent == NULL || param_node->parent->parent == NULL) {
 		return FAULT_CODE_9002;
 	}
 
-	parent_name = pn_tmp->name;
-
-	ift = nodename_to_ift(parent_name, &ift_i);
+	ift = nodename_to_ift(param_node->parent->parent->name, &ift_i);
 	if (!ift) {
 		return FAULT_CODE_9002;
 	}
 
 	cwmp_log_debug("PortMapping[%s]: refresh (%s) for %s",
-			ift, param_node->name, parent_name);
+			ift, param_node->name,
+			param_node->parent->parent->name);
 
 	/* remove old list  */
-	pn_tmp = param_node->child;
-	while (pn_tmp) {
-		pn = pn_tmp;
-		pn_tmp = pn_tmp->next_sibling;
-
-		/* skip "{i}" */
-		if (!strcmp(pn->name, "{i}"))
-			continue;
-
-		/* delete */
-		cwmp_model_delete_parameter(pn);
-	}
+	cwmp_model_delete_object_child(cwmp, param_node);
 
 	free(rules[ift_i]);
 	rules[ift_i] = NULL;

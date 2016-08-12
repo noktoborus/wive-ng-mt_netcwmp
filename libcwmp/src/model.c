@@ -408,6 +408,29 @@ int cwmp_model_refresh_object(cwmp_t * cwmp, parameter_node_t *param, int flag, 
     return CWMP_OK;
 }
 
+int cwmp_model_delete_object_child(cwmp_t *cwmp, parameter_node_t *param)
+{
+
+	parameter_node_t *pn = NULL;
+	cwmp_log_trace("%s(cwmp=%p, param=%p [name=%s])",
+			__func__, (void*)cwmp, (void*)param, param ? param->name : "");
+
+	if (!param)
+		return CWMP_ERROR;
+
+	pn = param->child;
+	while (pn) {
+		pn = param;
+		param = param->next_sibling;
+
+		if (!strcmp(pn->name, "{i}"))
+			continue;
+
+		cwmp_model_delete_parameter(pn);
+	}
+	return CWMP_OK;
+}
+
 int cwmp_model_load_parameter(cwmp_t * cwmp, xmldoc_t * doc, model_func_t * func_list, int func_count)
 {
     pool_t * pool = cwmp->pool;
