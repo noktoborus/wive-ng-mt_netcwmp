@@ -42,54 +42,33 @@
 			</object>
 			<object name="LANDevice">
 			<object name="1">
-				<object name="LANEthernetInterfaceConfig">
-					<object name="1">
-					<object name="Stats">
-						<param name="BytesSent" get_func="cpe_get_const_string" args="1"/>
-						<param name="BytesReceived" get_func="cpe_get_const_string" args="1"/>
-						<param name="PacketsSent" get_func="cpe_get_const_string" args="1"/>
-						<param name="PacketsReceived" get_func="cpe_get_const_string" args="1"/>
-					</object>
-					</object>
-					<object name="2">
-					<object name="Stats">
-						<param name="BytesSent" get_func="cpe_get_const_string" args="1"/>
-						<param name="BytesReceived" get_func="cpe_get_const_string" args="1"/>
-						<param name="PacketsSent" get_func="cpe_get_const_string" args="1"/>
-						<param name="PacketsReceived" get_func="cpe_get_const_string" args="1"/>
-					</object>
-					</object>
-					<object name="3">
-					<object name="Stats">
-						<param name="BytesSent" get_func="cpe_get_const_string" args="1"/>
-						<param name="BytesReceived" get_func="cpe_get_const_string" args="1"/>
-						<param name="PacketsSent" get_func="cpe_get_const_string" args="1"/>
-						<param name="PacketsReceived" get_func="cpe_get_const_string" args="1"/>
-					</object>
-					</object>
-					<object name="4">
-					<object name="Stats">
-						<param name="BytesSent" get_func="cpe_get_const_string" args="1"/>
-						<param name="BytesReceived" get_func="cpe_get_const_string" args="1"/>
-						<param name="PacketsSent" get_func="cpe_get_const_string" args="1"/>
-						<param name="PacketsReceived" get_func="cpe_get_const_string" args="1"/>
-					</object>
-					</object>
-					<object name="5">
-					<object name="Stats">
-						<param name="BytesSent" get_func="cpe_get_const_string" args="1"/>
-						<param name="BytesReceived" get_func="cpe_get_const_string" args="1"/>
-						<param name="PacketsSent" get_func="cpe_get_const_string" args="1"/>
-						<param name="PacketsReceived" get_func="cpe_get_const_string" args="1"/>
-					</object>
-					</object>
-					<object name="6">
-					<object name="Stats">
-						<param name="BytesSent" get_func="cpe_get_const_string" args="1"/>
-						<param name="BytesReceived" get_func="cpe_get_const_string" args="1"/>
-						<param name="PacketsSent" get_func="cpe_get_const_string" args="1"/>
-						<param name="PacketsReceived" get_func="cpe_get_const_string" args="1"/>
-					</object>
+				<object name="LANEthernetInterfaceConfig" refresh_func="cpe_refresh_LEIC">
+					<object name="{i}">
+						<param name="Enable" rw="1" get_func="cpe_get_LEIC_Enable" set_func="cpe_set_LEIC_Enable"/>
+						<param name="Status" get_func="cpe_get_LEIC_Status"/>
+						<param name="Alias" rw="1" get_func="cpe_get_alias" set_func="cpe_set_alias"/>
+						<param name="Name" get_func="cpe_get_LEIC_Name"/>
+						<param name="MACAddress" get_func="cpe_get_LEIC_MAC"/>
+						<param name="MACAddressControlEnabled" rw="1" get_func="cpe_get_LEIC_MACcontrol" set_func="cpe_set_LEIC_MACcontrol"/>
+						<param name="MaxBitRate" rw="1" get_func="cpe_get_LEIC_MaxBitRate" set_func="cpe_get_LEIC_MaxBitRate"/>
+						<param name="DuplexMode" rw="1" get_func="cpe_get_LEIC_DuplexMode" set_func="cpe_set_LEIC_DuplexMode"/>
+						<object name="Stats">
+							<param name="BytesSent" get_func="cpe_get_LEIC_stats"/>
+							<param name="BytesReceived" get_func="cpe_get_LEIC_stats"/>
+							<param name="PacketsSent" get_func="cpe_get_LEIC_stats"/>
+							<param name="PacketsReceived" get_func="cpe_get_LEIC_stats"/>
+							<param name="ErrorsSent" get_func="cpe_get_LEIC_stats"/>
+							<param name="ErrorsReceived" get_func="cpe_get_LEIC_stats"/>
+							<param name="UnicastPacketsSent" get_func="cpe_get_LEIC_stats"/>
+							<param name="UnicastPacketsReceived" get_func="cpe_get_LEIC_stats"/>
+							<param name="DiscardPacketsSent" get_func="cpe_get_LEIC_stats"/>
+							<param name="DiscardPacketsReceived" get_func="cpe_get_LEIC_stats"/>
+							<param name="MulticastPacketsSent" get_func="cpe_get_LEIC_stats"/>
+							<param name="MulticastPacketsReceived" get_func="cpe_get_LEIC_stats"/>
+							<param name="BroadcastPacketsSent" get_func="cpe_get_LEIC_stats"/>
+							<param name="BroadcastPacketsReceived" get_func="cpe_get_LEIC_stats"/>
+							<param name="UnknownProtoPacketsReceived" get_func="cpe_get_LEIC_stats"/>
+						</object>
 					</object>
 				</object>
 				<object name="X_COM_IgmpSnoopingConfig">

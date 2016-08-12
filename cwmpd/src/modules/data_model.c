@@ -156,6 +156,19 @@ model_func_t ModelFunction[] =
     {"cpe_get_time_status", cpe_get_time_status},
     {"cpe_get_time_localtime", cpe_get_time_localtime},
     {"cpe_get_time_zonename", cpe_get_time_zonename},
+
+    {"cpe_refresh_LEIC", cpe_refresh_LEIC},
+    {"cpe_get_LEIC_MAC", cpe_get_LEIC_MAC},
+    {"cpe_get_LEIC_MaxBitRate", cpe_get_LEIC_MaxBitRate},
+    {"cpe_get_LEIC_Name", cpe_get_LEIC_Name},
+    {"cpe_get_LEIC_stats", cpe_get_LEIC_stats},
+    {"cpe_get_LEIC_Status", cpe_get_LEIC_Status},
+    {"cpe_get_LEIC_DuplexMode", cpe_get_LEIC_DuplexMode},
+    {"cpe_set_LEIC_DuplexMode", cpe_set_LEIC_DuplexMode},
+    {"cpe_get_LEIC_Enable", cpe_get_LEIC_Enable},
+    {"cpe_set_LEIC_Enable", cpe_set_LEIC_Enable},
+    {"cpe_get_LEIC_MACcontrol", cpe_get_LEIC_MACcontrol},
+    {"cpe_set_LEIC_MACcontrol", cpe_set_LEIC_MACcontrol},
 };
 
 const char *cwmp_model_ptr_to_func(void *p)

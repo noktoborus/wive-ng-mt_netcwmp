@@ -14,6 +14,7 @@
 #include "LANDevice/X_COM_IgmpSnoopingConfig/X_COM_IgmpSnoopingConfig.c"
 #include "LANDevice/LANHostConfigManagement/LANHostConfigManagement.c"
 #include "LANDevice/WLANConfiguration/WLANConfiguration.c"
+#include "LANDevice/LANEthernetInterfaceConfig/LANEthernetInterfaceConfig.c"
 
 
 #include "Services/Services.c"
