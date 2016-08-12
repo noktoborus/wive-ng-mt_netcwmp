@@ -1009,12 +1009,11 @@ char * cwmp_get_parameter_nodename(const char * name, char * buffer)
     char *p = (char *)name;
     char *q = buffer;
 
-    while (*p || *p == '.') {
+    while (*p && *p != '.') {
         *q++ = *p++;
     }
 
     if (*p) p++;
-
     *q = '\0';
 
     return p;
