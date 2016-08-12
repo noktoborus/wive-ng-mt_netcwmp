@@ -1060,7 +1060,8 @@ parameter_node_t * cwmp_get_parameter_node(parameter_node_t * root, const char *
         dot = cwmp_get_parameter_nodename(dot, name);
 
         while (node && node->name) {
-            if (TRstrcmp(node->name, name) == 0) {
+            if (!TRstrcmp(node->name, name) ||
+                    !TRstrcmp(node->alias, name)) {
                 break;
             }
             node = node->next_sibling;
