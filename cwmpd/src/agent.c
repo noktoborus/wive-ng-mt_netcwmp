@@ -339,21 +339,29 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
                     break;
                 }
                 session_close = CWMP_YES;
-
-                if (session->parameter_value_changed == TRUE)
-
-                /* ??? */
-                /*
-                if (fork() == 0) {
-                    sleep(3);
-                    execl("/etc/scripts/internet.sh","/etc/scripts/internet.sh",(char*)NULL);
+                if (session->parameter_value_changed == TRUE) {
+                    char _p[80] = {};
+                    int _pid = 0;
+                    cwmp_conf_get("cwmpd:reload_script", _p);
+                    if (*_p) {
+                        if ((_pid = fork()) == 0) {
+                            sleep(3);
+                            if (execl(_p, _p, (char*)NULL) == -1) {
+                                cwmp_log_error("exec(%s) error: %s",
+                                        _p, strerror(errno));
+                            }
+                        } else if(_pid > 0) {
+                            cwmp_log_info("forked for exec(%s)", _p);
+                        } else {
+                            cwmp_log_error("fork() failed: %s", strerror(errno));
+                        }
+                    }
                 }
-                */
                 break;
 
 
             default:
-				cwmp_log_error("ERROR: Unknown session status! (%i)", session->status);
+                cwmp_log_error("ERROR: Unknown session status! (%i)", session->status);
                 break;
             }//end switch
         }//end while(!session_close)
