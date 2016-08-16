@@ -42,7 +42,8 @@
 			</object>
 			<object name="LANDevice">
 			<object name="1">
-				<object name="LANEthernetInterfaceConfig" refresh_func="cpe_refresh_LEIC">
+				<!-- args - number of interfaces (4 for snr-cpe-w4n) -->
+				<object name="LANEthernetInterfaceConfig" refresh_func="cpe_refresh_LEIC" args="4">
 					<object name="{i}">
 						<param name="Enable" rw="1" get_func="cpe_get_LEIC_Enable" set_func="cpe_set_LEIC_Enable"/>
 						<param name="Status" get_func="cpe_get_LEIC_Status"/>
@@ -50,11 +51,12 @@
 						<param name="Name" get_func="cpe_get_LEIC_Name"/>
 						<param name="MACAddress" get_func="cpe_get_LEIC_MAC"/>
 						<param name="MACAddressControlEnabled" rw="1" get_func="cpe_get_LEIC_MACcontrol" set_func="cpe_set_LEIC_MACcontrol"/>
-						<param name="MaxBitRate" rw="1" get_func="cpe_get_LEIC_MaxBitRate" set_func="cpe_get_LEIC_MaxBitRate"/>
+						<param name="MaxBitRate" rw="1" get_func="cpe_get_LEIC_MaxBitRate" set_func="cpe_set_LEIC_MaxBitRate"/>
 						<param name="DuplexMode" rw="1" get_func="cpe_get_LEIC_DuplexMode" set_func="cpe_set_LEIC_DuplexMode"/>
 						<object name="Stats">
 							<param name="BytesSent" get_func="cpe_get_LEIC_stats"/>
 							<param name="BytesReceived" get_func="cpe_get_LEIC_stats"/>
+							<!-- not available for raeth -->
 							<param name="PacketsSent" get_func="cpe_get_LEIC_stats"/>
 							<param name="PacketsReceived" get_func="cpe_get_LEIC_stats"/>
 							<param name="ErrorsSent" get_func="cpe_get_LEIC_stats"/>

@@ -18,6 +18,7 @@
 #include <cwmp/upload.h>
 
 #include <libwive_network.h>
+#include <libwive_ethernet.h>
 
 
 #define Public		/* Accessible outside this module     */
@@ -43,24 +44,6 @@
 #include        "sdk_version.h"
 
 #include <linux/autoconf.h>
-
-#if defined(CONFIG_RALINK_RT3052)
-#define PROCREG_SNMP	"/proc/rt3052/snmp"
-#elif defined(CONFIG_RALINK_RT3352)
-#define PROCREG_SNMP	"/proc/rt3352/snmp"
-#elif defined (CONFIG_RALINK_RT5350)
-#define PROCREG_SNMP	"/proc/rt5350/snmp"
-#elif defined(CONFIG_RALINK_RT3883)
-#define PROCREG_SNMP	"/proc/rt3883/snmp"
-#elif defined (CONFIG_RALINK_MT7620)
-#define PROCREG_SNMP	"/proc/mt7620/snmp"
-#elif defined (CONFIG_RALINK_MT7621)
-#define PROCREG_SNMP	"/proc/mt7621/snmp"
-#elif defined (CONFIG_RALINK_MT7628)
-#define PROCREG_SNMP	"/proc/mt7628/snmp"
-#else
-#define PROCREG_SNMP	"/proc/mt7620/snmp"
-#endif
 
 #ifdef CONFIG_RAETH_GMAC2		/* dual phy/rgmii mode */
 #define WAN_DEF "eth3"
