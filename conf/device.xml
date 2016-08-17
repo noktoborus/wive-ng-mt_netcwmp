@@ -43,7 +43,7 @@
 			<object name="LANDevice">
 			<object name="1">
 				<!-- args - number of interfaces (4 for snr-cpe-w4n) -->
-				<object name="LANEthernetInterfaceConfig" refresh_func="cpe_refresh_LEIC" args="4">
+				<object name="LANEthernetInterfaceConfig" refresh_func="cpe_refresh_LEIC">
 					<object name="{i}">
 						<param name="Enable" rw="1" get_func="cpe_get_LEIC_Enable" set_func="cpe_set_LEIC_Enable"/>
 						<param name="Status" get_func="cpe_get_LEIC_Status"/>

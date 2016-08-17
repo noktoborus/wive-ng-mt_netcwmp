@@ -87,21 +87,22 @@ error:
 int
 cpe_refresh_LEIC(cwmp_t *cwmp, parameter_node_t *param_node, callback_register_func_t callback_reg)
 {
-	unsigned count = 0u;
+	/* five physical ports */
+	const unsigned count = 5;
+
 	unsigned i = 0u;
 	parameter_node_t *pn = NULL;
 	unsigned wan_port = 0;
 
 	DM_TRACE_REFRESH();
 
-	count = strtoul(param_node->args, NULL, 10);
 	wan_port = cwmp_nvram_get_int("wan_port", 0);
 
 	/* remove old list  */
 	cwmp_model_delete_object_child(cwmp, param_node);
 
 	/* populate new */
-	for (i = 0u; i < count; i++) {
+	for (i = (count - 1); i < count; i--) {
 		if (i == wan_port)
 			continue;
 		cwmp_model_copy_parameter(param_node, &pn, i + 1);
