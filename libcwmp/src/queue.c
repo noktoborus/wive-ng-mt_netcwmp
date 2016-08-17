@@ -9,6 +9,11 @@
 void queue_add(queue_t *q, void * data, int type, int priority, void * arg1, void *arg2) {
 	qnode_t *node;
 
+	cwmp_log_trace("%s(q=%p, data=%p, type=%d, priority=%d, arg1=%p, arg2=%p)",
+			__func__, (void*)q, (void*)data,
+			type, priority,
+			(void*)arg1, (void*)arg2);
+
 	node = (qnode_t *)MALLOC(sizeof(qnode_t));
 
 	if(node == NULL) {
@@ -88,7 +93,7 @@ void queue_push(queue_t *q, void * data, int type) {
 
 void queue_view(queue_t *q) {
 	qnode_t *p;
-	cwmp_log_debug("%s(q=%p)", __func__, (void*)q);
+	cwmp_log_trace("%s(q=%p)", __func__, (void*)q);
 
 	p=q->first;
 	if(p==NULL) {
@@ -106,6 +111,7 @@ void queue_view(queue_t *q) {
 
 
 int queue_pop(queue_t *q, void ** data) {
+	cwmp_log_trace("%s(q=%p, data=%p)", __func__, (void*)q, (void*)data);
 	if(q->first == NULL) {
 		cwmp_log_debug("queue is empty.");
 		return -1;

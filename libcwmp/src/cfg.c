@@ -93,9 +93,15 @@ int cwmp_conf_get(const char * key, char *value)
     if (!*nvram_val) {
         char _val[512] = {};
         ini_gets(s, k, NULL, _val, sizeof(_val), cwmp_conf_handle->filename);
-        cwmp_log_error("%s(\"%s\") = \"%s\": write to nvram",
-                __func__, key, _val);
-        cwmp_nvram_set(nvram_name, _val);
+        if (*_val) {
+            cwmp_log_debug("%s(\"%s\") = \"%s\": write to nvram",
+                    __func__, key, _val);
+            cwmp_nvram_set(nvram_name, _val);
+        } else {
+            cwmp_log_debug("%s(\"%s\", %p) = \"%s\": readed from %s",
+                    __func__, key, (void*)value, value,
+                    cwmp_conf_handle->filename);
+        }
         TRstrncpy(value, _val, INI_BUFFERSIZE);
     } else {
         size_t _nv_sz = strlen(nvram_val);

@@ -339,32 +339,30 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
                     break;
                 }
                 session_close = CWMP_YES;
-                if (session->parameter_value_changed == TRUE) {
-                    char _p[80] = {};
-                    int _pid = 0;
-                    cwmp_conf_get("cwmpd:reload_script", _p);
-                    if (*_p) {
-                        if ((_pid = fork()) == 0) {
-                            sleep(3);
-                            if (execl(_p, _p, (char*)NULL) == -1) {
-                                cwmp_log_error("exec(%s) error: %s",
-                                        _p, strerror(errno));
-                            }
-                        } else if(_pid > 0) {
-                            cwmp_log_info("forked for exec(%s)", _p);
-                        } else {
-                            cwmp_log_error("fork() failed: %s", strerror(errno));
-                        }
-                    }
-                }
                 break;
-
-
             default:
                 cwmp_log_error("ERROR: Unknown session status! (%i)", session->status);
                 break;
             }//end switch
         }//end while(!session_close)
+
+        if (session->parameter_value_changed == TRUE) {
+            char _p[INI_BUFFERSIZE] = {};
+            int _pid = 0;
+            cwmp_conf_get("cwmpd:reload_script", _p);
+            if (*_p) {
+                if ((_pid = fork()) == 0) {
+                    sleep(3);
+                    if (execl(_p, _p, (char*)NULL) == -1) {
+                        cwmp_log_error("exec(%s) error: %s", _p, strerror(errno));
+                    }
+                } else if(_pid > 0) {
+                    cwmp_log_info("forked for exec(%s)", _p);
+                } else {
+                    cwmp_log_error("fork() failed: %s", strerror(errno));
+                }
+            }
+        }
 
         cwmp_log_debug("session status: EXIT");
         cwmp_session_free(session);
@@ -811,7 +809,7 @@ int cwmp_agent_run_tasks(cwmp_t * cwmp)
     int tasktype = 0;;
     int ok = CWMP_NO;
 
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(cwmp=%p)", __func__, (void*)cwmp);
 
     while(1)
     {
