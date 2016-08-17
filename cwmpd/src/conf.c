@@ -30,7 +30,7 @@
 void cwmp_conf_init(cwmp_t * cwmp)
 {
     pool_t * pool;
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(cwmp=%p)", __func__, (void*)cwmp);
 
     pool = cwmp->pool;
     cwmp->httpd_port =  cwmp_conf_get_int("cwmpd:httpd_port"); //cwmp_nvram_get_int("cwmp:httpd_port",8080);

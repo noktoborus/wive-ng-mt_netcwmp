@@ -44,15 +44,13 @@ typedef enum
 #define POLICY_DISCARD_BOOT     1
 #define POLICY_NOT_RETRY        2
 
-
-#define EVENT_REBOOT_NONE_FLAG   0
-#define EVENT_REBOOT_BOOTSTRAP_FLAG  1
-#define EVENT_REBOOT_ACS_FLAG     2
-#define EVENT_REBOOT_TRANSFERCOMPLETE_FLAG 4
-
-#define EVENT_REBOOT_UNKNOWN_FLAG 64
-
-
+enum event_reboot_flag {
+    EVENT_REBOOT_NONE_FLAG = 0,
+    EVENT_REBOOT_BOOTSTRAP_FLAG,
+    EVENT_REBOOT_ACS_FLAG,
+    EVENT_REBOOT_TRANSFERCOMPLETE_FLAG = 4,
+    EVENT_REBOOT_UNKNOWN_FLAG = 64
+};
 
 enum event_task_tag {
 	TASK_DOWNLOAD_TAG = 1,
@@ -71,9 +69,7 @@ struct event_code_st
     int   	event;
     char *	code;
     char   	command_key[COMMAND_KEY_LEN+1];
-    int      	policy;     /* 0:始终不能丢弃，1:直到重启，丢弃  2:不需要retry，可以丢弃 */
-    int      	have_key;   /* 0: 没有 1:有*/
-    int      	ref;        /*事件发送次数*/
+    int      	ref;        /* events */
     int      	fault_code;
     time_t	start;
     time_t	end;
@@ -92,7 +88,7 @@ struct event_list_st
 
 typedef struct event_global_st
 {
-    int      	event_flag;        /*0 其他原因重启 1 reboot命令重启2由于升级导致的重启*/
+    enum event_reboot_flag event_flag;
     char   	event_key[COMMAND_KEY_LEN+1]; /* command key */
     int      	fault_code;
     time_t	start;

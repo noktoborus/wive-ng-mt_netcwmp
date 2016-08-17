@@ -57,8 +57,7 @@ static int cwmp_save_argv( int argc, char *const *argv)
 
 int cwmp_set_var(cwmp_t * cwmp)
 {
-    FUNCTION_TRACE();
-
+    cwmp_log_trace("%s(cwmp=%p)", __func__, (void*)cwmp);
 
     cwmp_bzero(cwmp, sizeof(cwmp_t));
 	cwmp_set_request(cwmp, CWMP_TRUE);
@@ -111,7 +110,7 @@ int main(int argc, char **argv)
     if (loglevel != NULL)
     {
         if (strcasecmp(loglevel,"crit") == 0) level = CWMP_LOG_CRIT;
-	else if (strcasecmp(loglevel,"error") == 0) level = CWMP_LOG_ERROR;
+        else if (strcasecmp(loglevel,"error") == 0) level = CWMP_LOG_ERROR;
         else if (strcasecmp(loglevel,"warn") == 0) level = CWMP_LOG_WARN;
         else if (strcasecmp(loglevel,"info") == 0) level = CWMP_LOG_INFO;
         else if (strcasecmp(loglevel,"debug") == 0) level = CWMP_LOG_DEBUG;

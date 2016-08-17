@@ -158,7 +158,8 @@ int cwmp_agent_get_active_event(cwmp_t *cwmp, cwmp_session_t * session,  event_l
     event_code_t * ev;
     int i=0;
 
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(cwmp=%p, session=%p, pevent_list=%p)",
+            __func__, (void*)cwmp, (void*)session, (void*)pevent_list);
 
     el = cwmp_create_event_list(session->env, INFORM_MAX);
 
@@ -184,8 +185,8 @@ int cwmp_agent_get_active_event(cwmp_t *cwmp, cwmp_session_t * session,  event_l
     if (el->count == 0)
     {
         ev = cwmp_create_event_code(session->env);
-        ev->event = INFORM_BOOT;
-        ev->code = CWMP_INFORM_EVENT_CODE_1;
+        ev->event = INFORM_PERIODIC;
+        ev->code = CWMP_INFORM_EVENT_CODE_2;
         el->events[el->count++] = ev;
     }
 

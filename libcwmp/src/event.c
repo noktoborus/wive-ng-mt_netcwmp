@@ -1,3 +1,4 @@
+/* vim: set et: */
 #include <cwmp/types.h>
 #include <cwmp/cwmp.h>
 #include <cwmp/event.h>
@@ -61,8 +62,6 @@ event_code_t * cwmp_event_code_create(pool_t * pool )
     //ev->event = 0;
     //ev->code = NULL;
     //memset(ev->command_key, 0 , COMMAND_KEY_LEN+1);
-    //ev->have_key = 0;
-    //ev->policy = 0;
     //ev->ref = 0;
     //ev->fault_code = 0;
     //ev->start = 0;
@@ -88,6 +87,8 @@ int cwmp_event_list_init(pool_t * pool, event_list_t * el)
 int cwmp_event_global_init(cwmp_t * cwmp)
 {
     FILE    *fp = NULL;
+
+    cwmp_log_trace("%s(cwmp=%p)", __func__, (void*)cwmp);
 
     if(!cwmp)
     {
@@ -124,7 +125,9 @@ int cwmp_event_file_save(cwmp_t * cwmp)
 {
     FILE    *fp = NULL;
     int     ret = CWMP_OK;
-    FUNCTION_TRACE();
+
+    cwmp_log_trace("%s(cwmp=%p)", __func__, (void*)cwmp);
+
     if(!cwmp)
     {
         return CWMP_ERROR;
@@ -156,6 +159,8 @@ int cwmp_event_init(cwmp_t *cwmp)
 //    int     upgrade_flag = 0;
 //    char    val[64] = {0};
 
+    cwmp_log_trace("%s(cwmp=%p)", __func__, (void*)cwmp);
+
     if(!cwmp)
     {
         cwmp_log_error("param cwmp is NULL\n");
@@ -172,18 +177,17 @@ int cwmp_event_init(cwmp_t *cwmp)
 
     if(cwmp->event_global.event_flag == EVENT_REBOOT_NONE_FLAG || cwmp->event_global.event_flag & EVENT_REBOOT_BOOTSTRAP_FLAG)
     {
-	cwmp->event_global.event_flag = EVENT_REBOOT_BOOTSTRAP_FLAG;
-	cwmp_event_set_value(cwmp, INFORM_BOOTSTRAP, 1, NULL, 0, 0, 0);
+        cwmp->event_global.event_flag = EVENT_REBOOT_BOOTSTRAP_FLAG;
+        cwmp_event_set_value(cwmp, INFORM_BOOTSTRAP, 1, NULL, 0, 0, 0);
     }
     else    //reboot
     {
-	cwmp_log_info("reboot_flag=%d, key=%s\n", cwmp->event_global.event_flag,
+        cwmp_log_info("reboot_flag=%d, key=%s\n", cwmp->event_global.event_flag,
                                                                cwmp->event_global.event_key);
-
-	cwmp_event_set_value(cwmp, INFORM_BOOT, 1, NULL, 0, 0, 0);
+        cwmp_event_set_value(cwmp, INFORM_BOOT, 1, NULL, 0, 0, 0);
         if(cwmp->event_global.event_flag & EVENT_REBOOT_ACS_FLAG)
         {
-	     cwmp_event_set_value(cwmp, INFORM_MREBOOT, 1, NULL, 0, 0, 0);
+            cwmp_event_set_value(cwmp, INFORM_MREBOOT, 1, NULL, 0, 0, 0);
     	}
     }
 
@@ -201,7 +205,12 @@ int cwmp_event_init(cwmp_t *cwmp)
 
 int cwmp_event_set_value(cwmp_t *cwmp,  int event,   int value, const char * cmd_key, int fault_code, time_t start, time_t end)
 {
-    cwmp_log_debug( "cwmp_event_set_value begin, event=%d, value=%d, %s\n", event, value, cmd_key);
+    cwmp_log_trace("%s(cwmp=%p, event=%d [%s], value=%d, cmd_key='%s', fault_code=%d, start=%llu, end=%llu)",
+        __func__, (void*)cwmp, event,
+        (((unsigned)event < INFORM_MAX) ? inform_event_table[event].key : "-"),
+        value, cmd_key, fault_code,
+        (unsigned long long)start, (unsigned long long)end);
+
     if(event < 0 || event >= INFORM_MAX) {
         cwmp_log_error( "event=%d, max=%d\n", event, INFORM_MAX);
         return CWMP_ERROR;
