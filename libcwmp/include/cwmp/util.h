@@ -17,9 +17,7 @@
 #include <cwmp/md5.h>
 #include <cwmp/upload.h>
 
-#include <libwive_network.h>
-#include <libwive_ethernet.h>
-
+#include <libwive.h>
 
 #define Public		/* Accessible outside this module     */
 #define Private static		/* Accessible only within this module */

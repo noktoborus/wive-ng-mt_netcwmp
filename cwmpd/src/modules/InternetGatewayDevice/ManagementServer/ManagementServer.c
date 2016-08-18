@@ -105,11 +105,12 @@ int cpe_get_igd_ms_connectionrequesturl(cwmp_t * cwmp, const char * name, char *
     char buf[256] = {0};
     char* local_ip = getIntIp(pool);
 
-    cwmp_log_info("Wan ip is %s",local_ip);
+    cwmp_log_debug("Wan ip is %s",local_ip);
 
-    if (local_ip == 0) {
-        cpe_get_localip("br0", local_ip);
-        cwmp_log_info("Local ip is %s",local_ip);
+    if (local_ip == 0)
+    {
+	cpe_get_localip("br0", local_ip);
+	cwmp_log_debug("Local ip is %s",local_ip);
     }
 
     if (local_ip == 0) {

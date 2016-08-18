@@ -811,23 +811,23 @@ int cwmp_agent_upload_file(cwmp_t * cwmp, upload_arg_t * ularg)
 
 int cwmp_agent_run_tasks(cwmp_t * cwmp)
 {
-    void * data;
-    int tasktype = 0;;
-    int ok = CWMP_NO;
+	void * data;
+	int tasktype = 0;;
+	int ok = CWMP_NO;
 
-    cwmp_log_trace("%s(cwmp=%p)", __func__, (void*)cwmp);
+	FUNCTION_TRACE();
 
-    while(1)
-    {
-        tasktype = queue_pop(cwmp->queue, &data);
-        if(tasktype == -1)
-        {
-            cwmp_log_debug("no more task to run");
-            break;
-        }
-        ok = CWMP_YES;
-        switch(tasktype)
-        {
+	while(1)
+	{
+		tasktype = queue_pop(cwmp->queue, &data);
+		if(tasktype == -1)
+		{
+			cwmp_log_debug("no more task to run");
+			break;
+		}
+		ok = CWMP_YES;
+		switch(tasktype)
+		{
             case TASK_PORTMAP_TAG:
                 perform_pm_save(cwmp);
                 break;
@@ -843,72 +843,72 @@ int cwmp_agent_run_tasks(cwmp_t * cwmp)
                     cwmp_event_set_value(cwmp, INFORM_DIAGNOSTICSCOMPLETE, 1, NULL, 0, starttime, endtime);
                     break;
                 }
-            case TASK_DOWNLOAD_TAG:
-                {
-                    download_arg_t * dlarg = (download_arg_t*)data;
-                    //begin download file
-                    time_t starttime = time(NULL);
-                    int faultcode = 0;
+			case TASK_DOWNLOAD_TAG:
+				{
+					download_arg_t * dlarg = (download_arg_t*)data;
+					//begin download file
+					time_t starttime = time(NULL);
+					int faultcode = 0;
 
-                    faultcode = cwmp_agent_download_file(dlarg);
+					faultcode = cwmp_agent_download_file(dlarg);
 
-                    time_t endtime = time(NULL);
-                    cwmp_event_set_value(cwmp, INFORM_TRANSFERCOMPLETE, 1,dlarg->cmdkey, faultcode, starttime, endtime);
+					time_t endtime = time(NULL);
+					cwmp_event_set_value(cwmp, INFORM_TRANSFERCOMPLETE, 1,dlarg->cmdkey, faultcode, starttime, endtime);
 
-                    free(dlarg);
-                }
-                break;
+					free(dlarg);
+				}
+				break;
 
-            case TASK_UPLOAD_TAG:
-                {
-                    upload_arg_t * ularg = (upload_arg_t*)data;
-                    //begin download file
-                    time_t starttime = time(NULL);
-                    int faultcode = 0;
+			case TASK_UPLOAD_TAG:
+				{
+					upload_arg_t * ularg = (upload_arg_t*)data;
+					//begin download file
+					time_t starttime = time(NULL);
+					int faultcode = 0;
 
-                    faultcode = cwmp_agent_upload_file(cwmp, ularg);
+					faultcode = cwmp_agent_upload_file(cwmp, ularg);
 
-                    time_t endtime = time(NULL);
-                    cwmp_event_set_value(cwmp, INFORM_TRANSFERCOMPLETE, 1,ularg->cmdkey, faultcode, starttime, endtime);
+					time_t endtime = time(NULL);
+					cwmp_event_set_value(cwmp, INFORM_TRANSFERCOMPLETE, 1,ularg->cmdkey, faultcode, starttime, endtime);
 
-                    free(ularg);
-                }
-                break;
+					free(ularg);
+				}
+				break;
 
-            case TASK_REBOOT_TAG:
-                {
-                    //begin reboot system
-                    cwmp_log_info("reboot ...");
-                    cwmp_event_set_value(cwmp, INFORM_MREBOOT, 1, NULL, 0, 0, 0);
-                    cwmp_event_clear_active(cwmp);
-                    system("reboot");
-                }
-                break;
+			case TASK_REBOOT_TAG:
+				{
+					//begin reboot system
+					cwmp_log_info("INFO: Rebooting the system ...");
+					cwmp_event_set_value(cwmp, INFORM_MREBOOT, 1, NULL, 0, 0, 0);
+					cwmp_event_clear_active(cwmp);
+					reboot_now();
+				}
+				break;
 
-            case TASK_NOTIFY_TAG:
-                {
-                    cwmp_set_request(cwmp, CWMP_YES);
-                    cwmp_event_set_value(cwmp, INFORM_VALUECHANGE, 1, NULL, 0, 0, 0);
-                }
-                break;
+			case TASK_NOTIFY_TAG:
+				{
+					cwmp->new_request = CWMP_YES;
+					cwmp_event_set_value(cwmp, INFORM_VALUECHANGE, 1, NULL, 0, 0, 0);
+				}
+				break;
 
 
 
-            case TASK_FACTORYRESET_TAG:
-                {
-                    //begin factory reset system
-                    cwmp_log_debug("factory reset ...");
-                    cwmp_event_clear_active(cwmp);
-                    system("fs nvramreset");
-                }
-                break;
+			case TASK_FACTORYRESET_TAG:
+				{
+					//begin factory reset system
+					cwmp_log_info("INFO: Factory RESET ...");
+					cwmp_event_clear_active(cwmp);
+					system("fs nvramreset");
+				}
+				break;
 
-            default:
-                    cwmp_log_error("Unknown task tag: %s", tasktype);
-                break;
+			default:
+					cwmp_log_error("ERROR: Unknown task tag \"%s\" \n", tasktype);
+				break;
 
-        }
-    }
+		}
+	}
 
-    return ok;
+	return ok;
 }
