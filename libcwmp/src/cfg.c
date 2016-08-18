@@ -97,9 +97,8 @@ int cwmp_conf_get(const char * key, char *value)
                     __func__, key, _val);
             cwmp_nvram_set(nvram_name, _val);
         } else {
-            cwmp_log_debug("%s(\"%s\", %p) = \"%s\": readed from %s",
-                    __func__, key, (void*)value, value,
-                    cwmp_conf_handle->filename);
+            cwmp_log_debug("%s(\"%s\", %p) = empty value",
+                    __func__, key, (void*)value);
         }
         TRstrncpy(value, _val, INI_BUFFERSIZE);
     } else {

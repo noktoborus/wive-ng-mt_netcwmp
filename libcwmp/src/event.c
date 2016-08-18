@@ -86,36 +86,26 @@ int cwmp_event_list_init(pool_t * pool, event_list_t * el)
 
 int cwmp_event_global_init(cwmp_t * cwmp)
 {
-    FILE    *fp = NULL;
+    unsigned long long starttime = 0;
+    unsigned long long endtime = 0;
+    char fmt[20] = {};
 
     cwmp_log_trace("%s(cwmp=%p)", __func__, (void*)cwmp);
+    assert(cwmp != NULL);
 
-    if(!cwmp)
-    {
-        cwmp_log_error("param cwmp is NULL\n");
-        return CWMP_ERROR;
-    }
     memset(&cwmp->event_global, 0, sizeof(event_global_t));
+    cwmp_conf_get("cwmp:event_data", cwmp->event_global.data);
+    snprintf(fmt, sizeof(fmt),
+            "%%d:%%d:%%llu:%%llu:%%%ds", sizeof(cwmp->event_global.data));
 
-    //判断配置文件是否存在
-    if(access(cwmp->event_filename, F_OK) == -1)
-    {
-        return CWMP_ERROR;
-    }
+    sscanf(cwmp->event_global.data, fmt,
+            &cwmp->event_global.event_flag,
+            &cwmp->event_global.fault_code,
+            &starttime, &endtime,
+            cwmp->event_global.event_key);
 
-    fp = fopen(cwmp->event_filename, "rb");
-    if(!fp)
-    {
-        cwmp_log_error("could not open event file %s\n", cwmp->event_filename);
-        return CWMP_ERROR;
-    }
-
-    if(fread(&cwmp->event_global, sizeof(event_global_t), 1, fp) != 1)
-    {
-        cwmp_log_error("read event global file fail\n");
-    }
-
-    fclose(fp);
+    cwmp->event_global.start = (time_t)starttime;
+    cwmp->event_global.end = (time_t)endtime;
 
     return CWMP_OK;
 }
@@ -123,30 +113,29 @@ int cwmp_event_global_init(cwmp_t * cwmp)
 //把事件信息写入文件中
 int cwmp_event_file_save(cwmp_t * cwmp)
 {
-    FILE    *fp = NULL;
     int     ret = CWMP_OK;
+    char data[sizeof(cwmp->event_global.data)] = {};
 
     cwmp_log_trace("%s(cwmp=%p)", __func__, (void*)cwmp);
+    assert(cwmp != NULL);
 
-    if(!cwmp)
-    {
-        return CWMP_ERROR;
+    snprintf(data, sizeof(data), "%d:%d:%llu:%llu:%s",
+            cwmp->event_global.event_flag,
+            cwmp->event_global.fault_code,
+            (unsigned long long)cwmp->event_global.start,
+            (unsigned long long)cwmp->event_global.end,
+            cwmp->event_global.event_key
+            );
+
+    if (!strcmp(cwmp->event_global.data, data)) {
+
+        cwmp_log_debug("%s(): nothing to save, data=%s",
+                __func__, data);
+    } else {
+        cwmp_conf_set("cwmp:event_data", data);
+        memcpy(cwmp->event_global.data, data, sizeof(data));
     }
 
-    if((fp = fopen(cwmp->event_filename, "wb+")) == NULL)
-    {
-        cwmp_log_error("can't open file: %s.\n", cwmp->event_filename);
-        return CWMP_ERROR;
-    }
-
-    if(fwrite(&cwmp->event_global, sizeof(event_global_t), 1, fp) != 1)
-    {
-        cwmp_log_error("can't write event global to %s\n", cwmp->event_filename);
-
-        ret = CWMP_ERROR;
-    }
-
-    fclose(fp);
     return ret;
 }
 
@@ -175,15 +164,15 @@ int cwmp_event_init(cwmp_t *cwmp)
 
     cwmp_event_global_init(cwmp);
 
-    if(cwmp->event_global.event_flag == EVENT_REBOOT_NONE_FLAG || cwmp->event_global.event_flag & EVENT_REBOOT_BOOTSTRAP_FLAG)
+    if(cwmp->event_global.event_flag == EVENT_REBOOT_NONE_FLAG)
     {
         cwmp->event_global.event_flag = EVENT_REBOOT_BOOTSTRAP_FLAG;
         cwmp_event_set_value(cwmp, INFORM_BOOTSTRAP, 1, NULL, 0, 0, 0);
     }
     else    //reboot
     {
-        cwmp_log_info("reboot_flag=%d, key=%s\n", cwmp->event_global.event_flag,
-                                                               cwmp->event_global.event_key);
+        cwmp_log_info("reboot_flag=%d, key=%s\n",
+                cwmp->event_global.event_flag, cwmp->event_global.event_key);
         cwmp_event_set_value(cwmp, INFORM_BOOT, 1, NULL, 0, 0, 0);
         if(cwmp->event_global.event_flag & EVENT_REBOOT_ACS_FLAG)
         {
@@ -307,6 +296,8 @@ int cwmp_event_clear_active(cwmp_t *cwmp)
     int     i;
 //    int     notify_flag = 0;
 
+    cwmp_log_trace("%s(cwmp=%p)", __func__, (void*)cwmp);
+
     assert(cwmp != NULL);
 
     pthread_mutex_lock(&cwmp->event_mutex);
@@ -320,13 +311,10 @@ int cwmp_event_clear_active(cwmp_t *cwmp)
 
 		switch(pec[i]->event) {
 			case INFORM_BOOTSTRAP:
-				cwmp->event_global.event_flag |=  EVENT_REBOOT_ACS_FLAG;
-					cwmp_event_file_save(cwmp);
 				break;
 			case INFORM_MREBOOT:
 				cwmp->event_global.event_flag |= EVENT_REBOOT_ACS_FLAG;
-					cwmp_event_file_save(cwmp);
-
+				cwmp_event_file_save(cwmp);
 				break;
 			case INFORM_VALUECHANGE:
 	//			notify_flag = 1;

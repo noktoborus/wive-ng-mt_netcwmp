@@ -502,6 +502,7 @@ eventcheck:
         if(cwmp->event_global.event_flag & EVENT_REBOOT_TRANSFERCOMPLETE_FLAG)
         {
             cwmp->event_global.event_flag &=  ~EVENT_REBOOT_TRANSFERCOMPLETE_FLAG;
+            cwmp_event_file_save(cwmp);
             if(!doctmppool)
             {
                 doctmppool = pool_create(POOL_DEFAULT_SIZE);
@@ -513,6 +514,10 @@ eventcheck:
             ec.start = cwmp->event_global.start;
             ec.end = cwmp->event_global.end;
             newdoc = cwmp_session_create_transfercomplete_message(session, &ec, doctmppool);
+        }
+        if (cwmp->event_global.event_flag & EVENT_REBOOT_ACS_FLAG) {
+            cwmp->event_global.event_flag &= ~EVENT_REBOOT_ACS_FLAG;
+            cwmp_event_file_save(cwmp);
         }
     }
 

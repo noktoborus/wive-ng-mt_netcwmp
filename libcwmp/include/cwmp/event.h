@@ -14,6 +14,7 @@
 #define __CWMPEVENT_H__
 
 #include <cwmp/types.h>
+#include <cwmp/cfg.h>
 
 typedef enum
 {
@@ -93,8 +94,9 @@ typedef struct event_global_st
     int      	fault_code;
     time_t	start;
     time_t	end;
-
-}event_global_t;
+    /* source data, prevent write unchanged value */
+    char data[INI_BUFFERSIZE];
+} event_global_t;
 
 
 typedef struct transfer_st{
@@ -127,6 +129,7 @@ int cwmp_event_global_init(cwmp_t * cwmp);
 
 int cwmp_event_set_value(cwmp_t *cwmp,  int event,   int value, const char * cmd_key, int fault_code, time_t start, time_t end);
 int cwmp_event_clear_active(cwmp_t *cwmp);
+int cwmp_event_file_save(cwmp_t *cwmp);
 
 #endif
 
