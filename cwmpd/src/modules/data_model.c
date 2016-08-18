@@ -169,6 +169,7 @@ model_func_t ModelFunction[] =
     {"cpe_set_LEIC_Enable", cpe_set_LEIC_Enable},
     {"cpe_get_LEIC_MACcontrol", cpe_get_LEIC_MACcontrol},
     {"cpe_set_LEIC_MACcontrol", cpe_set_LEIC_MACcontrol},
+    {"cpe_get_LEIC_number", cpe_get_LEIC_number},
 };
 
 const char *cwmp_model_ptr_to_func(void *p)
