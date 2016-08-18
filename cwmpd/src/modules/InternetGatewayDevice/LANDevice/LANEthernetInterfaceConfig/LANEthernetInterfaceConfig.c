@@ -45,6 +45,7 @@ leic_portNo_from_path(cwmp_t *cwmp, const char *path, bool stats)
 	parameter_node_t *pn = NULL;
 	unsigned wan_port = 0;
 	char *n = NULL;
+    char *lan_first = cwmp_nvram_get("lan_port");
 	wan_port = cwmp_nvram_get_int("wan_port", 0);
 
 	pn = cwmp_get_parameter_path_node(cwmp->root, path);
@@ -64,19 +65,31 @@ leic_portNo_from_path(cwmp_t *cwmp, const char *path, bool stats)
 		return -1;
 	}
 
-	pno -= 1;
+    /* convert number to index */
+    if (!strcmp(lan_first, "near")) {
+        if (wan_port == 0) {
+            /* data in array: "4 3 2 1 W" */
+            pno = leic_max_port - pno;
+        } else {
+            /* data in array: "W 1 2 3 4" */
+        }
+    } else if (!strcmp(lan_first, "distant")) {
+        if (wan_port != 0) {
+            /* data in array: "W 4 3 2 1" */
+            pno = wan_port - (pno - 1);
+        } else {
+            /* data in array: "4 3 2 1 W" */
+            pno -= 1;
+        }
+    }
 
-	if (pno > leic_max_port) {
+    /* check out of range(0, leic_max_port) */
+    if (pno > leic_max_port) {
 		cwmp_log_error("LEIC: number %d not a port (max port: %d)",
 				pno, leic_max_port);
 		return -1;
 	}
 
-	if (pno == wan_port) {
-		cwmp_log_error("LEIC: can't access for port %d, because it's WAN port",
-				pno);
-		return -1;
-	}
 	return pno;
 
 error:
@@ -108,7 +121,7 @@ cpe_refresh_LEIC(cwmp_t *cwmp, parameter_node_t *param_node, callback_register_f
 		cwmp_model_copy_parameter(param_node, &pn, i + 1);
 	}
 
-	leic_max_port = count;
+	leic_max_port = count - 1;
 
 	return FAULT_CODE_OK;
 }
