@@ -121,9 +121,19 @@ cpe_refresh_LEIC(cwmp_t *cwmp, parameter_node_t *param_node, callback_register_f
 		cwmp_model_copy_parameter(param_node, &pn, i + 1);
 	}
 
+    /* one port for WAN */
 	leic_max_port = count - 1;
 
 	return FAULT_CODE_OK;
+}
+
+int
+cpe_get_LEIC_number(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
+{
+    char buf[22] = "0";
+    snprintf(buf, sizeof(buf), "%u", leic_max_port);
+    *value = pool_pstrdup(buf);
+    return FAULT_CODE_OK;
 }
 
 int
