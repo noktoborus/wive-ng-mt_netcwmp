@@ -132,7 +132,7 @@ cpe_get_LEIC_number(cwmp_t *cwmp, const char *name, char **value, char *args, po
 {
     char buf[22] = "0";
     snprintf(buf, sizeof(buf), "%u", leic_max_port);
-    *value = pool_pstrdup(buf);
+    *value = pool_pstrdup(pool, buf);
     return FAULT_CODE_OK;
 }
 
