@@ -105,11 +105,8 @@ cpe_refresh_LEIC(cwmp_t *cwmp, parameter_node_t *param_node, callback_register_f
 
 	unsigned i = 0u;
 	parameter_node_t *pn = NULL;
-	unsigned wan_port = 0;
 
 	DM_TRACE_REFRESH();
-
-	wan_port = cwmp_nvram_get_int("wan_port", 0);
 
 	/* remove old list  */
 	cwmp_model_delete_object_child(cwmp, param_node);
