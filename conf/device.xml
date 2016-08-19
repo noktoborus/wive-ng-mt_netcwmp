@@ -74,6 +74,19 @@
 						</object>
 					</object>
 				</object>
+				<object name="Hosts">
+					<param name="HostNumberOfEntries" get_func="cpe_get_hosts_count"/>
+					<object name="Host" refresh_func="cpe_refresh_hosts">
+						<object name="{i}">
+							<param name="IPAddress"/>
+							<param name="AddressSource"/>
+							<param name="LeaseTimeRemaining"/>
+							<param name="MACAddress"/>
+							<param name="HostName"/>
+							<param name="InterfaceType"/>
+						</object>
+					</object>
+				</object>
 				<object name="X_COM_IgmpSnoopingConfig">
 					<param name="Enable" noti_rw="1" rw="1" get_func="cpe_get_igd_lan_igmp_enabled" set_func="cpe_set_igd_lan_igmp_enabled"/>
 				</object>

@@ -170,6 +170,9 @@ model_func_t ModelFunction[] =
     {"cpe_get_LEIC_MACcontrol", cpe_get_LEIC_MACcontrol},
     {"cpe_set_LEIC_MACcontrol", cpe_set_LEIC_MACcontrol},
     {"cpe_get_LEIC_number", cpe_get_LEIC_number},
+
+    {"cpe_refresh_hosts", cpe_refresh_hosts},
+    {"cpe_get_hosts_count", cpe_get_hosts_count},
 };
 
 const char *cwmp_model_ptr_to_func(void *p)

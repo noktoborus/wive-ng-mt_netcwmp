@@ -15,6 +15,7 @@
 #include "LANDevice/LANHostConfigManagement/LANHostConfigManagement.c"
 #include "LANDevice/WLANConfiguration/WLANConfiguration.c"
 #include "LANDevice/LANEthernetInterfaceConfig/LANEthernetInterfaceConfig.c"
+#include "LANDevice/Hosts/Hosts.c"
 
 
 #include "Services/Services.c"
