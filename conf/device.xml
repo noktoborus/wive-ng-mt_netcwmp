@@ -42,7 +42,7 @@
 			</object>
 			<object name="LANDevice">
 			<object name="1">
-				<param name="LANEthernetInterfaceNumberOfEntries" get_func="cpe_get_LEIC_number">
+				<param name="LANEthernetInterfaceNumberOfEntries" get_func="cpe_get_LEIC_number"/>
 				<object name="LANEthernetInterfaceConfig" refresh_func="cpe_refresh_LEIC">
 					<object name="{i}">
 						<param name="Enable" rw="1" get_func="cpe_get_LEIC_Enable" set_func="cpe_set_LEIC_Enable"/>
