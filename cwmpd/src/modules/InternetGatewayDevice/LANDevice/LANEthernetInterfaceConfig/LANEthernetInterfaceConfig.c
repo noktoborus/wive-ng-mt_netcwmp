@@ -100,8 +100,8 @@ error:
 int
 cpe_refresh_LEIC(cwmp_t *cwmp, parameter_node_t *param_node, callback_register_func_t callback_reg)
 {
-	/* five physical ports */
-	const unsigned count = 5;
+	/* four physical LAN ports  */
+	const unsigned count = 4;
 
 	unsigned i = 0u;
 	parameter_node_t *pn = NULL;
@@ -115,14 +115,12 @@ cpe_refresh_LEIC(cwmp_t *cwmp, parameter_node_t *param_node, callback_register_f
 	cwmp_model_delete_object_child(cwmp, param_node);
 
 	/* populate new */
-	for (i = (count - 1); i < count; i--) {
-		if (i == wan_port)
-			continue;
+	for (i = 0; i < count; i++) {
 		cwmp_model_copy_parameter(param_node, &pn, i + 1);
 	}
 
     /* one port for WAN */
-	leic_max_port = count - 1;
+	leic_max_port = count;
 
 	return FAULT_CODE_OK;
 }

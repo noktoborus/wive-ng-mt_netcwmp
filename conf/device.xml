@@ -56,7 +56,7 @@
 						<object name="Stats">
 							<param name="BytesSent" get_func="cpe_get_LEIC_stats"/>
 							<param name="BytesReceived" get_func="cpe_get_LEIC_stats"/>
-							<!-- not available for raeth -->
+							<!-- not available for raeth
 							<param name="PacketsSent" get_func="cpe_get_LEIC_stats"/>
 							<param name="PacketsReceived" get_func="cpe_get_LEIC_stats"/>
 							<param name="ErrorsSent" get_func="cpe_get_LEIC_stats"/>
@@ -70,6 +70,7 @@
 							<param name="BroadcastPacketsSent" get_func="cpe_get_LEIC_stats"/>
 							<param name="BroadcastPacketsReceived" get_func="cpe_get_LEIC_stats"/>
 							<param name="UnknownProtoPacketsReceived" get_func="cpe_get_LEIC_stats"/>
+							-->
 						</object>
 					</object>
 				</object>
