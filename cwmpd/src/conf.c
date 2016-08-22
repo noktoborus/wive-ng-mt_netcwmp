@@ -38,11 +38,8 @@ void cwmp_conf_init(cwmp_t * cwmp)
     cwmp->acs_auth  =   cwmp_conf_get_int("cwmp:acs_auth");
     cwmp->cpe_auth  =   cwmp_conf_get_int("cwmp:cpe_auth");
 
-    if(cwmp->acs_auth)
-    {
-        cwmp->acs_user = cwmp_conf_pool_get(pool, "cwmp:acs_username");
-        cwmp->acs_pwd = cwmp_conf_pool_get(pool, "cwmp:acs_password");
-    }
+	cwmp->acs_user = cwmp_conf_pool_get(pool, "cwmp:acs_username");
+	cwmp->acs_pwd = cwmp_conf_pool_get(pool, "cwmp:acs_password");
 
     if(cwmp->cpe_auth)
     {

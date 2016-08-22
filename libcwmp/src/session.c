@@ -1078,6 +1078,11 @@ int cwmp_session_recv_response(cwmp_session_t * session)
 
         if(response->status == 401 ||response->status == 407)
         {
+            /* set auth flag, if not defined */
+            if (!session->cwmp->acs_auth) {
+                cwmp_log_debug("%s: force auth flag", __func__);
+                session->cwmp->acs_auth = true;
+            }
             auth = http_get_variable(response->parser, "WWW-Authenticate");
             if(auth)
             {
