@@ -1278,7 +1278,11 @@ int cwmp_parse_getparameternames_message(env_t * env, xmldoc_t * doc, char ** pa
     xmlnode_t * cwmpParamPath;
     xmlnode_t * cwmpNextLevel;
     const char * nl;
-    xmlnode_t * node = cwmp_get_rpc_method_node(doc);
+    xmlnode_t * node = NULL;
+
+    cwmp_log_trace("%s(env=%p, doc=%p, path_name=%p, next_level=%p, fault=%p)",
+            __func__, (void*)env, (void*)doc, (void*)path_name, (void*)next_level, (void*)fault);
+    node = cwmp_get_rpc_method_node(doc);
 
     cwmpParamPath = cwmp_xml_get_child_with_name(node, CWMP_XML_GETPARAMETERNAMES_PARAMETERPATH);
     cwmpNextLevel = cwmp_xml_get_child_with_name(node, CWMP_XML_GETPARAMETERNAMES_NEXTLEVEL);
@@ -2431,6 +2435,10 @@ void * cwmp_create_getparameternames_response_all_parameter_names(env_t * env , 
     xmlnode_t * parameterNameNode;
     parameter_node_t * param_child;
 
+    cwmp_log_trace("%s(env=%p, parent_node=%p, path_name=\"%s\", param_node=%p [name=%s], count=%p)",
+            __func__, (void*)env, (void*)parent_node, path_name, (void*)param_node,
+            param_node ? param_node->name : NULL, (void*)count);
+
     if (!param_node)
         return NULL;
 
@@ -2441,6 +2449,12 @@ void * cwmp_create_getparameternames_response_all_parameter_names(env_t * env , 
         ESA(parameterWritableNode, cwmp_xml_create_child_node(env ,  parameterInfoStructNode, NULL, "Writable", param_node->rw==0? "0" : "1"));
         (*count) ++;
     }
+
+    if (param_node->type == TYPE_OBJECT && param_node->refresh)
+    {
+        (*param_node->refresh)(env->cwmp, param_node, callback_register_task);
+    }
+
     for (param_child = param_node->child; param_child; param_child = param_child->next_sibling)
     {
         if(TRstrcmp(param_child->name, "{i}") == 0)
@@ -2485,7 +2499,9 @@ xmldoc_t* cwmp_create_getparameternames_response_message(env_t * env ,
 
     parameter_node_t * child;
 
-
+    cwmp_log_trace("%s(env=%p, header=%p, path_name=\"%s\", param_node=%p [name=%s], next_subset=%u, next_level=%u)",
+            __func__, (void*)env, (void*)header, path_name, (void*)param_node,
+            (param_node ? param_node->name : NULL), next_subset, next_level);
     xmldoc_t * doc = XmlDocCreateDocument(env->pool );
     envelopeNode    = cwmp_create_envelope_node(env ,  & doc->node);
 
@@ -2515,10 +2531,15 @@ xmldoc_t* cwmp_create_getparameternames_response_message(env_t * env ,
     {
         if (next_level == CWMP_YES)
         {
+            if (param_node->type == TYPE_OBJECT && param_node->refresh)
+            {
+                (*param_node->refresh)(env->cwmp, param_node, callback_register_task);
+            }
+
             for (child = param_node->child; child; child = child->next_sibling)
             {
-		if(TRstrcmp(child->name, "{i}") == 0)
-	            continue;
+                if(TRstrcmp(child->name, "{i}") == 0)
+                    continue;
 
                 cwmp_buffer_init(&buffer);
                 if (child->type == TYPE_OBJECT)
