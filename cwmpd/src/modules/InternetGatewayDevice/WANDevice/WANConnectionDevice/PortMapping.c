@@ -121,8 +121,8 @@ perform_pm_save(cwmp_t *cwmp)
 	free(data);
 }
 
-bool
-pm_parse(const char *in, struct pm_rule *rule, char **next);
+char *
+pm_parse(const char *in, struct pm_rule *rule);
 
 static unsigned
 rule_count(const char *pm_line, const char *ift)
@@ -134,10 +134,7 @@ rule_count(const char *pm_line, const char *ift)
 	if (!pm_line)
 		return 0u;
 
-	while(pm_line) {
-		if (!pm_parse(pm_line, &rule, (char**)&pm_line)) {
-			continue;
-		}
+	while((pm_line = pm_parse(pm_line, &rule)) != NULL) {
 		/* count rules */
 		if (!strcmp(rule.iface, ift)) {
 			cc++;
@@ -169,8 +166,8 @@ nodename_to_ift(const char *nodename, enum pm_type *ift_i)
 	}
 }
 
-bool
-pm_parse(const char *in, struct pm_rule *rule, char **next)
+char *
+pm_parse(const char *in, struct pm_rule *rule)
 {
 	regex_t preg = {};
 	char *pattern = "\\([[:alpha:]]*\\),\\([1-3]\\)," /* iface, type */
@@ -180,22 +177,27 @@ pm_parse(const char *in, struct pm_rule *rule, char **next)
 		"\\([0-1]\\),\\([^;]*\\)" /* loopback, description */
 		"\\(;\\)"
 		;
-
+	char *next = NULL;
 	int rc = 0;
 	regmatch_t pmatch[11] = {};
+
+	if (!in || !*in) {
+		return NULL;
+	}
 
 	memset(rule, 0u, sizeof(*rule));
 	rc = regcomp(&preg, pattern, 0);
 	if (rc != 0) {
 		cwmp_log_warn("PortMapping: regcomp(\"%s\") failed: %d\n", pattern, rc);
-		return false;
+		return NULL;
 	}
 
 	rc = regexec(&preg, in, sizeof(pmatch) / sizeof(*pmatch), pmatch, 0);
 	if (rc != 0) {
 		cwmp_log_warn("PortMapping: regexec(\"%s\", \"%s\") failed: %d\n",
 				pattern, in, rc);
-		return false;
+		regfree(&preg);
+		return NULL;
 	}
 
 	strncpy(rule->iface,
@@ -214,31 +216,28 @@ pm_parse(const char *in, struct pm_rule *rule, char **next)
 			&in[pmatch[9].rm_so],
 			MIN(sizeof(rule->description), pmatch[9].rm_eo - pmatch[9].rm_so));
 
-	if (next) {
-		if (*(*next = (char*)in + pmatch[10].rm_so + 1) == '\0')
-			*next = NULL;
-	}
-
+	next = ((char*)in + (pmatch[10].rm_so + 1));
 	regfree(&preg);
 
 	/* check values */
 	if (rule->dport_max > 0 || rule->sport_max > 0) {
 		if (rule->sport_max && rule->sport_max < rule->sport_min) {
 			cwmp_log_warn("PortMapping: src-port-max can't be less src-port-min\n");
-			return false;
+			/* parse next */
+			return pm_parse(next, rule);
 		}
 
 		if (rule->dport_max && rule->dport_max < rule->dport_min) {
 			cwmp_log_warn("PortMapping: dst-port-max can't be less dst-port-min\n");
-			return false;
+			return pm_parse(next, rule);
 		}
 
 		if (rule->dport_max - rule->dport_min != rule->sport_max - rule->sport_min) {
 				cwmp_log_warn("PortMapping: dst-port and src-port ranges not match\n");
-			return false;
+			return pm_parse(next, rule);
 		}
 	}
-	return true;
+	return next;
 }
 
 int
@@ -381,13 +380,7 @@ cpe_refresh_pm(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_f
 	rules_s[ift_i] = rules_c;
 
 	rules_c = 0u;
-	while (pm_line) {
-		if (!pm_parse(pm_line, &rule, (char**)&pm_line)) {
-			cwmp_log_info("PortMapping[%s]: parse error, next val: %s",
-					ift, pm_line);
-			continue;
-		}
-
+	while ((pm_line = pm_parse(pm_line, &rule)) != NULL) {
 		/* skip values for another iface */
 		if (strcmp(rule.iface, ift) != 0) {
 			continue;
