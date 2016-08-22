@@ -812,6 +812,8 @@ int cwmp_agent_upload_file(cwmp_t * cwmp, upload_arg_t * ularg)
 int cwmp_agent_run_tasks(cwmp_t * cwmp)
 {
 	void * data;
+	void * arg1;
+	void * arg2;
 	int tasktype = 0;;
 	int ok = CWMP_NO;
 
@@ -819,7 +821,7 @@ int cwmp_agent_run_tasks(cwmp_t * cwmp)
 
 	while(1)
 	{
-		tasktype = queue_pop(cwmp->queue, &data);
+		tasktype = queue_pop(cwmp->queue, &data, &arg1, &arg2);
 		if(tasktype == -1)
 		{
 			cwmp_log_debug("no more task to run");
@@ -831,18 +833,6 @@ int cwmp_agent_run_tasks(cwmp_t * cwmp)
             case TASK_PORTMAP_TAG:
                 perform_pm_save(cwmp);
                 break;
-            case TASK_PING_TAG:
-                {
-                    time_t starttime = 0;
-                    time_t endtime = 0;
-
-                    starttime = time(NULL);
-                    perform_ping(cwmp);
-                    endtime = time(NULL);
-
-                    cwmp_event_set_value(cwmp, INFORM_DIAGNOSTICSCOMPLETE, 1, NULL, 0, starttime, endtime);
-                    break;
-                }
 			case TASK_DOWNLOAD_TAG:
 				{
 					download_arg_t * dlarg = (download_arg_t*)data;
@@ -891,9 +881,12 @@ int cwmp_agent_run_tasks(cwmp_t * cwmp)
 					cwmp_event_set_value(cwmp, INFORM_VALUECHANGE, 1, NULL, 0, 0, 0);
 				}
 				break;
-
-
-
+			case TASK_CALLBACK_TAG:
+				{
+					cwmp_log_debug("execute callback: %p", data);
+					(*(callback_func_t)data)(arg1, arg2);
+				}
+				break;
 			case TASK_FACTORYRESET_TAG:
 				{
 					//begin factory reset system

@@ -110,7 +110,7 @@ void queue_view(queue_t *q) {
 }
 
 
-int queue_pop(queue_t *q, void ** data) {
+int queue_pop(queue_t *q, void ** data, void **arg1, void **arg2) {
 	cwmp_log_trace("%s(q=%p, data=%p)", __func__, (void*)q, (void*)data);
 	if(q->first == NULL) {
 		cwmp_log_debug("queue is empty.");
@@ -121,6 +121,8 @@ int queue_pop(queue_t *q, void ** data) {
 	pthread_mutex_lock(& q->mutex);
 
 	void *c=q->first->data;
+	void *a1=q->first->arg1;
+	void *a2=q->first->arg2;
 	p=q->first;
 	type = p->datatype;
 	q->first=q->first->next;
@@ -130,6 +132,10 @@ int queue_pop(queue_t *q, void ** data) {
 	pthread_mutex_unlock(& q->mutex);
 
 	*data = c;
+	if (arg1)
+		*arg1 = a1;
+	if (arg2)
+		*arg2 = a2;
 	return type;
 }
 

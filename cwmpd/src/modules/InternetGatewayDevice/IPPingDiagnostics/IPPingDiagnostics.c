@@ -173,7 +173,7 @@ read_ping_data(FILE *f)
 /* */
 
 /* internal values */
-void
+static void
 perform_ping(cwmp_t *cwmp)
 {
 	char buf[512] = {};
@@ -244,11 +244,26 @@ perform_ping(cwmp_t *cwmp)
 	}
 }
 
+static int
+ping_cb(cwmp_t *cwmp, void *arg2)
+{
+	time_t starttime = 0;
+	time_t endtime = 0;
+
+	starttime = time(NULL);
+	perform_ping(cwmp);
+	endtime = time(NULL);
+
+	cwmp_event_set_value(cwmp, INFORM_DIAGNOSTICSCOMPLETE, 1, NULL, 0, starttime, endtime);
+	return 0;
+}
+
 /* result values */
 int
 cpe_get_igd_ping_success(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
 	char v[32] = {};
+	DM_TRACE_GET();
 	snprintf(v, sizeof(v), "%u", ping_values.r.success);
 	*value = pool_pstrdup(pool, v);
 	return FAULT_CODE_OK;
@@ -258,6 +273,7 @@ int
 cpe_get_igd_ping_failure(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
 	char v[32] = {};
+	DM_TRACE_GET();
 	snprintf(v, sizeof(v), "%u", ping_values.r.failure);
 	*value = pool_pstrdup(pool, v);
 	return FAULT_CODE_OK;
@@ -267,6 +283,7 @@ int
 cpe_get_igd_ping_average(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
 	char v[32] = {};
+	DM_TRACE_GET();
 	snprintf(v, sizeof(v), "%u", ping_values.r.average);
 	*value = pool_pstrdup(pool, v);
 	return FAULT_CODE_OK;
@@ -276,6 +293,7 @@ int
 cpe_get_igd_ping_minimum(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
 	char v[32] = {};
+	DM_TRACE_GET();
 	snprintf(v, sizeof(v), "%u", ping_values.r.minimum);
 	*value = pool_pstrdup(pool, v);
 	return FAULT_CODE_OK;
@@ -285,6 +303,7 @@ int
 cpe_get_igd_ping_maximum(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
 	char v[32] = {};
+	DM_TRACE_GET();
 	snprintf(v, sizeof(v), "%u", ping_values.r.maximum);
 	*value = pool_pstrdup(pool, v);
 	return FAULT_CODE_OK;
@@ -292,28 +311,35 @@ cpe_get_igd_ping_maximum(cwmp_t *cwmp, const char *name, char **value, char *arg
 
 /* request values */
 int
-cpe_set_igd_ping_state(cwmp_t *cwmp, const char *name, const char *value, int length, callback_register_func_t callback_reg)
+cpe_set_igd_ping_state(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
 {
 	enum ping_state state = string_to_state(value);
+
+	DM_TRACE_SET();
+
+	assert(callback_reg != NULL);
+
 	if (state != PING_REQUESTED) {
 		cwmp_log_error("IPPingDiagnostics.DiagnosticsState invalid value: '%s'", value);
 		return FAULT_CODE_OK; /* return FAULT_CODE_9007; */
 	}
 	ping_values.state = state;
 
-	queue_push(cwmp->queue, NULL, TASK_PING_TAG);
+	callback_reg(cwmp, (callback_func_t)&ping_cb, (void*)cwmp, NULL);
 	return FAULT_CODE_OK;
 }
 
 int
-cpe_set_igd_ping_dscp(cwmp_t *cwmp, const char *name, const char *value, int length, callback_register_func_t callback_reg)
+cpe_set_igd_ping_dscp(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
 {
+	DM_TRACE_SET();
 	return set_integer("DSCP", &ping_values.dscp, value, 0, 63);
 }
 
 int
-cpe_set_igd_ping_host(cwmp_t *cwmp, const char *name, const char *value, int length, callback_register_func_t callback_reg)
+cpe_set_igd_ping_host(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
 {
+	DM_TRACE_SET();
 	if (!length) {
 		cwmp_log_error("IPPingDiagnostics.Host zero-length host not allowed");
 		return FAULT_CODE_OK; /* return FAULT_CODE_9007; */
@@ -327,9 +353,10 @@ cpe_set_igd_ping_host(cwmp_t *cwmp, const char *name, const char *value, int len
 }
 
 int
-cpe_set_igd_ping_iface(cwmp_t *cwmp, const char *name, const char *value, int length, callback_register_func_t callback_reg)
+cpe_set_igd_ping_iface(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
 {
 	parameter_node_t *p = NULL;
+	DM_TRACE_SET();
 	if (!length) {
 		memset(ping_values.iface, 0u, sizeof(ping_values.iface));
 		return FAULT_CODE_OK;
@@ -347,26 +374,30 @@ cpe_set_igd_ping_iface(cwmp_t *cwmp, const char *name, const char *value, int le
 }
 
 int
-cpe_set_igd_ping_repeat(cwmp_t *cwmp, const char *name, const char *value, int length, callback_register_func_t callback_reg)
+cpe_set_igd_ping_repeat(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
 {
+	DM_TRACE_SET();
 	return set_integer("NumberOfRepetitions", &ping_values.repeat, value, 1, (unsigned)-1);
 }
 
 int
-cpe_set_igd_ping_data_size(cwmp_t *cwmp, const char *name, const char *value, int length, callback_register_func_t callback_reg)
+cpe_set_igd_ping_data_size(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
 {
+	DM_TRACE_SET();
 	return set_integer("DataBlockSize", &ping_values.data_size, value, 1, 65535);
 }
 
 int
-cpe_set_igd_ping_timeout(cwmp_t *cwmp, const char *name, const char *value, int length, callback_register_func_t callback_reg)
+cpe_set_igd_ping_timeout(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
 {
+	DM_TRACE_SET();
 	return set_integer("Timeout", &ping_values.timeout, value, 1, (unsigned)-1);
 }
 
 int
 cpe_get_igd_ping_state(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
+	DM_TRACE_GET();
 	*value = pool_pstrdup(pool, state_to_string(ping_values.state));
 	return FAULT_CODE_OK;
 }
@@ -375,6 +406,7 @@ int
 cpe_get_igd_ping_dscp(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
 	char dscp[8] = {};
+	DM_TRACE_GET();
 	snprintf(dscp, sizeof(dscp), "%u", ping_values.dscp);
 	*value = pool_pstrdup(pool, dscp);
 	return FAULT_CODE_OK;
@@ -383,6 +415,7 @@ cpe_get_igd_ping_dscp(cwmp_t *cwmp, const char *name, char **value, char *args, 
 int
 cpe_get_igd_ping_host(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
+	DM_TRACE_GET();
 	*value = pool_pstrdup(pool, ping_values.host);
 	return FAULT_CODE_OK;
 }
@@ -390,6 +423,7 @@ cpe_get_igd_ping_host(cwmp_t *cwmp, const char *name, char **value, char *args, 
 int
 cpe_get_igd_ping_iface(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
+	DM_TRACE_GET();
 	*value = pool_pstrdup(pool, ping_values.iface);
 	return FAULT_CODE_OK;
 }
@@ -398,6 +432,7 @@ int
 cpe_get_igd_ping_repeat(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
 	char v[32] = {};
+	DM_TRACE_GET();
 	snprintf(v, sizeof(v), "%u", ping_values.repeat);
 	*value = pool_pstrdup(pool, v);
 	return FAULT_CODE_OK;
@@ -407,6 +442,7 @@ int
 cpe_get_igd_ping_data_size(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
 	char v[32] = {};
+	DM_TRACE_GET();
 	snprintf(v, sizeof(v), "%u", ping_values.data_size);
 	*value = pool_pstrdup(pool, v);
 	return FAULT_CODE_OK;
@@ -416,6 +452,7 @@ int
 cpe_get_igd_ping_timeout(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
 	char v[32] = {};
+	DM_TRACE_GET();
 	snprintf(v, sizeof(v), "%u", ping_values.timeout);
 	*value = pool_pstrdup(pool, v);
 	return FAULT_CODE_OK;

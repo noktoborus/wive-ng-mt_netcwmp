@@ -36,13 +36,13 @@ struct queue_t {
 	int size;
 	struct qnode_t *first;
 	struct qnode_t *last;
-	
+
 	pthread_mutex_t     mutex;
 } ;
 
 void queue_add(queue_t *q, void * data, int type, int priority, void * arg1, void *arg2);
 void queue_push(queue_t *q, void* data, int type);
-int queue_pop(queue_t *q, void ** data);
+int queue_pop(queue_t *q, void ** data, void ** arg1, void ** arg2);
 void queue_view(queue_t *q);
 queue_t *queue_create(pool_t * pool);
 int queue_is_empty(queue_t *q);

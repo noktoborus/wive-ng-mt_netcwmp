@@ -3,8 +3,6 @@
 
 #include <cwmp/cwmp.h>
 
-/* execute ping  */
-void perform_ping(cwmp_t *cwmp);
 /* save PortMapping data */
 void perform_pm_save(cwmp_t *cwmp);
 
