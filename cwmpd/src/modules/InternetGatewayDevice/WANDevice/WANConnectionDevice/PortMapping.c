@@ -52,13 +52,7 @@ normilize_buf(char *buf)
 }
 
 static void
-notify_save(cwmp_t *cwmp)
-{
-	queue_push(cwmp->queue, NULL, TASK_PORTMAP_TAG);
-}
-
-void
-perform_pm_save(cwmp_t *cwmp)
+perform_pm_save(cwmp_t *cwmp, void *arg2)
 {
 	/* 368 bytes per rule */
 	char crule[368] = {};
@@ -323,7 +317,7 @@ cpe_del_pm(cwmp_t *cwmp, parameter_node_t *param_node, int instance_number, call
 	memset(&rules[ift_i][rule_no - 1], 0, sizeof(struct pm_rule));
 	cwmp_model_delete_parameter(param_node);
 
-	notify_save(cwmp);
+	(*callback_reg)(cwmp, (callback_func_t)&perform_pm_save, cwmp, NULL);
 
 	return FAULT_CODE_OK;
 }
@@ -531,7 +525,7 @@ cpe_set_pm(cwmp_t *cwmp, const char *name, const char *value, int length, char *
 		snprintf(rule->description, sizeof(rule->description), "%s", value);
 	}
 
-	notify_save(cwmp);
+	(*callback_reg)(cwmp, (callback_func_t)&perform_pm_save, cwmp, NULL);
 
 	return FAULT_CODE_OK;
 }

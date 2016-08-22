@@ -830,9 +830,6 @@ int cwmp_agent_run_tasks(cwmp_t * cwmp)
 		ok = CWMP_YES;
 		switch(tasktype)
 		{
-            case TASK_PORTMAP_TAG:
-                perform_pm_save(cwmp);
-                break;
 			case TASK_DOWNLOAD_TAG:
 				{
 					download_arg_t * dlarg = (download_arg_t*)data;
