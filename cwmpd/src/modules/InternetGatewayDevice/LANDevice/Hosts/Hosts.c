@@ -156,6 +156,7 @@ hosts_list_free(struct hosts_addr **list)
 /* device model code */
 
 static struct hosts_addr *hosts_addrs = NULL;
+static struct hosts_addr **hosts_ptrs = NULL;
 static unsigned hosts_count = 0u;
 
 int
@@ -171,6 +172,7 @@ int
 cpe_refresh_hosts(cwmp_t *cwmp, parameter_node_t *param_node, callback_register_func_t callback_reg)
 {
 	unsigned i = 0u;
+	struct hosts_addr *ha = NULL;
 	parameter_node_t *pn = NULL;
 	DM_TRACE_REFRESH();
 
@@ -183,9 +185,83 @@ cpe_refresh_hosts(cwmp_t *cwmp, parameter_node_t *param_node, callback_register_
 	}
 
 	hosts_count = hosts_list(&hosts_addrs);
+	if (!hosts_count) {
+		return FAULT_CODE_OK;
+	}
 
-	for (i = 0u; i < hosts_count; i++) {
+	hosts_ptrs = calloc(hosts_count, sizeof(struct hosts_addr*));
+	if (!hosts_ptrs) {
+		hosts_list_free(&hosts_addrs);
+		return FAULT_CODE_9002;
+	}
+
+	for (ha = hosts_addrs, i = 0u; ha; i++, ha = ha->next) {
 		cwmp_model_copy_parameter(param_node, &pn, i + 1);
+		hosts_ptrs[i] = ha;
+	}
+
+	return FAULT_CODE_OK;
+}
+
+int
+cpe_get_hosts(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
+{
+	char *nname = NULL;
+	long num = 0u;
+	struct hosts_addr *ha = NULL;
+	parameter_node_t *pn = NULL;
+
+	DM_TRACE_GET();
+	pn = cwmp_get_parameter_path_node(cwmp->root, name);
+
+	assert(pn != NULL);
+	assert(pn->parent != NULL);
+
+	nname = pn->name;
+	cwmp_log_debug("parent: %p %s", pn->parent, pn->parent ? pn->parent->name : NULL);
+	num = strtol(pn->parent->name, NULL, 10);
+	assert(num > 0 && num <= hosts_count);
+	cwmp_log_debug("num: %s [%ld]", pn->parent->name, num);
+	ha = hosts_ptrs[num - 1];
+
+	if (!strcmp(nname, "Active")) {
+		*value = "0";
+	} else if (!strcmp(nname, "IPAddress")) {
+		*value = pool_pstrdup(pool, ha->addr);
+	} else if (!strcmp(nname, "AddressSource")) {
+		if (ha->is_dhcp) {
+			*value = "DHCP";
+		} else {
+			*value = "Static";
+		}
+	} else if (!strcmp(nname, "LeaseTimeRemaining")) {
+		if (ha->is_dhcp) {
+			char buf[42] = {};
+			snprintf(buf, sizeof(buf), "%lu", ha->lease);
+			*value = pool_pstrdup(pool, buf);
+		} else {
+			*value = "0";
+		}
+	} else if (!strcmp(nname, "MACAddress")) {
+		*value = pool_pstrdup(pool, ha->mac);
+	} else if (!strcmp(nname, "HostName")) {
+		if (*ha->hostname) {
+			*value = pool_pstrdup(pool, ha->hostname);
+		} else {
+			*value = "";
+		}
+	} else if (!strcmp(nname, "InterfaceType")) {
+		switch(ha->hw_type) {
+			case 0x1:
+				*value = "Ethernet";
+				break;
+			default:
+				*value = "Other";
+				break;
+		}
+	} else {
+		cwmp_log_error("%s: unknown name '%s'", __func__, nname);
+		return FAULT_CODE_9002;
 	}
 
 	return FAULT_CODE_OK;

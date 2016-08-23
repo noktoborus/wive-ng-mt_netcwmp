@@ -173,6 +173,7 @@ model_func_t ModelFunction[] =
 
     {"cpe_refresh_hosts", cpe_refresh_hosts},
     {"cpe_get_hosts_count", cpe_get_hosts_count},
+    {"cpe_get_hosts", cpe_get_hosts},
 };
 
 const char *cwmp_model_ptr_to_func(void *p)

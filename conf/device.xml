@@ -78,12 +78,12 @@
 					<param name="HostNumberOfEntries" get_func="cpe_get_hosts_count"/>
 					<object name="Host" refresh_func="cpe_refresh_hosts">
 						<object name="{i}">
-							<param name="IPAddress"/>
-							<param name="AddressSource"/>
-							<param name="LeaseTimeRemaining"/>
-							<param name="MACAddress"/>
-							<param name="HostName"/>
-							<param name="InterfaceType"/>
+							<param name="IPAddress" get_func="cpe_get_hosts"/>
+							<param name="AddressSource" get_func="cpe_get_hosts"/>
+							<param name="LeaseTimeRemaining" get_func="cpe_get_hosts"/>
+							<param name="MACAddress" get_func="cpe_get_hosts"/>
+							<param name="HostName" get_func="cpe_get_hosts"/>
+							<param name="InterfaceType" get_func="cpe_get_hosts"/>
 						</object>
 					</object>
 				</object>
