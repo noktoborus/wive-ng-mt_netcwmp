@@ -1,6 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <cwmp>
 	<model>
+		<!--
+			* shared attributes:
+				inform (boolean):
+					add this node to inform list
+				inform_sort (boolean):
+					sort in inform list
+				rw (boolean):
+					indicates to write to this object/parameter (set_func/add_func)
+			* object attributes:
+				add_func (parameter_add_handler_pt):
+					clone "{i}" subnode and set incremental name to this
+				del_func (parameter_del_handler_pt):
+					delete node
+					usefull for delete generated from "{i}" node
+			* param attributes:
+				reload_func (parameter_reload_handler_pt):
+					reload service function
+					called after successful result set_func
+				set_func (parameter_set_handler_pt):
+					set value function
+				get_func (parameter_get_handler_pt):
+					get value function
+		-->
 		<object name="InternetGatewayDevice">
 			<object name="Time">
 				<param name="Enable" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_bool" set_func="cpe_set_nvram_bool" args="NTPEnabled"/>
