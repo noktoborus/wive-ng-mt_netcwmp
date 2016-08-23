@@ -19,6 +19,7 @@
 				reload_func (parameter_reload_handler_pt):
 					reload service function
 					called after successful result set_func
+					(unique call each reload_func on event/ACS task)
 				set_func (parameter_set_handler_pt):
 					set value function
 				get_func (parameter_get_handler_pt):
