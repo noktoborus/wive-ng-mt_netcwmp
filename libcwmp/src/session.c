@@ -790,7 +790,8 @@ xmldoc_t *  cwmp_session_create_setparametervalues_response_message(cwmp_session
 //    char * value;
 
 
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(session=%p, doc=%p, pool=%p)",
+            __func__, (void*)session, (void*)doc, (void*)pool);
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
     if (rv != CWMP_OK) {
         cwmp_log_error("no header node");

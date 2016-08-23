@@ -1562,35 +1562,35 @@ parameter_t*  cwmp_parameter_list_add_parameter(env_t * env, pool_t * pool , par
                 parameter = cwmp_create_parameter(env,  name, val, TRstrlen(value), pn->type);
             }
 
-            } else {
-                parameter = cwmp_create_parameter(env ,  name, pn->value, pn->value_length, pn->type);
-                cwmp_log_warn("%s: parameter %s has no getter.", __func__, name);
-            }
-
-            if (!parameter) {
-                cwmp_log_warn("%s: parameter %s not available.", __func__, name);
-            }
+        } else {
+            parameter = cwmp_create_parameter(env ,  name, pn->value, pn->value_length, pn->type);
+            cwmp_log_warn("%s: parameter %s has no getter.", __func__, name);
         }
 
-        // Execute setter
-        if (exec_set && parameter && parameter->fault_code == FAULT_CODE_OK) {
-            if(pn->set) {
-                //exec set function
-                parameter->fault_code =  (*pn->set)(env->cwmp, name,  value, TRstrlen(value), pn->args, callback_register_task);
+        if (!parameter) {
+            cwmp_log_warn("%s: parameter %s not available.", __func__, name);
+        }
+    }
 
-                if (parameter->fault_code == FAULT_CODE_OK) {
-                    cwmp_log_debug("%s: set parameter value (%s=%s) [setter: %s]", __func__, name, value, cwmp_model_ptr_to_func((void*)pn->set));
-                }
-            } else {
-                cwmp_log_warn("%s: parameter %s has no setter", __func__, name);
-                parameter->fault_code = FAULT_CODE_9008;
+    // Execute setter
+    if (exec_set && parameter && parameter->fault_code == FAULT_CODE_OK) {
+        if(pn->set) {
+            //exec set function
+            parameter->fault_code =  (*pn->set)(env->cwmp, name,  value, TRstrlen(value), pn->args, callback_register_task);
+
+            if (parameter->fault_code == FAULT_CODE_OK) {
+                cwmp_log_debug("%s: set parameter value (%s=%s) [setter: %s]", __func__, name, value, cwmp_model_ptr_to_func((void*)pn->set));
             }
+        } else {
+            cwmp_log_warn("%s: parameter %s has no setter", __func__, name);
+            parameter->fault_code = FAULT_CODE_9008;
         }
+    }
 
-        if (cwmp_add_parameter_to_list(env, *ppl, parameter) != CWMP_OK) {
-            cwmp_log_error("%s: parameter %s add error.", __func__, name);
-        }
-        return parameter;
+    if (cwmp_add_parameter_to_list(env, *ppl, parameter) != CWMP_OK) {
+        cwmp_log_error("%s: parameter %s add error.", __func__, name);
+    }
+    return parameter;
 }
 
 int  cwmp_parse_setparameterattributes_message(env_t * env , xmldoc_t * doc, parameter_node_t * root, parameter_list_t ** ppl, fault_code_t *fault)
