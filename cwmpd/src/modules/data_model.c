@@ -10,18 +10,23 @@
             (param_node ? param_node->name : ""), (void*)callback_reg);
 
 #define DM_TRACE_SET() \
-    cwmp_log_trace("%s(cwmp=\"%p\", name=\"%s\", value=\"%s\", length=%d, args=\"%s\", callback_reg=%p)",\
+    cwmp_log_trace("%s(cwmp=%p, name=\"%s\", value=\"%s\", length=%d, args=\"%s\", callback_reg=%p)",\
             __func__, (void*)cwmp, name, value, length, args, (void*)callback_reg);
 
 #define DM_TRACE_GET() \
-    cwmp_log_trace("%s(cwmp=\"%p\", name=\"%s\", value=%p, args=\"%s\", pool=%p)",\
+    cwmp_log_trace("%s(cwmp=%p, name=\"%s\", value=%p, args=\"%s\", pool=%p)",\
             __func__, (void*)cwmp, name, (void*)value, args, (void*)pool);
+
+#define DM_TRACE_RELOAD() \
+    cwmp_log_trace("%s(cwmp=%p, callback_reg=%p)",\
+            __func__, (void*)cwmp, (void*)callback_reg);
 
 #include "InternetGatewayDevice/InternetGatewayDevice.c"
 #include "alias.c"
 
 model_func_t ModelFunction[] =
 {
+    {"cpe_reload_all", cpe_reload_all},
     {"cpe_get_alias", cpe_get_alias},
     {"cpe_set_alias", cpe_set_alias},
     {"cpe_get_igd_di_manufacturer", cpe_get_igd_di_manufacturer},

@@ -60,6 +60,7 @@ enum event_task_tag {
 	TASK_FACTORYRESET_TAG,
 	TASK_CALLBACK_TAG,
 	TASK_NOTIFY_TAG,
+    TASK_RELOAD_TAG,
 };
 
 

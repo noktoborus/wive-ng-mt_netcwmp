@@ -347,24 +347,6 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
             }//end switch
         }//end while(!session_close)
 
-        if (session->parameter_value_changed == TRUE) {
-            char _p[INI_BUFFERSIZE] = {};
-            int _pid = 0;
-            cwmp_conf_get("cwmpd:reload_script", _p);
-            if (*_p) {
-                if ((_pid = fork()) == 0) {
-                    sleep(3);
-                    if (execl(_p, _p, (char*)NULL) == -1) {
-                        cwmp_log_error("exec(%s) error: %s", _p, strerror(errno));
-                    }
-                } else if(_pid > 0) {
-                    cwmp_log_info("forked for exec(%s)", _p);
-                } else {
-                    cwmp_log_error("fork() failed: %s", strerror(errno));
-                }
-            }
-        }
-
         cwmp_log_debug("session status: EXIT");
         cwmp_session_free(session);
         session = NULL;
@@ -442,7 +424,6 @@ int cwmp_agent_analyse_session(cwmp_session_t * session)
     else if (TRstrcmp(method, CWMP_RPC_SETPARAMETERVALUES) == 0)
     {
         newdoc = cwmp_session_create_setparametervalues_response_message(session, doc, doctmppool);
-        session->parameter_value_changed = TRUE;
     }
 
     else if (TRstrcmp(method, CWMP_RPC_SETPARAMETERATTRIBUTES) == 0)
@@ -471,10 +452,6 @@ int cwmp_agent_analyse_session(cwmp_session_t * session)
     else if (TRstrcmp(method, CWMP_RPC_ADDOBJECT) == 0)
     {
         newdoc = cwmp_session_create_addobject_response_message(session, doc, doctmppool);
-        if (newdoc != NULL)
-        {
-            session->parameter_value_changed = TRUE;
-        }
     }
     else if (TRstrcmp(method, CWMP_RPC_DELETEOBJECT) == 0)
     {
@@ -560,6 +537,14 @@ static void _print_param(parameter_node_t * param, int level)
             "----",
             param->name,
             param->parent ? param->parent->name : "-");
+
+    if (param->reload) {
+        snprintf(func, sizeof(func), "reload=%p[%s]%s",
+                (void*)param->reload,
+                cwmp_model_ptr_to_func(param->reload),
+                param->get ? ", " : "");
+        strncat(log, func, sizeof(log));
+    }
 
     if (param->get) {
         snprintf(func, sizeof(func), "get=%p[%s]%s",
@@ -809,8 +794,42 @@ int cwmp_agent_upload_file(cwmp_t * cwmp, upload_arg_t * ularg)
     return faultcode;
 }
 
+/* TODO: to extern library */
+static void
+unique_add_ptr(void ***ptrs, size_t *count, void *new_ptr)
+{
+    size_t rcount = *count;
+    void **rptrs = *ptrs;
+    size_t i = 0u;
+    if (!rptrs) {
+        rcount = 0u;
+    }
+
+    if (!new_ptr)
+        return;
+
+    for (i = 0u; i < rcount; i++) {
+        if (rptrs[i] == new_ptr)
+            return;
+    }
+    rptrs = (void**)realloc(rptrs, sizeof(void*) * rcount + 2);
+    if (!rptrs) {
+        cwmp_log_error("realloc(%d) failed: %s",
+                (sizeof(void*) * rcount + 2), strerror(errno));
+        return;
+    }
+    rptrs[rcount++] = new_ptr;
+    rptrs[rcount] = NULL;
+    *count = rcount;
+    *ptrs = rptrs;
+}
+
+/* */
+
 int cwmp_agent_run_tasks(cwmp_t * cwmp)
 {
+	void ** reload_scripts = NULL;
+	size_t reload_count = 0u;
 	void * data;
 	void * arg1;
 	void * arg2;
@@ -892,12 +911,33 @@ int cwmp_agent_run_tasks(cwmp_t * cwmp)
 					system("fs nvramreset");
 				}
 				break;
-
+			case TASK_RELOAD_TAG:
+				{
+                    cwmp_log_debug("unqueue reload callback: %s",
+                            cwmp_model_ptr_to_func(data));
+					/* uniqulize poiters */
+					unique_add_ptr(&reload_scripts, &reload_count, data);
+				}
+				break;
 			default:
 					cwmp_log_error("ERROR: Unknown task tag \"%s\" \n", tasktype);
 				break;
 
 		}
+	}
+	if (reload_scripts) {
+		/* execute functions */
+		int rval = 0;
+		size_t i = 0u;
+		for (; i < reload_count; i++) {
+			rval = (*(parameter_reload_handler_pt)reload_scripts[i])(cwmp, callback_register_task);
+			if (rval == FAULT_CODE_OK) {
+				continue;
+			}
+			cwmp_log_error("reload function %s got error",
+					cwmp_model_ptr_to_func(reload_scripts[i]));
+		}
+		free(reload_scripts);
 	}
 
 	return ok;

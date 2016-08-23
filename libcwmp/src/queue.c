@@ -111,7 +111,8 @@ void queue_view(queue_t *q) {
 
 
 int queue_pop(queue_t *q, void ** data, void **arg1, void **arg2) {
-	cwmp_log_trace("%s(q=%p, data=%p)", __func__, (void*)q, (void*)data);
+	cwmp_log_trace("%s(q=%p, data=%p, arg1=%p, arg2=%p)",
+            __func__, (void*)q, (void*)data, (void*)arg1, (void*)arg2);
 	if(q->first == NULL) {
 		cwmp_log_debug("queue is empty.");
 		return -1;

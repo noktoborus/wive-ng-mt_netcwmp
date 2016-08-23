@@ -149,20 +149,18 @@ struct http_socket_t
     void *  write_calldata;
 
     int error_code;
-    
-    int use_ssl;
-    
-#ifdef USE_CWMP_OPENSSL    
-    SSL * ssl;
-#endif    
-    
-    
-    pool_t * pool;
-    
-    
-};
 
-int callback_register_task(cwmp_t * cwmp, callback_func_t callback, void *data1, void *data2);
+    int use_ssl;
+
+#ifdef USE_CWMP_OPENSSL
+    SSL * ssl;
+#endif
+
+
+    pool_t * pool;
+
+
+};
 
 
 

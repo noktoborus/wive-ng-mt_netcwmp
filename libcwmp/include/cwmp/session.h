@@ -46,7 +46,6 @@ struct cwmp_session_t
 
     parameter_node_t * root;
 
-    int parameter_value_changed;
 };
 
 #define ParameterFormatEnd  ".%s"

@@ -22,19 +22,27 @@
 #include "Services/X_COM_IPTV/X_COM_IPTV.c"
 
 
-char* cpe_get_igd_device_summary(void * arg, void * pool)
+int
+cpe_reload_all(cwmp_t *cwmp, callback_register_func_t callback_reg)
 {
-    //pool_t * p = (pool_t *)pool;
-    return	NULL;
+	char p[INI_BUFFERSIZE] = {};
+	int pid = 0;
+
+	DM_TRACE_RELOAD();
+	cwmp_conf_get("cwmpd:reload_script", p);
+	if (*p) {
+		if ((pid = fork()) == 0) {
+			sleep(3);
+			if (execl(p, p, (char*)NULL) == -1) {
+				cwmp_log_error("exec(%s) error: %s", p, strerror(errno));
+			}
+		} else if(pid > 0) {
+			cwmp_log_info("forked for exec(%s)", p);
+		} else {
+			cwmp_log_error("fork() failed: %s", strerror(errno));
+		}
+	}
+
+	return FAULT_CODE_OK;
 }
-
-char* cpe_get_igd_lan_device_number_of_entries(void * arg, void * pool)
-{
-    //pool_t * p = (pool_t *)pool;
-    return NULL;
-}
-
-
-
-
 

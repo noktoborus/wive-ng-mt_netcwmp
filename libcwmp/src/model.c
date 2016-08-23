@@ -183,6 +183,7 @@ int cwmp_model_init_parameter(parameter_node_t * param, xmlnode_t * node, model_
     param->add = NULL;
     param->del = NULL;
     param->refresh = NULL;
+    param->reload = NULL;
     param->args = NULL;
 	char tmp[42] = {};
 
@@ -265,6 +266,12 @@ int cwmp_model_init_parameter(parameter_node_t * param, xmlnode_t * node, model_
     }
     else
     {
+        value = cwmp_xml_get_node_attribute(node, "reload_func");
+        if (value)
+        {
+            param->reload = (parameter_reload_handler_pt) cwmp_model_find_func(func_list, func_count, value);
+        }
+
         value = cwmp_xml_get_node_attribute(node, "get_func");
         if(value)
         {

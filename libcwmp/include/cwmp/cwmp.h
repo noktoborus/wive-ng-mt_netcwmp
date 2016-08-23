@@ -406,6 +406,7 @@ struct parameter_node_st
 	parameter_add_handler_pt  	add;
 	parameter_del_handler_pt	del;
 	parameter_refresh_handler_pt	refresh;
+	parameter_reload_handler_pt		reload;
 
 	char * args;
 
@@ -573,7 +574,7 @@ xmlnode_t * cwmp_xml_get_child_with_name(void * nodeptr, const char * nodeName);
 #define XmlNodeGetDocRoot(docptr)   XmlNodeGetFirstChild(& (docptr)->node)
 
 
-
+int callback_register_task(cwmp_t * cwmp, callback_func_t callback, void *data1, void *data2);
 
 #endif // CWMP_H
 
