@@ -221,13 +221,21 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
     while (TRUE) {
         if (cwmp->new_request == CWMP_NO) {
             cwmp_log_debug("No new request from ACS");
-            sleep(2);
 
+            sleep(1);
             periodic++;
 
-            if (periodic < 10) {
+            if (!cwmp->conf.periodic_enable) {
+                continue;
+            }
+
+            if (periodic < cwmp->conf.periodic_interval) {
                 continue;
             } else {
+                /* FIXME: wtf?
+                 * '4 VALUE CHANGED' event emitted after 'lazy' setter
+                 * (passive notification in SetParameterAttributesStruct)
+                 */
                 if (cwmp_conf_get_int("cwmpd:notification") != 0) {
                     cwmp_log_info("Periodic response");
                     queue_push(cwmp->queue, NULL, TASK_NOTIFY_TAG);

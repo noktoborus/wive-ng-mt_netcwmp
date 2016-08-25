@@ -155,3 +155,58 @@ int cpe_set_igd_ms_connectionrequestpassword(cwmp_t * cwmp, const char * name, c
 	cwmp_conf_set("cwmp:cpe_password", value);
     return FAULT_CODE_OK;
 }
+
+int
+cpe_set_ms_periodic_inform_interval(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
+{
+    char buf[42] = {};
+    unsigned long val = 0lu;
+    DM_TRACE_SET();
+
+    val = strtoul(value, NULL, 10);
+    val = val ? val : 1;
+    if (cwmp->conf.periodic_interval != val) {
+        snprintf(buf, sizeof(buf), "%lu", val);
+        cwmp->conf.periodic_interval = val;
+        cwmp_conf_set("cwmpd:inform_periodic_interval", buf);
+    }
+
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_set_ms_periodic_inform_enable(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
+{
+    bool enable = false;
+    DM_TRACE_SET();
+
+    enable = (*value == '1');
+    if (cwmp->conf.periodic_enable != enable) {
+        cwmp->conf.periodic_enable = enable;
+        cwmp_conf_set("cwmpd:inform_periodic_enable", enable ? "1" : "0");
+    }
+
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_ms_periodic_inform_interval(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
+{
+    char buf[42] = {};
+
+    DM_TRACE_GET();
+    snprintf(buf, sizeof(buf), "%lu", cwmp->conf.periodic_interval);
+    *value = buf;
+
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_ms_periodic_inform_enable(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
+{
+    DM_TRACE_GET();
+    *value = (cwmp->conf.periodic_enable ? "1" : "0");
+
+    return FAULT_CODE_OK;
+}
+

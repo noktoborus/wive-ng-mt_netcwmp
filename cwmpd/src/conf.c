@@ -1,3 +1,4 @@
+/* vim: set et: */
 /************************************************************************
  *                                                                      *
  * Netcwmp/Opencwmp Project                                             *
@@ -33,6 +34,13 @@ void cwmp_conf_init(cwmp_t * cwmp)
     cwmp_log_trace("%s(cwmp=%p)", __func__, (void*)cwmp);
 
     pool = cwmp->pool;
+
+    cwmp->conf.periodic_interval = strtoul(cwmp_conf_get_int("cwmpd:inform_periodic_interval"), NULL, 10);
+    cwmp->conf.periodic_enable = (bool)cwmp_conf_get_int("cwmpd:inform_periodic_enable");
+    if (!cwmp->conf.periodic_interval) {
+        cwmp->conf.periodic_interval = 1lu;
+    }
+
     cwmp->httpd_port =  cwmp_conf_get_int("cwmpd:httpd_port"); //cwmp_nvram_get_int("cwmp:httpd_port",8080);
 
     cwmp->acs_auth  =   cwmp_conf_get_int("cwmp:acs_auth");

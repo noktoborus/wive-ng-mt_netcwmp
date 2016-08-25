@@ -13,6 +13,7 @@
 #ifndef __CWMP_H__
 #define __CWMP_H__
 
+#include <stdbool.h>
 #include <cwmp/xmlet.h>
 #include <cwmp/types.h>
 #include <cwmp/util.h>
@@ -358,6 +359,10 @@ struct cwmp_st
 	parameter_node_t * root;
 
 
+	struct {
+		bool periodic_enable;
+		unsigned long periodic_interval;
+	} conf;
 
 #ifdef USE_CWMP_OPENSSL
     SSL_CTX * ssl_ctx;
