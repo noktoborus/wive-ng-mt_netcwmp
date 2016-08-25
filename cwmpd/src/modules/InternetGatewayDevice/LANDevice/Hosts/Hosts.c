@@ -10,6 +10,7 @@ struct hosts_addr {
 
 	unsigned hw_type;
 
+	bool is_wireless;
 	bool is_dhcp;
 	unsigned long lease;
 
@@ -47,6 +48,13 @@ _hosts_check(struct hosts_addr *list)
 
 	int row_no = 0;
 
+	RT_802_11_MAC_TABLE table24 = {};
+	RT_802_11_MAC_TABLE table5 = {};
+	RT_802_11_MAC_ENTRY *pe = NULL;
+
+	getWlanStationTable(&table24, 1);
+	getWlanStationTable(&table5, 2);
+
 	dl = getDhcpClientList(&row_count, &written_at);
 	if (!row_count) {
 		return;
@@ -69,6 +77,27 @@ _hosts_check(struct hosts_addr *list)
 			snprintf(np->hostname, sizeof(np->hostname),
 					"%s", dl[row_no].hostname);
 			break;
+		}
+		/* 2.4GHz radio */
+		for (row_no = 0; row_no < table24.Num; row_no++) {
+			pe = &(table24.Entry[row_no]);
+			snprintf(mac, 18, "%02x:%02x:%02x:%02x:%02x:%02x",
+					pe->Addr[0], pe->Addr[1], pe->Addr[2],
+					pe->Addr[3], pe->Addr[4], pe->Addr[5]);
+			if (!strcmp(np->mac, mac)) {
+				np->is_wireless = true;
+			}
+
+		}
+		/* 5GHz radio */
+		for (row_no = 0; row_no < table5.Num; row_no++) {
+			pe = &(table5.Entry[row_no]);
+			snprintf(mac, 18, "%02x:%02x:%02x:%02x:%02x:%02x",
+					pe->Addr[0], pe->Addr[1], pe->Addr[2],
+					pe->Addr[3], pe->Addr[4], pe->Addr[5]);
+			if (!strcmp(np->mac, mac)) {
+				np->is_wireless = true;
+			}
 		}
 	}
 }
@@ -251,13 +280,17 @@ cpe_get_hosts(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *
 			*value = "";
 		}
 	} else if (!strcmp(nname, "InterfaceType")) {
-		switch(ha->hw_type) {
-			case 0x1:
-				*value = "Ethernet";
-				break;
-			default:
-				*value = "Other";
-				break;
+		if (ha->is_wireless) {
+			*value = "802.11";
+		} else {
+			switch(ha->hw_type) {
+				case 0x1:
+					*value = "Ethernet";
+					break;
+				default:
+					*value = "Other";
+					break;
+			}
 		}
 	} else {
 		cwmp_log_error("%s: unknown name '%s'", __func__, nname);
