@@ -208,16 +208,16 @@
 									<param name="ConnectionTrigger" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_const_string" set_func="AlwaysOn"/>
 									<object name="PortMapping" rw="1" add_func="cpe_add_pm" refresh_func="cpe_refresh_pm">
 										<object name="{i}" del_func="cpe_del_pm">
-											<param name="PortMappingEnabled" rw="1" reload_func="cpe_reload_all" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
-											<param name="Alias" rw="1" reload_func="cpe_reload_all" set_func="cpe_set_alias" get_func="cpe_get_alias"/>
-											<param name="PortMappingLeaseDuration" rw="1" reload_func="cpe_reload_all" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
-											<param name="RemoteHost" rw="1" reload_func="cpe_reload_all" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
-											<param name="ExternalPort" rw="1" reload_func="cpe_reload_all" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
-											<param name="ExternalPortEndRange" rw="1" reload_func="cpe_reload_all" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
-											<param name="InternalPort" rw="1" reload_func="cpe_reload_all" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
-											<param name="PortMappingProtocol" rw="1" reload_func="cpe_reload_all" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
-											<param name="InternalClient" rw="1" reload_func="cpe_reload_all" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
-											<param name="PortMappingDescription" rw="1" reload_func="cpe_reload_all" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="PortMappingEnabled" rw="1" reload_func="cpe_reload_pm" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="Alias" rw="1" reload_func="cpe_reload_pm" set_func="cpe_set_alias" get_func="cpe_get_alias"/>
+											<param name="PortMappingLeaseDuration" rw="1" reload_func="cpe_reload_pm" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="RemoteHost" rw="1" reload_func="cpe_reload_pm" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="ExternalPort" rw="1" reload_func="cpe_reload_pm" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="ExternalPortEndRange" rw="1" reload_func="cpe_reload_pm" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="InternalPort" rw="1" reload_func="cpe_reload_pm" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="PortMappingProtocol" rw="1" reload_func="cpe_reload_pm" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="InternalClient" rw="1" reload_func="cpe_reload_pm" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
+											<param name="PortMappingDescription" rw="1" reload_func="cpe_reload_pm" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
 										</object>
 									</object>
 								</object> 
