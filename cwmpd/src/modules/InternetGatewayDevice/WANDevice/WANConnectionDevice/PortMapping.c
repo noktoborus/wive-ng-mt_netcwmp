@@ -121,8 +121,11 @@ cpe_reload_pm(cwmp_t *cwmp, callback_register_func_t callback_reg)
 	}
 	cwmp_nvram_set("PortForwardRules", data);
 	free(data);
-	/* TODO: call to reload firewall */
-	cpe_reload_all(cwmp, callback_reg);
+
+	/* call to reload firewall */
+	cwmp_log_debug("PortMapping: reload iptables rules");
+	firewall_rebuild_etc();
+	system("service iptables restart");
 	return FAULT_CODE_OK;
 }
 
