@@ -36,6 +36,9 @@ struct pm_rule
 	unsigned dport_max;
 	bool loopback;
 	char description[256];
+
+	unsigned long lease;
+	bool is_upnp;
 };
 
 static void
@@ -51,8 +54,8 @@ normilize_buf(char *buf)
 	}
 }
 
-static void
-perform_pm_save(cwmp_t *cwmp, void *arg2)
+int
+cpe_reload_pm(cwmp_t *cwmp, callback_register_func_t callback_reg)
 {
 	/* 368 bytes per rule */
 	char crule[368] = {};
@@ -68,7 +71,7 @@ perform_pm_save(cwmp_t *cwmp, void *arg2)
 	if (!data) {
 		cwmp_log_error("PortMapping: calloc(%"PRIuPTR") failed: %s",
 				size, strerror(errno));
-		return;
+		return FAULT_CODE_9002;
 	}
 	/* foreach(PM_WAN (1), PM_VPN (2)) */
 	for (ift_i = 1; ift_i < 3; ift_i++) {
@@ -76,6 +79,11 @@ perform_pm_save(cwmp_t *cwmp, void *arg2)
 			/* skip if empty */
 			if (!*rules[ift_i][i].iface)
 				continue;
+			/* skip UPnP mapping */
+			/* TODO: save UPnP rules to miniupnpd */
+			if (!rules[ift_i][i].is_upnp || !rules[ift_i][i].lease) {
+				continue;
+			}
 
 			if (rules[ift_i][i].sport_max > rules[ift_i][i].sport_min) {
 				snprintf(sport, sizeof(sport), "%u", rules[ift_i][i].sport_max);
@@ -113,22 +121,144 @@ perform_pm_save(cwmp_t *cwmp, void *arg2)
 	}
 	cwmp_nvram_set("PortForwardRules", data);
 	free(data);
+	/* TODO: call to reload firewall */
+	cpe_reload_all(cwmp, callback_reg);
+	return FAULT_CODE_OK;
 }
 
 char *
 pm_parse(const char *in, struct pm_rule *rule);
 
+static size_t
+pm_parse_regex(regex_t *preg, const char *pattern,
+		const char *in, regmatch_t *out, size_t out_size) {
+	int rc = 0u;
+
+	assert(out_size > 0);
+
+	if (!in || !*in) {
+		return 0u;
+	}
+	rc = regcomp(preg, pattern, 0);
+	if (rc != 0) {
+		cwmp_log_warn("PortMapping: regcomp(\"%s\") failed: %d\n", pattern, rc);
+		return 0u;
+	}
+	rc = regexec(preg, in, out_size, out, 0);
+	if (rc != 0) {
+		cwmp_log_warn("PortMapping: regexec(\"%s\", \"%s\") failed: %d\n",
+				pattern, in, rc);
+		regfree(preg);
+		return 0u;
+	}
+	{
+		size_t len = out[0].rm_eo;
+		regfree(preg);
+		return len;
+	}
+}
+
+/*
+ * return miniupnpd leases data
+ * must be free'd
+ */
+static char *
+pm_alloc_upnp()
+{
+	long len = 0;
+	FILE *f = NULL;
+	char *data = NULL;
+
+	/* TODO: get value from /etc/miniupnpd.conf (lease_file) */
+	f = fopen("/var/upnp_leases", "r");
+	if (!f) {
+		return NULL;
+	}
+
+	fseek(f, 0, SEEK_END);
+	len = ftell(f);
+
+	if (len <= 0) {
+		fclose(f);
+		return NULL;
+	}
+	rewind(f);
+
+	data = calloc(1, len);
+	if (!data) {
+		cwmp_log_error("%s: calloc(%ld) failed: %s",
+				__func__, len, strerror(errno));
+		return NULL;
+	}
+
+	if (fread(data, 1, len, f) != (size_t)len) {
+		fclose(f);
+		free(data);
+		return NULL;
+	}
+
+	fclose(f);
+	return data;
+}
+
+static char *
+pm_parse_upnp(const char *in, struct pm_rule *rule)
+{
+	char *next = NULL;
+	size_t len = 0u;
+	regex_t preg = {};
+	const char *pattern = "\\(TCP\\|UDP\\):\\([0-9]*\\):" /* protocol:port src: */
+		"\\([0-9.]*\\):\\([0-9]*\\):" /* addr:port dst: */
+		"\\([0-9]*\\):\\([^\n]*\\)" /* lease time:description */
+		"\n";
+	regmatch_t pmatch[7] = {};
+
+	if (!in || !*in) {
+		return NULL;
+	}
+
+	if (!(len = pm_parse_regex(&preg, pattern, in,
+					pmatch, sizeof(pmatch) / sizeof(*pmatch)))) {
+		return NULL;
+	}
+
+	/* set values */
+	rule->is_upnp = true;
+	/* only for vpn */
+	snprintf(rule->iface, sizeof(rule->iface), "VPN");
+	if (!strncmp("TCP", &in[pmatch[1].rm_so], pmatch[1].rm_eo - pmatch[1].rm_so)) {
+		rule->proto = PM_TCP;
+	} else if (!strncmp("UDP", &in[pmatch[1].rm_so], pmatch[1].rm_eo - pmatch[1].rm_so)) {
+		rule->proto = PM_UDP;
+	}
+
+	rule->sport_min = (unsigned)strtoul(&in[pmatch[2].rm_so], NULL, 10);
+	rule->sport_max = rule->sport_min;
+	strncpy(rule->addr, &in[pmatch[3].rm_so],
+			MIN(sizeof(rule->addr), pmatch[3].rm_eo - pmatch[3].rm_so));
+	rule->dport_min = (unsigned)strtoul(&in[pmatch[4].rm_so], NULL, 10);
+	rule->dport_max = rule->dport_min;
+	rule->lease = strtoul(&in[pmatch[5].rm_so], NULL, 10);
+	snprintf(rule->description, sizeof(rule->description), "UPNP_%.*s",
+		pmatch[6].rm_eo - pmatch[6].rm_so, &in[pmatch[6].rm_so]);
+
+	/* go next */
+	next = ((char*)in + len);
+	return next;
+}
+
 static unsigned
-rule_count(const char *pm_line, const char *ift)
+rule_count(const char *in, const char *ift,
+		char*(*parse)(const char *, struct pm_rule *))
 {
 	struct pm_rule rule = {};
 
 	unsigned cc = 0u;
 
-	if (!pm_line)
-		return 0u;
+	cwmp_log_debug("%s(in=\"%s\", ift=\"%s\", parse=%p)",
+			__func__, in, ift, (void*)parse);
 
-	while((pm_line = pm_parse(pm_line, &rule)) != NULL) {
+	while((in = (*parse)(in, &rule)) != NULL) {
 		/* count rules */
 		if (!strcmp(rule.iface, ift)) {
 			cc++;
@@ -172,25 +302,13 @@ pm_parse(const char *in, struct pm_rule *rule)
 		"\\(;\\)"
 		;
 	char *next = NULL;
-	int rc = 0;
 	regmatch_t pmatch[11] = {};
+	size_t len = 0;
 
-	if (!in || !*in) {
-		return NULL;
-	}
-
+	assert(in != NULL);
 	memset(rule, 0u, sizeof(*rule));
-	rc = regcomp(&preg, pattern, 0);
-	if (rc != 0) {
-		cwmp_log_warn("PortMapping: regcomp(\"%s\") failed: %d\n", pattern, rc);
-		return NULL;
-	}
-
-	rc = regexec(&preg, in, sizeof(pmatch) / sizeof(*pmatch), pmatch, 0);
-	if (rc != 0) {
-		cwmp_log_warn("PortMapping: regexec(\"%s\", \"%s\") failed: %d\n",
-				pattern, in, rc);
-		regfree(&preg);
+	if (!(len = pm_parse_regex(&preg, pattern, in,
+					pmatch, sizeof(pmatch) / sizeof(*pmatch)))) {
 		return NULL;
 	}
 
@@ -210,8 +328,7 @@ pm_parse(const char *in, struct pm_rule *rule)
 			&in[pmatch[9].rm_so],
 			MIN(sizeof(rule->description), pmatch[9].rm_eo - pmatch[9].rm_so));
 
-	next = ((char*)in + (pmatch[10].rm_so + 1));
-	regfree(&preg);
+	next = ((char*)in + len);
 
 	/* check values */
 	if (rule->dport_max > 0 || rule->sport_max > 0) {
@@ -317,8 +434,6 @@ cpe_del_pm(cwmp_t *cwmp, parameter_node_t *param_node, int instance_number, call
 	memset(&rules[ift_i][rule_no - 1], 0, sizeof(struct pm_rule));
 	cwmp_model_delete_parameter(param_node);
 
-	(*callback_reg)(cwmp, (callback_func_t)&perform_pm_save, cwmp, NULL);
-
 	return FAULT_CODE_OK;
 }
 
@@ -330,6 +445,7 @@ cpe_refresh_pm(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_f
 	const char *ift = NULL;
 	enum pm_type ift_i = PM_NONE;
 	unsigned rules_c = 0u;
+	const char *pnp_data = NULL;
 
 	parameter_node_t *pn = NULL;
 
@@ -342,6 +458,11 @@ cpe_refresh_pm(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_f
 	ift = nodename_to_ift(param_node->parent->parent->name, &ift_i);
 	if (!ift) {
 		return FAULT_CODE_9002;
+	}
+
+	if (ift_i == PM_VPN) {
+		/* UPnP only for WANPPPConnection */
+		pnp_data = (const char*)pm_alloc_upnp();
 	}
 
 	cwmp_log_debug("PortMapping[%s]: refresh (%s) for %s",
@@ -357,10 +478,11 @@ cpe_refresh_pm(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_f
 
 	/* generate new list */
 	pm_line = cwmp_nvram_get("PortForwardRules");
-	rules_c = rule_count(pm_line, ift);
+	rules_c = rule_count(pm_line, ift, &pm_parse)
+			+ rule_count(pnp_data, ift, &pm_parse_upnp);
 	if (!rules_c) {
 		cwmp_log_info("PortMapping[%s]: no rules", ift);
-		return FAULT_CODE_OK;
+		goto code_ok;
 	}
 
 	cwmp_log_debug("PortMapping[%s]: allocate %"PRIuPTR" rules",
@@ -369,7 +491,7 @@ cpe_refresh_pm(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_f
 	if (!rules[ift_i]) {
 		cwmp_log_error("PortMapping[%s]: calloc(%d) failed: %s",
 				ift, rules_c * sizeof(struct pm_rule), strerror(errno));
-		return FAULT_CODE_9002;
+		goto code_9002;
 	}
 	rules_s[ift_i] = rules_c;
 
@@ -383,23 +505,43 @@ cpe_refresh_pm(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_f
 		cwmp_model_copy_parameter(param_node, &pn, (rules_c + 1));
 		/* save data (from 0 to infinity) */
 		memcpy(&rules[ift_i][rules_c], &rule, sizeof(rule));
-		/* fix rules */
+		/* split rule (TR-098 defined only TCP and UDP proto) */
 		if (rule.proto == PM_UDPTCP) {
 			rules[ift_i][rules_c].proto = PM_UDP;
 			memcpy(&rules[ift_i][++rules_c], &rule, sizeof(rule));
 			cwmp_model_copy_parameter(param_node, &pn, (rules_c + 1));
 			rules[ift_i][rules_c].proto = PM_TCP;
 		}
-
 		rules_c++;
 	}
 
+	if ((pm_line = pnp_data) == NULL) {
+		goto code_ok;
+	}
+
+	while ((pm_line = pm_parse_upnp(pm_line, &rule)) != NULL) {
+		cwmp_model_copy_parameter(param_node, &pn, (rules_c + 1));
+		memcpy(&rules[ift_i][rules_c], &rule, sizeof(rule));
+		rules_c++;
+	}
+
+code_ok:
+	if (pnp_data) {
+		free((void*)pnp_data);
+	}
 	return FAULT_CODE_OK;
+code_9002:
+	if (pnp_data) {
+		free((void*)pnp_data);
+	}
+	return FAULT_CODE_9002;
 }
 
 
 struct pm_rule *
-name_to_rule(cwmp_t *cwmp, const char *fullpath, char *out_name, size_t out_len)
+name_to_rule(cwmp_t *cwmp, const char *fullpath,
+		char *out_name, size_t out_len,
+		enum pm_type *r_ift_i)
 {
 	/* InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.PortMapping.1.InternalPort */
 	parameter_node_t *pn = NULL;
@@ -443,6 +585,9 @@ name_to_rule(cwmp_t *cwmp, const char *fullpath, char *out_name, size_t out_len)
 
 	cwmp_log_debug("PortMapping[%s]: work with rule %"PRIuPTR, ift, rule_no);
 
+	if (r_ift_i) {
+		*r_ift_i = ift_i;
+	}
 	return &rules[ift_i][rule_no - 1];
 }
 
@@ -452,10 +597,11 @@ cpe_set_pm(cwmp_t *cwmp, const char *name, const char *value, int length, char *
 	struct pm_rule *rule = NULL;
 	char param[64] = {};
 	unsigned long val = 0u;
+	enum pm_type ift_i = PM_NONE;
 
 	DM_TRACE_SET();
 
-	rule = name_to_rule(cwmp, name, param, sizeof(param));
+	rule = name_to_rule(cwmp, name, param, sizeof(param), &ift_i);
 
 	if (!rule)
 		return FAULT_CODE_9005;
@@ -466,13 +612,12 @@ cpe_set_pm(cwmp_t *cwmp, const char *name, const char *value, int length, char *
 			/* FIXME: add switch per-rule */
 			cwmp_nvram_set("PortForwardEnable", "0");
 		}
-	} else if (!strcmp("Alias", param)) {
-		/* ignore */
 	} else if (!strcmp("PortMappingLeaseDuration", param)) {
-		/* TODO: not supported */
-		if (strcmp(value, "0")) {
-			cwmp_log_warn("PortMapping: "
-					"only '0' allowed as PortMappingLeaseDuration");
+		if (ift_i == PM_VPN) {
+			rule->lease = strtoul(value, NULL, 10);
+		} else if (strcmp(value, "0")) {
+			cwmp_log_warn("PortMapping: only '0' value allowed as %s",
+					param);
 			return FAULT_CODE_9003;
 		}
 	} else if (!strcmp("RemoteHost", param)) {
@@ -525,8 +670,6 @@ cpe_set_pm(cwmp_t *cwmp, const char *name, const char *value, int length, char *
 		snprintf(rule->description, sizeof(rule->description), "%s", value);
 	}
 
-	(*callback_reg)(cwmp, (callback_func_t)&perform_pm_save, cwmp, NULL);
-
 	return FAULT_CODE_OK;
 }
 
@@ -536,12 +679,13 @@ cpe_get_pm(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *poo
 	struct pm_rule *rule = NULL;
 	char param[64] = {};
 	char buf[128] = {};
+	enum pm_type ift_i = PM_NONE;
 
 	const char *enabled = "";
 
 	DM_TRACE_GET();
 
-	rule = name_to_rule(cwmp, name, param, sizeof(param));
+	rule = name_to_rule(cwmp, name, param, sizeof(param), &ift_i);
 
 	if (!rule)
 		return FAULT_CODE_9005;
@@ -549,13 +693,15 @@ cpe_get_pm(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *poo
 	enabled = cwmp_nvram_get("PortForwardEnable");
 
 	if (!strcmp("PortMappingEnabled", param)) {
-		if (*enabled == '1' || *enabled == 't') {
+		if (rule->is_upnp) {
 			*value = "true";
 		} else {
-			*value = "false";
+			if (*enabled == '1' || *enabled == 't') {
+				*value = "true";
+			} else {
+				*value = "false";
+			}
 		}
-	} else if (!strcmp("Alias", param)) {
-		*value = pool_pstrdup(pool, "");
 	} else if (!strcmp("PortMappingLeaseDuration", param)) {
 		/* not supported timed rules */
 		*value = "0";

@@ -1,26 +1,3 @@
-#include "Time/Time.c"
-#include "WANDevice/WANConnectionDevice/PortMapping.c"
-#include "IPPingDiagnostics/IPPingDiagnostics.c"
-#include "DeviceInfo/DeviceInfo.c"
-#include "ManagementServer/ManagementServer.c"
-#include "WANDevice/WANDevice.c"
-#include "WANDevice/WANConnectionDevice/WANConnectionDevice.c"
-#include "WANDevice/WANConnectionDevice/WANIPConnection.c"
-#include "WANDevice/WANConnectionDevice/WANPPPConnection.c"
-
-#include "Layer3Forwarding/Layer3Forwarding.c"
-
-#include "LANDevice/LANDevice.c"
-#include "LANDevice/X_COM_IgmpSnoopingConfig/X_COM_IgmpSnoopingConfig.c"
-#include "LANDevice/LANHostConfigManagement/LANHostConfigManagement.c"
-#include "LANDevice/WLANConfiguration/WLANConfiguration.c"
-#include "LANDevice/LANEthernetInterfaceConfig/LANEthernetInterfaceConfig.c"
-#include "LANDevice/Hosts/Hosts.c"
-
-
-#include "Services/Services.c"
-#include "Services/X_COM_IPTV/X_COM_IPTV.c"
-
 
 int
 cpe_reload_all(cwmp_t *cwmp, callback_register_func_t callback_reg)
@@ -45,4 +22,27 @@ cpe_reload_all(cwmp_t *cwmp, callback_register_func_t callback_reg)
 
 	return FAULT_CODE_OK;
 }
+
+#include "Time/Time.c"
+#include "WANDevice/WANConnectionDevice/PortMapping.c"
+#include "IPPingDiagnostics/IPPingDiagnostics.c"
+#include "DeviceInfo/DeviceInfo.c"
+#include "ManagementServer/ManagementServer.c"
+#include "WANDevice/WANDevice.c"
+#include "WANDevice/WANConnectionDevice/WANConnectionDevice.c"
+#include "WANDevice/WANConnectionDevice/WANIPConnection.c"
+#include "WANDevice/WANConnectionDevice/WANPPPConnection.c"
+
+#include "Layer3Forwarding/Layer3Forwarding.c"
+
+#include "LANDevice/LANDevice.c"
+#include "LANDevice/X_COM_IgmpSnoopingConfig/X_COM_IgmpSnoopingConfig.c"
+#include "LANDevice/LANHostConfigManagement/LANHostConfigManagement.c"
+#include "LANDevice/WLANConfiguration/WLANConfiguration.c"
+#include "LANDevice/LANEthernetInterfaceConfig/LANEthernetInterfaceConfig.c"
+#include "LANDevice/Hosts/Hosts.c"
+
+
+#include "Services/Services.c"
+#include "Services/X_COM_IPTV/X_COM_IPTV.c"
 

@@ -157,6 +157,7 @@ model_func_t ModelFunction[] =
     {"cpe_add_pm", cpe_add_pm},
     {"cpe_del_pm", cpe_del_pm},
     {"cpe_refresh_pm", cpe_refresh_pm},
+    {"cpe_reload_pm", cpe_reload_pm},
 
     {"cpe_get_time_status", cpe_get_time_status},
     {"cpe_get_time_localtime", cpe_get_time_localtime},
