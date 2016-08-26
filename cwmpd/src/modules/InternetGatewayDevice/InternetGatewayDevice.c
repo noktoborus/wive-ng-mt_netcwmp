@@ -23,6 +23,7 @@ cpe_reload_all(cwmp_t *cwmp, callback_register_func_t callback_reg)
 	return FAULT_CODE_OK;
 }
 
+#include "User/User.c"
 #include "Time/Time.c"
 #include "WANDevice/WANConnectionDevice/PortMapping.c"
 #include "IPPingDiagnostics/IPPingDiagnostics.c"

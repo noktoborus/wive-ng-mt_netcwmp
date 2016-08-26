@@ -26,6 +26,19 @@
 					get value function
 		-->
 		<object name="InternetGatewayDevice">
+			<param name="UserNumberOfEntries" get_func="cpe_get_const_string" args="2"/>
+			<object name="User">
+				<object name="1"> <!-- user management -->
+					<param name="Enable" get_func="cpe_get_const_string" set_func="cpe_set_null" args="1"/>
+					<param name="Username" get_func="cpe_get_nvram_string" set_func="cpe_set_user_name" args="Login" reload_func="cpe_reload_user"/>
+					<param name="Password" get_func="cpe_get_nvram_string" set_func="cpe_set_nvram_string" args="Password" reload_func="cpe_reload_user"/>
+				</object>
+				<object name="2"> <!-- operator managment -->
+					<param name="Enable" get_func="cpe_get_user_mngmt_enable" set_func="cpe_set_user_mngmt_enable" reload_func="cpe_reload_user"/>
+					<param name="Username" get_func="cpe_get_nvram_string" set_func="cpe_set_user_name" args="MngmtLogin" reload_func="cpe_reload_user"/>
+					<param name="Password" get_func="cpe_get_nvram_string" set_func="cpe_set_nvram_string" args="MngmtPassword" reload_func="cpe_reload_user"/>
+				</object>
+			</object>
 			<object name="Time">
 				<param name="Enable" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_bool" set_func="cpe_set_nvram_bool" args="NTPEnabled"/>
 				<param name="Status" get_func="cpe_get_time_status"/>

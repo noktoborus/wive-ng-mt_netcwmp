@@ -38,6 +38,11 @@ model_func_t ModelFunction[] =
     {"cpe_get_igd_di_softwareversion", cpe_get_igd_di_softwareversion},
     {"cpe_get_igd_di_provisioningcode", cpe_get_igd_di_provisioningcode},
 */
+    {"cpe_reload_user", cpe_reload_user},
+    {"cpe_get_user_mngmt_enable", cpe_get_user_mngmt_enable},
+    {"cpe_set_user_mngmt_enable", cpe_set_user_mngmt_enable},
+    {"cpe_set_user_name", cpe_set_user_name},
+
     {"cpe_get_igd_di_devicelog", cpe_get_igd_di_devicelog},
 
     {"cpe_get_ms_periodic_inform_enable", cpe_get_ms_periodic_inform_enable},
