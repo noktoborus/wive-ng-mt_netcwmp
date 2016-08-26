@@ -196,7 +196,7 @@ cpe_get_ms_periodic_inform_interval(cwmp_t *cwmp, const char *name, char **value
 
     DM_TRACE_GET();
     snprintf(buf, sizeof(buf), "%lu", cwmp->conf.periodic_interval);
-    *value = buf;
+    *value = pool_pstrdup(pool, buf);
 
     return FAULT_CODE_OK;
 }
