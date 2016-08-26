@@ -35,7 +35,7 @@ void cwmp_conf_init(cwmp_t * cwmp)
 
     pool = cwmp->pool;
 
-    cwmp->conf.periodic_interval = strtoul(cwmp_conf_get_int("cwmpd:inform_periodic_interval"), NULL, 10);
+    cwmp->conf.periodic_interval = (unsigned long)cwmp_conf_get_int("cwmpd:inform_periodic_interval");
     cwmp->conf.periodic_enable = (bool)cwmp_conf_get_int("cwmpd:inform_periodic_enable");
     if (!cwmp->conf.periodic_interval) {
         cwmp->conf.periodic_interval = 1lu;
