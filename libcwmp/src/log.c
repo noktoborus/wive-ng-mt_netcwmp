@@ -72,40 +72,82 @@ int cwmp_loglevel_to_syslog_level(int level) {
     }
 }
 
+void cwmp_log_set(const char * filename, int level)
+{
+    if (!g_ot_log_file_ptr) {
+        return;
+    }
+
+    if (filename)
+    {
+        if (g_cwmp_log_file.name) {
+            free(g_cwmp_log_file.name);
+        }
+
+        if (g_cwmp_log_file.file &&
+                g_cwmp_log_file.file != stdout &&
+                g_cwmp_log_file.file != stderr) {
+            fclose(g_cwmp_log_file.file);
+            g_cwmp_log_file.file = NULL;
+        }
+
+        if (!strcmp(filename, "stdout")) {
+            g_cwmp_log_file.file = stdout;
+        } else if (!strcmp(filename, "stderr")) {
+            g_cwmp_log_file.file = stderr;
+        } else if (!*filename) {
+            /* null log */
+        } else {
+            g_cwmp_log_file.file = fopen(filename,"a+");
+        }
+
+        g_cwmp_log_file.name = strdup(filename);
+    }
+
+    if (level) {
+        cwmp_log_debug("set level to: %s", cwmp_loglevel_to_syslog_level(level));
+        g_cwmp_log_file.level = level;
+    }
+}
+
 int cwmp_log_init(const char * filename, int level)
 {
     setlogmask (LOG_UPTO (cwmp_loglevel_to_syslog_level(level)));
 
     openlog ("cwmpd", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
+    g_ot_log_file_ptr = &g_cwmp_log_file;
+
     g_cwmp_log_file.file = NULL;
     g_cwmp_log_file.name = NULL;
-    if (filename)
-    {
-        g_cwmp_log_file.file = fopen(filename,"a+");
-        g_cwmp_log_file.name = strdup(filename);
+
+    if (!filename) {
+        filename = "stdout";
     }
 
-    if (g_cwmp_log_file.file == NULL)
-    {
-        g_cwmp_log_file.file = stdout;
-    }
+    cwmp_log_set(filename, level);
 
-    g_cwmp_log_file.level = level;
-
-    g_ot_log_file_ptr = &g_cwmp_log_file;
+    cwmp_log_info("Log started: level=%s, filename=%s",
+            cwmp_loglevel_to_string(g_cwmp_log_file.level),
+            g_cwmp_log_file.name);
 
     return 0;
 }
 
 void cwmp_log_fini()
 {
-    free(g_cwmp_log_file.name);
+    if (g_cwmp_log_file.name) {
+        free(g_cwmp_log_file.name);
+    }
 
-    if ((g_cwmp_log_file.file != stdout) && (g_cwmp_log_file.file != NULL))
+    if ((g_cwmp_log_file.file != NULL) &&
+           (g_cwmp_log_file.file != stdout) &&
+           (g_cwmp_log_file.file != stderr))
     {
         fclose(g_cwmp_log_file.file);
     }
+
+    memset(&g_cwmp_log_file, 0u, sizeof(g_cwmp_log_file));
 }
 
 void cwmp_log_write(int level, cwmp_log_t * log, const char * fmt, va_list ap)
@@ -122,6 +164,9 @@ void cwmp_log_write(int level, cwmp_log_t * log, const char * fmt, va_list ap)
     {
         logger = g_ot_log_file_ptr;
     }
+
+    if (!logger->file)
+        return;
 
     if (logger->level >= level)
     {

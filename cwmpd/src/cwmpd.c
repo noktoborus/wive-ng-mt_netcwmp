@@ -84,10 +84,12 @@ void cwmp_init_ssl(cwmp_t * cwmp)
 int main(int argc, char **argv)
 {
 //    cwmp_pid_t pid;
+    int level = CWMP_LOG_INFO;
     cwmp_t * cwmp;
 	time_t seed = time(NULL);
 	srand((unsigned int)seed);
 
+    cwmp_log_init(NULL, level);
 //    nvram_init(RT2860_NVRAM);
 
 //    int syslog_enable = 0;
@@ -105,7 +107,7 @@ int main(int argc, char **argv)
     cwmp_conf_open("/etc/cwmp.conf");
 
     char* loglevel = cwmp_conf_pool_get(cwmp_global_pool,"cwmpd:log_level");
-    int level = CWMP_LOG_INFO;
+    char* log_filename = cwmp_conf_pool_get(cwmp_global_pool, "cwmpd:log_filename");
 
     if (loglevel != NULL)
     {
@@ -117,7 +119,7 @@ int main(int argc, char **argv)
         else if (strcasecmp(loglevel,"trace") == 0) level = CWMP_LOG_TRACE;
     }
 
-    cwmp_log_init(NULL, level);
+    cwmp_log_set(log_filename, level);
     cwmp_log_debug("DEBUG: current log level is \"%s\" (%i)", loglevel, level);
 
     cwmp_enable=cwmp_conf_get_int("cwmp:enable");

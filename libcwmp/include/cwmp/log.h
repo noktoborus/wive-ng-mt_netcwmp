@@ -42,6 +42,7 @@
 typedef struct cwmp_log_t cwmp_log_t;
 
 int cwmp_log_init(const char * filename, int level);
+void cwmp_log_set(const char * filename, int level);
 void cwmp_log_fini();
 
 
