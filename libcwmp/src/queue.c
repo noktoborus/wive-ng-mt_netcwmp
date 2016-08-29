@@ -56,7 +56,7 @@ void queue_add(queue_t *q, void * data, int type, int priority, void * arg1, voi
 void queue_push(queue_t *q, void * data, int type) {
 	qnode_t *node;
 
-	cwmp_log_debug("%s(q=%p, data=%p, type=%d)",
+	cwmp_log_trace("%s(q=%p, data=%p, type=%d)",
 			__func__, (void*)q, (void*)data, type);
 
 	node = (qnode_t *)MALLOC(sizeof(qnode_t));
@@ -142,7 +142,10 @@ int queue_pop(queue_t *q, void ** data, void **arg1, void **arg2) {
 
 
 queue_t *queue_create(pool_t * pool) {
-	queue_t *queue = MALLOC(sizeof(queue_t));//(queue_t *)pool_pcalloc(pool, sizeof(queue_t) );
+	queue_t *queue = NULL;
+
+	cwmp_log_trace("%s(pool=%p)", __func__, (void*)pool);
+	queue = MALLOC(sizeof(queue_t));//(queue_t *)pool_pcalloc(pool, sizeof(queue_t) );
 	if(queue == NULL) return NULL;
 	queue->first = NULL;
 	queue->last = NULL;
@@ -156,10 +159,14 @@ queue_t *queue_create(pool_t * pool) {
 
 /* Elegxei an h oura einai adeia */
 int queue_is_empty(queue_t *q) {
+	cwmp_log_trace("%s(q=%p)", __func__, (void*)q);
 	return (q->first == NULL);
 }
 
 void queue_free(pool_t * pool, queue_t *q) {
+	cwmp_log_trace("%s(pool=%p, q=%p)",
+			__func__, (void*)pool, (void*)q);
+
 	pthread_mutex_lock(& q->mutex);
 	qnode_t *p = q->first;
 	while(p->next != NULL) {
