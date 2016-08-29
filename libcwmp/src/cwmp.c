@@ -1892,6 +1892,8 @@ int cwmp_parse_deleteobject_message(env_t * env , xmldoc_t *doc, parameter_node_
     {
         cwmp_set_faultcode(fault, FAULT_CODE_9005);
         return CWMP_ERROR;
+    } else ( param->reload) {
+        queue_push(env->cwmp->queue, pn->reload, TASK_RELOAD_TAG);
     }
 
 

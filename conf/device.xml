@@ -9,17 +9,20 @@
 					sort in inform list
 				rw (boolean):
 					indicates to write to this object/parameter (set_func/add_func)
+				reload_func (parameter_reload_handler_pt):
+					reload service function
+					called after successful result set_func in param
+					and successful del_func in object
+					(unique call each reload_func on event/ACS task)
+
 			* object attributes:
 				add_func (parameter_add_handler_pt):
 					clone "{i}" subnode and set incremental name to this
 				del_func (parameter_del_handler_pt):
 					delete node
 					usefull for delete generated from "{i}" node
-			
-				reload_func (parameter_reload_handler_pt):
-					reload service function
-					called after successful result set_func
-					(unique call each reload_func on event/ACS task)
+
+			* parameter attributes:	
 				set_func (parameter_set_handler_pt):
 					set value function
 				get_func (parameter_get_handler_pt):
@@ -189,7 +192,7 @@
 										<param name="EthernetPacketsReceived" get_func="cpe_get_igd_wan_ip_rxtxbytes" args="rx"/>
 									</object>
 									<object name="PortMapping" rw="1" add_func="cpe_add_pm" refresh_func="cpe_refresh_pm">
-										<object name="{i}" del_func="cpe_del_pm">
+										<object name="{i}" del_func="cpe_del_pm" reload_func="cpe_reload_pm">
 											<param name="PortMappingEnabled" rw="1" reload_func="cpe_reload_pm" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
 											<param name="Alias" rw="1" set_func="cpe_set_alias" get_func="cpe_get_alias"/>
 											<param name="PortMappingLeaseDuration" rw="1" reload_func="cpe_reload_pm" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
@@ -223,7 +226,7 @@
 									<param name="MACAddress" rw="1" type="s" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="WAN_MAC_ADDR" set_func="cpe_set_nvram_string"/>
 									<param name="ConnectionTrigger" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_const_string" set_func="AlwaysOn"/>
 									<object name="PortMapping" rw="1" add_func="cpe_add_pm" refresh_func="cpe_refresh_pm">
-										<object name="{i}" del_func="cpe_del_pm">
+										<object name="{i}" del_func="cpe_del_pm" reload_func="cpe_reload_pm">
 											<param name="PortMappingEnabled" rw="1" reload_func="cpe_reload_pm" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
 											<param name="Alias" rw="1" reload_func="cpe_reload_pm" set_func="cpe_set_alias" get_func="cpe_get_alias"/>
 											<param name="PortMappingLeaseDuration" rw="1" reload_func="cpe_reload_pm" set_func="cpe_set_pm" get_func="cpe_get_pm"/>
