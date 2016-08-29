@@ -66,7 +66,10 @@ cpe_reload_pm(cwmp_t *cwmp, callback_register_func_t callback_reg)
 	size_t i = 0u;
 	char *data = NULL;
 
-	cwmp_log_debug("PortMapping: save data (%"PRIuPTR" bytes)", size);
+	DM_TRACE_RELOAD();
+	cwmp_log_debug("PortMapping: save data (%"PRIuPTR" bytes). "
+			"Rules count: WAN=%"PRIuPTR" VPN=%"PRIuPTR, size,
+			rules_s[PM_WAN], rules_s[PM_VPN]);
 	data = calloc(1, size);
 	if (!data) {
 		cwmp_log_error("PortMapping: calloc(%"PRIuPTR") failed: %s",
@@ -77,11 +80,12 @@ cpe_reload_pm(cwmp_t *cwmp, callback_register_func_t callback_reg)
 	for (ift_i = 1; ift_i < 3; ift_i++) {
 		for (i = 0u; i < rules_s[ift_i]; i++) {
 			/* skip if empty */
-			if (!*rules[ift_i][i].iface)
+			if (!*rules[ift_i][i].iface) {
 				continue;
+			}
 			/* skip UPnP mapping */
 			/* TODO: save UPnP rules to miniupnpd */
-			if (!rules[ift_i][i].is_upnp || !rules[ift_i][i].lease) {
+			if (rules[ift_i][i].is_upnp || rules[ift_i][i].lease) {
 				continue;
 			}
 
@@ -116,7 +120,7 @@ cpe_reload_pm(cwmp_t *cwmp, callback_register_func_t callback_reg)
 					(ift_i == PM_VPN ? "VPN" :
 						(ift_i == PM_WAN ? "WAN" : "?")),
 					crule);
-			strncpy(data, crule, size);
+			strncat(data, crule, size);
 		}
 	}
 	cwmp_nvram_set("PortForwardRules", data);
