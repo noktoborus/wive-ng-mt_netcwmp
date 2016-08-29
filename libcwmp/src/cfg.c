@@ -25,6 +25,8 @@ typedef struct conf_t conf_t;
 struct conf_t {
     char * filename;
     FILE * fd;
+    bool write_to_nvram;
+    bool read_from_nvram;
 };
 
 
@@ -32,13 +34,30 @@ static conf_t	* cwmp_conf_handle = NULL;
 
 int cwmp_conf_open(const char * filename)
 {
-    FUNCTION_TRACE();
+    char buf[INI_BUFFERSIZE] = {};
+
+    cwmp_log_trace("%s(filename=\"%s\")", __func__, filename);
     cwmp_conf_handle = malloc(sizeof(cwmp_conf_handle));
     if (!cwmp_conf_handle) {
         cwmp_log_error("conf malloc faild.");
         return CWMP_ERROR;
     }
     cwmp_conf_handle->filename = TRstrdup(filename);
+    /* basic values */
+    ini_gets("cwmp", "cfg_write_to_nvram", NULL, buf, sizeof(buf), filename);
+    if (*buf == '1') {
+        cwmp_conf_handle->write_to_nvram = true;
+        cwmp_conf_handle->read_from_nvram = true;
+    }
+    ini_gets("cwmp", "cfg_read_from_nvram", NULL, buf, sizeof(buf), filename);
+    if (*buf == '1') {
+        cwmp_conf_handle->read_from_nvram = true;
+    }
+
+    cwmp_log_info("CONF: write_to_nvram=%s, read_from_nvram=%s",
+            cwmp_conf_handle->write_to_nvram ? "true" : "false",
+            cwmp_conf_handle->read_from_nvram ? "true" : "false");
+
     return CWMP_OK;
 }
 
@@ -79,7 +98,7 @@ int cwmp_conf_get(const char * key, char *value)
     cwmp_conf_split(name, &s, &k);
 
     /* 'evn' only from config file */
-    if (!TRstrcmp(s, "env")) {
+    if (!TRstrcmp(s, "env") || !cwmp_conf_handle->read_from_nvram) {
         ini_gets(s, k, NULL, value, INI_BUFFERSIZE, cwmp_conf_handle->filename);
         cwmp_log_debug("%s(\"%s\", %p) = \"%s\": readed from %s",
                 __func__, key, (void*)value, value,
@@ -130,7 +149,7 @@ int cwmp_conf_set(const char * key, const char * value)
     TRstrncpy(name, key, INI_BUFFERSIZE);
     cwmp_conf_split(name, &s, &k);
 
-    if (!TRstrcmp(s, "env")) {
+    if (!TRstrcmp(s, "env") || !cwmp_conf_handle->write_to_nvram) {
         cwmp_log_debug("%s(\"%s\", \"%s\"): write to %s",
                 __func__, key, value, cwmp_conf_handle->filename);
         return ini_puts(s, k, value, cwmp_conf_handle->filename);
