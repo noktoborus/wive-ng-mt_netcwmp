@@ -189,6 +189,26 @@ model_func_t ModelFunction[] =
     {"cpe_refresh_hosts", cpe_refresh_hosts},
     {"cpe_get_hosts_count", cpe_get_hosts_count},
     {"cpe_get_hosts", cpe_get_hosts},
+
+
+    {"cpe_reload_trd", cpe_reload_trd},
+    {"cpe_get_trd_state", cpe_get_trd_state},
+    {"cpe_set_trd_state", cpe_set_trd_state},
+    {"cpe_get_trd_iface", cpe_get_trd_iface},
+    {"cpe_set_trd_iface", cpe_set_trd_iface},
+    {"cpe_get_trd_host", cpe_get_trd_host},
+    {"cpe_set_trd_host", cpe_set_trd_host},
+    {"cpe_get_trd_tries", cpe_get_trd_tries},
+    {"cpe_set_trd_tries", cpe_set_trd_tries},
+    {"cpe_get_trd_timeout", cpe_get_trd_timeout},
+    {"cpe_set_trd_timeout", cpe_set_trd_timeout},
+    {"cpe_get_trd_dbs", cpe_get_trd_dbs},
+    {"cpe_set_trd_dbs", cpe_set_trd_dbs},
+    {"cpe_get_trd_dscp", cpe_get_trd_dscp},
+    {"cpe_set_trd_dscp", cpe_set_trd_dscp},
+    {"cpe_get_trd_mhc", cpe_get_trd_mhc},
+    {"cpe_set_trd_mhc", cpe_set_trd_mhc},
+    {"cpe_get_trd_hops", cpe_get_trd_hops},
 };
 
 const char *cwmp_model_ptr_to_func(void *p)
