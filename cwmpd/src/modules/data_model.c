@@ -208,7 +208,9 @@ model_func_t ModelFunction[] =
     {"cpe_set_trd_dscp", cpe_set_trd_dscp},
     {"cpe_get_trd_mhc", cpe_get_trd_mhc},
     {"cpe_set_trd_mhc", cpe_set_trd_mhc},
-    {"cpe_get_trd_hops", cpe_get_trd_hops},
+    {"cpe_get_trd_hop", cpe_get_trd_hop},
+    {"cpe_get_trd_hop_count", cpe_get_trd_hop_count},
+    {"cpe_get_trd_response", cpe_get_trd_response},
 };
 
 const char *cwmp_model_ptr_to_func(void *p)

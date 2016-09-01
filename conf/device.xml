@@ -254,14 +254,14 @@
 				<param name="DataBlockSize" get_func="cpe_get_trd_dbs" set_func="cpe_set_trd_dbs"/>
 				<param name="DSCP" get_func="cpe_get_trd_dscp" set_func="cpe_set_trd_dscp"/>
 				<param name="MaxHopCount" get_func="cpe_get_trd_mhc" set_func="cpe_set_trd_mhc"/>
-				<param name="ResponseTime" get_func="cpe_get_trd_hops"/>
-				<param name="RouteHopsNumberOfEntries" get_func="cpe_get_trd_hops"/>
+				<param name="ResponseTime" get_func="cpe_get_trd_response"/>
+				<param name="RouteHopsNumberOfEntries" get_func="cpe_get_trd_hop_count"/>
 				<object name="RouteHops">
 					<object name="{i}">
-						<param name="HopHost" get_func="cpe_get_trd_hops"/>
-						<param name="HopHostAddress" get_func="cpe_get_trd_hops"/>
-						<param name="HopErrorCode" get_func="cpe_get_trd_hops"/>
-						<param name="HopRTTimes" get_func="cpe_get_trd_hops"/>
+						<param name="HopHost" get_func="cpe_get_trd_hop"/>
+						<param name="HopHostAddress" get_func="cpe_get_trd_hop"/>
+						<param name="HopErrorCode" get_func="cpe_get_trd_hop"/>
+						<param name="HopRTTimes" get_func="cpe_get_trd_hop"/>
 					</object>
 				</object>
 			</object>
