@@ -168,8 +168,24 @@
 			</object>
 			<object name="WANDevice">
 				<object name="1">
+					<object name="WANEthernetInterfaceConfig">
+						<param name="Enable" rw="1" get_func="" set_func=""/>
+						<param name="Status" get_func=""/>
+						<param name="MACAddress" get_func=""/>
+						<param name="MaxBitRate" rw="1" get_func="" set_func=""/>
+						<param name="DuplexMode" rw="1" get_func="" set_func=""/>
+						<object name="Stats">
+							<param name="BytesSent" get_func=""/>
+							<param name="BytesReceived" get_func=""/>
+							<param name="PacketsSent" get_func=""/>
+							<param name="PacketsReceived" get_func=""/>
+						</object>
+					</object>
 					<object name="WANConnectionDevice" rw="1">
 						<object name="1" rw="1">
+							<object name="WANEthernetLinkConfig">
+								<param name="EthernetLinkStatus" get_func=""/>
+							</object>
 							<object name="WANIPConnection" rw="1" add_func="cpe_add_null">
 								<object name="1">
 									<param name="Name" rw="1" type="s" reload_func="cpe_reload_all" get_func="cpe_get_const_string" args="WAN" set_func="cpe_set_null"/>
