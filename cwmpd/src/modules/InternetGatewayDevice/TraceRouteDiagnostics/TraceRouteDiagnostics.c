@@ -84,6 +84,8 @@ trd_process(FILE *f, struct trd_HopHost *hops, size_t max_hops)
 	}
 
 	while (fgets(l, sizeof(l), f) != NULL && lineno < max_hops) {
+		cwmp_log_info("TraceRouteDiagnostics: %.*s",
+				*l ? ((int)strlen(l) - 1) : 0, l);
 		if (regexec(&preg, l, nmatch, pmatch, 0)) {
 			if (!strncmp("traceroute", l, 10)) {
 				/* skip header */
@@ -162,15 +164,11 @@ cpe_reload_trd(cwmp_t *cwmp, callback_register_func_t callback_reg)
 	parameter_node_t *pn = NULL;
 	parameter_node_t *npn = NULL;
 	size_t i = 0u;
+	time_t starttime = 0;
+	time_t endtime = 0;
 
 	DM_TRACE_RELOAD();
-	snprintf(cmd, sizeof(cmd),
-			"traceroute -q %u -w %u -t %u -m %u '%s'",
-			trd.number_of_tries,
-			trd.timeout,
-			trd.dscp,
-			trd.max_hop_count,
-			trd.host);
+	time(&starttime);
 
 	if (trd.hh) {
 		free(trd.hh);
@@ -185,9 +183,9 @@ cpe_reload_trd(cwmp_t *cwmp, callback_register_func_t callback_reg)
 		return FAULT_CODE_9002;
 	}
 
-	if (!(pn = cwmp_get_parameter_node(pn->parent, "IPPingDiagnostics.Hops"))) {
+	if (!(pn = cwmp_get_parameter_node(pn->parent, "TraceRouteDiagnostics.RouteHops"))) {
 		cwmp_log_error(
-				"TraceRouteDiagnostics: can't get IPPingDiagnostics.Hops node");
+				"TraceRouteDiagnostics: can't get TraceRouteDiagnostics.RouteHops node");
 		return FAULT_CODE_9002;
 	}
 
@@ -195,7 +193,7 @@ cpe_reload_trd(cwmp_t *cwmp, callback_register_func_t callback_reg)
 	cwmp_model_delete_object_child(cwmp, pn);
 
 	/* validate values */
-	if (!trd.max_hop_count) {
+	if (!trd.max_hop_count || trd.max_hop_count > 64) {
 		cwmp_log_error(
 				"TraceRouteDiagnostics: MaxHopCount not in range 1-64, value=%u",
 				trd.max_hop_count);
@@ -203,7 +201,7 @@ cpe_reload_trd(cwmp_t *cwmp, callback_register_func_t callback_reg)
 		return FAULT_CODE_9002;
 	}
 
-	if (trd.number_of_tries) {
+	if (!trd.number_of_tries || trd.number_of_tries > 3) {
 		cwmp_log_error(
 				"TraceRouteDiagnostics: NumberOfTries not in range 1-3, value=%u",
 				trd.number_of_tries);
@@ -211,14 +209,14 @@ cpe_reload_trd(cwmp_t *cwmp, callback_register_func_t callback_reg)
 		return FAULT_CODE_9002;
 	}
 
-	if (trd.timeout) {
+	if (!trd.timeout) {
 		cwmp_log_error(
 				"TraceRouteDiagnostics: Timeout must be > 1");
 		trd.state = TRD_ERROR_RESOLVE;
 		return FAULT_CODE_9002;
 	}
 
-	if (trd.dscp) {
+	if (trd.dscp > 63) {
 		cwmp_log_error(
 				"TraceRouteDiagnostics: DSCP not in range 0-63, value=%u",
 				trd.dscp);
@@ -233,6 +231,15 @@ cpe_reload_trd(cwmp_t *cwmp, callback_register_func_t callback_reg)
 	}
 
 	/* run */
+	snprintf(cmd, sizeof(cmd),
+			"traceroute -q %u -w %u -t %u -m %u '%s'",
+			trd.number_of_tries,
+			trd.timeout < 1000 ? 1 : (trd.timeout / 1000),
+			trd.dscp,
+			trd.max_hop_count,
+			trd.host);
+
+	cwmp_log_info("TraceRouteDiagnostics: run %s", cmd);
 	if (!(f = popen(cmd, "r"))) {
 		cwmp_log_error("TraceRouteDiagnostics: popen(%s) failed: %s",
 				cmd, strerror(errno));
@@ -263,6 +270,9 @@ cpe_reload_trd(cwmp_t *cwmp, callback_register_func_t callback_reg)
 	for (i = 0u; i < trd.hh_count; i++) {
 		cwmp_model_copy_parameter(pn, &npn, i + 1);
 	}
+
+	time(&endtime);
+	cwmp_event_set_value(cwmp, INFORM_DIAGNOSTICSCOMPLETE, 1, NULL, 0, starttime, endtime);
 
 	return FAULT_CODE_OK;
 }
