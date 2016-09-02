@@ -57,7 +57,7 @@ int cpe_set_igd_wan_ppp_authprot(cwmp_t * cwmp, const char * name, const char * 
     return FAULT_CODE_OK;
 }
 
-/*
+/* Uptime
  * ConnectionStatus
  * EthernetBytesSent
  * EthernetBytesReceived
@@ -72,6 +72,8 @@ int cpe_get_igd_wan_ppp_stats(cwmp_t * cwmp, const char * name, char ** value, c
 	int elc = 0;
 	int status = 0;
 	char buf[42] = {};
+    struct stat st = {};
+    time_t t = 0;
 
 	DM_TRACE_GET();
 	pn = cwmp_get_parameter_path_node(cwmp->root, name);
@@ -84,7 +86,7 @@ int cpe_get_igd_wan_ppp_stats(cwmp_t * cwmp, const char * name, char ** value, c
 		}
 	}
 
-	if (!strcmp(pn->name, "ConnectionStatus")) {
+     if (!strcmp(pn->name, "ConnectionStatus")) {
 		status = getVPNStatusCode();
 		switch (status) {
 			case 0:
@@ -106,7 +108,22 @@ int cpe_get_igd_wan_ppp_stats(cwmp_t * cwmp, const char * name, char ** value, c
 				break;
 		}
 	} else if (nc) {
-	   	if (!strcmp(pn->name, "EthernetBytesSent")) {
+        if (!strcmp(pn->name, "Uptime")) {
+            time(&t);
+            snprintf(buf, sizeof(buf), "/var/run/%s.pid", nc->ifname);
+            if (stat(buf, &st) == -1) {
+                cwmp_log_error("WANPPPConnection.{i}.Uptime: stat(%s) failed: %s",
+                        buf, strerror(errno));
+            } else if (t < st.st_mtim.tv_sec) {
+                cwmp_log_error(
+                        "WANPPPConnection.{i}.Uptime: system time less then mtime(%s)",
+                        buf);
+            } else {
+                snprintf(buf, sizeof(buf), "%llu",
+                        (unsigned long long)(time(NULL) - st.st_mtim.tv_sec));
+                *value = pool_pstrdup(pool, buf);
+            }
+        } else if (!strcmp(pn->name, "EthernetBytesSent")) {
 			snprintf(buf, sizeof(buf), "%llu", nc->tx_bytes);
 		} else if (!strcmp(pn->name, "EthernetBytesReceived")) {
 			snprintf(buf, sizeof(buf), "%llu", nc->rx_bytes);
