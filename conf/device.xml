@@ -57,6 +57,38 @@
 					</object>
 				</object>
 			</object>
+			<object name="Capabilities">
+				<param name="DownloadTransport" get_func="cpe_get_const_string" args="HTTP"/>
+				<param name="UploadTransport" get_func="cpe_get_const_string" args="HTTP"/>
+			</object>
+			<object name="UploadDiagnostics">
+				<param name="DiagnosticsState" rw="1" get_func="" set_func=""/>
+				<param name="Interface" rw="1" get_func="" set_func=""/>
+				<param name="UploadURL" rw="1" get_func="" set_func=""/>
+				<param name="DSCP" rw="1" get_func="" set_func=""/>
+				<param name="EthernetPriority" rw="1" get_func="" set_func=""/>
+				<param name="TestFileLength" rw="1" get_func="" set_func=""/>
+				<param name="ROMTime" get_func=""/>
+				<param name="BOMTime" get_func=""/>
+				<param name="EOMTime" get_func=""/>
+				<param name="TotalBytesSent" get_func=""/>
+				<param name="TCPOpenRequestTime" get_func=""/>
+				<param name="TCPOpenResponseTime" get_func=""/>
+			</object>
+			<object name="DownloadDiagnostics">
+				<param name="DiagnosticsState" rw="1" get_func="cpe_get_dd_state" set_func="cpe_set_dd_state" reload_func="cpe_reload_dd"/>
+				<param name="Interface" rw="1" get_func="cpe_get_dd_iface" set_func="cpe_set_dd_iface"/>
+				<param name="DownloadURL" rw="1" get_func="cpe_get_dd_url" set_func="cpe_set_dd_url"/>
+				<param name="DSCP" rw="1" get_func="cpe_get_dd_dscp" set_func="cpe_set_dd_dscp"/>
+				<param name="EthernetPriority" rw="1" get_func="cpe_get_dd_epri" set_func="cpe_set_dd_epri"/>
+				<param name="ROMTime" get_func="cpe_get_dd_result"/>
+				<param name="BOMTime" get_func="cpe_get_dd_result"/>
+				<param name="EOMTime" get_func="cpe_get_dd_result"/>
+				<param name="TestBytesReceived" get_func="cpe_get_dd_result"/>
+				<param name="TotalBytesReceived" get_func="cpe_get_dd_result"/>
+				<param name="TCPOpenRequestTime" get_func="cpe_get_dd_result"/>
+				<param name="TCPOpenResponseTime" get_func="cpe_get_dd_result"/>
+			</object>
 			<param name="UserNumberOfEntries" get_func="cpe_get_const_string" args="2"/>
 			<object name="User">
 				<object name="1"> <!-- user management -->

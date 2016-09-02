@@ -27,6 +27,7 @@ cpe_reload_all(cwmp_t *cwmp, callback_register_func_t callback_reg)
 #include "Time/Time.c"
 #include "WANDevice/WANConnectionDevice/PortMapping.c"
 #include "IPPingDiagnostics/IPPingDiagnostics.c"
+#include "DownloadDiagnostics/DownloadDiagnostics.c"
 #include "TraceRouteDiagnostics/TraceRouteDiagnostics.c"
 #include "DeviceInfo/DeviceInfo.c"
 #include "ManagementServer/ManagementServer.c"

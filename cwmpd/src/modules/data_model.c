@@ -212,6 +212,19 @@ model_func_t ModelFunction[] =
     {"cpe_get_trd_hop", cpe_get_trd_hop},
     {"cpe_get_trd_hop_count", cpe_get_trd_hop_count},
     {"cpe_get_trd_response", cpe_get_trd_response},
+
+    {"cpe_reload_dd", cpe_reload_dd},
+    {"cpe_get_dd_dscp", cpe_get_dd_dscp},
+    {"cpe_get_dd_epri", cpe_get_dd_epri},
+    {"cpe_get_dd_iface", cpe_get_dd_iface},
+    {"cpe_get_dd_result", cpe_get_dd_result},
+    {"cpe_get_dd_state", cpe_get_dd_state},
+    {"cpe_get_dd_url", cpe_get_dd_url},
+    {"cpe_set_dd_dscp", cpe_set_dd_dscp},
+    {"cpe_set_dd_epri", cpe_set_dd_epri},
+    {"cpe_set_dd_iface", cpe_set_dd_iface},
+    {"cpe_set_dd_state", cpe_set_dd_state},
+    {"cpe_set_dd_url", cpe_set_dd_url},
 };
 
 const char *cwmp_model_ptr_to_func(void *p)
