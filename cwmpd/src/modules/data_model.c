@@ -94,6 +94,7 @@ model_func_t ModelFunction[] =
     {"cpe_set_igd_wan_ppp_authprot", cpe_set_igd_wan_ppp_authprot},
 
     {"cpe_get_igd_wan_ppp_servicename", cpe_get_igd_wan_ppp_servicename},
+    {"cpe_get_igd_wan_ppp_stats", cpe_get_igd_wan_ppp_stats},
 
 //    {"cpe_get_igd_services_iptv_igmpversion", cpe_get_igd_services_iptv_igmpversion},
 //    {"cpe_set_igd_services_iptv_igmpversion", cpe_set_igd_services_iptv_igmpversion},

@@ -269,6 +269,13 @@
 									<param name="DNSServers" rw="1" type="s" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="wan_primary_dns" set_func="cpe_set_nvram_string"/>
 									<param name="MACAddress" rw="1" type="s" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="WAN_MAC_ADDR" set_func="cpe_set_nvram_string"/>
 									<param name="ConnectionTrigger" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_const_string" set_func="AlwaysOn"/>
+									<param name="ConnectionStatus" get_func="cpe_get_igd_wan_ppp_stats"/>
+									<object name="Stats">
+										<param name="EthernetBytesSent" get_func="cpe_get_igd_wan_ppp_stats"/>
+										<param name="EthernetBytesReceived" get_func="cpe_get_igd_wan_ppp_stats"/>
+										<param name="EthernetPacketsSent" get_func="cpe_get_igd_wan_ppp_stats"/>
+										<param name="EthernetPacketsReceived" get_func="cpe_get_igd_wan_ppp_stats"/>
+									</object>
 									<object name="PortMapping" rw="1" add_func="cpe_add_pm" refresh_func="cpe_refresh_pm">
 										<object name="{i}" del_func="cpe_del_pm" reload_func="cpe_reload_pm">
 											<param name="PortMappingEnabled" rw="1" reload_func="cpe_reload_pm" set_func="cpe_set_pm" get_func="cpe_get_pm"/>

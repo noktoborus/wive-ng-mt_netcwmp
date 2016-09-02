@@ -1,3 +1,4 @@
+/* vim: set et: */
 int cpe_get_igd_wan_ppp_servicename(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
 
@@ -55,3 +56,67 @@ int cpe_set_igd_wan_ppp_authprot(cwmp_t * cwmp, const char * name, const char * 
 
     return FAULT_CODE_OK;
 }
+
+/*
+ * ConnectionStatus
+ * EthernetBytesSent
+ * EthernetBytesReceived
+ * EthernetPacketsSent
+ * EthernetPacketsReceived
+ */
+int cpe_get_igd_wan_ppp_stats(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+	parameter_node_t *pn = NULL;
+	struct nic_counts *ncs = NULL;
+	struct nic_counts *nc = NULL;
+	int elc = 0;
+	int status = 0;
+	char buf[42] = {};
+
+	DM_TRACE_GET();
+	pn = cwmp_get_parameter_path_node(cwmp->root, name);
+	ncs = nicscounts(&elc);
+
+	for (; elc-- > 0;) {
+		nc = &ncs[elc];
+		if (!strncmp(nc->ifname, "ppp", 3)) {
+			break;
+		}
+	}
+
+	if (!strcmp(pn->name, "ConnectionStatus")) {
+		status = getVPNStatusCode();
+		switch (status) {
+			case 0:
+				*value = "Unconfigured";
+				break;
+			case 1:
+				*value = "Disconnected";
+				break;
+			case 2:
+				*value = "Connecting";
+				break;
+			case 3: /* 3 - Connected or 'kabinet network' for kabinet type */
+			case 4: /* 4 - full access for kabinet type */
+				*value = "Connected";
+				break;
+			default:
+				cwmp_log_error("WANPPPConnection.{i}.ConnectionStatus: "
+						"unknown status: %d", status);
+				break;
+		}
+	} else if (nc) {
+	   	if (!strcmp(pn->name, "EthernetBytesSent")) {
+			snprintf(buf, sizeof(buf), "%llu", nc->tx_bytes);
+		} else if (!strcmp(pn->name, "EthernetBytesReceived")) {
+			snprintf(buf, sizeof(buf), "%llu", nc->rx_bytes);
+		} else if (!strcmp(pn->name, "EthernetPacketsSent")) {
+			snprintf(buf, sizeof(buf), "%llu", nc->tx_packets);
+		} else if (!strcmp(pn->name, "EthernetPacketsReceived")) {
+			snprintf(buf, sizeof(buf), "%llu", nc->rx_packets);
+		}
+		*value = pool_pstrdup(pool, buf);
+	}
+	return FAULT_CODE_OK;
+}
+
