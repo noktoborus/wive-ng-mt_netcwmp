@@ -159,6 +159,7 @@ struct http_socket_t
 
     pool_t * pool;
 
+	struct http_statistics stat;
 
 };
 

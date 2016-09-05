@@ -124,6 +124,7 @@ void http_sockaddr_set(http_sockaddr_t * addr, int family, int port, const char 
 
 int http_socket_calloc(http_socket_t **news, pool_t * pool)
 {
+    cwmp_log_trace("%s(news=%p, pool=%p)", __func__, (void*)news, (void*)pool);
     (*news) = (http_socket_t *)pool_pcalloc(pool, sizeof(http_socket_t));
 
     if ((*news) == NULL)
@@ -252,7 +253,9 @@ int http_socket_connect(http_socket_t * sock, const char * host, int port)
     struct addrinfo *res = NULL;
     char nport[16] = {};
     int rval = 0;
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(sock=%p, host=\"%s\", port=%d)",
+            __func__, (void*)sock, host, port);
+
     cwmp_log_info("connecting to %s:%d", host, port);
 
     if (sock->sockdes != 0 && sock->sockdes != -1) {
@@ -263,7 +266,8 @@ int http_socket_connect(http_socket_t * sock, const char * host, int port)
         close(sock->sockdes);
         sock->sockdes = -1;
     }
-
+    memset(&sock->stat, 0, sizeof(sock->stat));
+    time(&sock->stat.ns_query);
     snprintf(nport, sizeof(nport), "%d", port);
     rval = getaddrinfo(host, nport, &hints, &result);
     if (rval != 0) {
@@ -278,6 +282,7 @@ int http_socket_connect(http_socket_t * sock, const char * host, int port)
         return CWMP_ERROR;
     }
 
+    time(&sock->stat.tcp_connect);
     for (res = result; res; res = res->ai_next) {
         char xaddr[96] = {};
         sock->sockdes = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -291,8 +296,9 @@ int http_socket_connect(http_socket_t * sock, const char * host, int port)
         }
         if (connect(sock->sockdes, res->ai_addr, res->ai_addrlen) == -1) {
             cwmp_log_info("connect(): %s", strerror(errno));
-            goto gai_error;
+            continue;
         }
+        time(&sock->stat.tcp_response);
         break;
     }
 
@@ -310,7 +316,7 @@ int http_socket_accept(http_socket_t *sock, http_socket_t ** news)
     size_t len;
     pool_t * pool;
     int rc, s;
-    cwmp_log_debug("TRACE: socket_tcp_accept\n");
+    cwmp_log_trace("%s(sock=%p, news=%p)", __func__, (void*)sock, (void*)news);
 
     len = sizeof addr;
     s = accept (sock->sockdes, &addr, &len);
@@ -337,7 +343,7 @@ int http_socket_accept(http_socket_t *sock, http_socket_t ** news)
 
 void http_socket_close(http_socket_t * sock)
 {
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(sock=%p)", __func__, (void*)sock);
     if (sock)
     {
         if (sock->sockdes != -1)
@@ -351,7 +357,6 @@ void http_socket_close(http_socket_t * sock)
         }
 
     }
-
 }
 
 void http_socket_destroy(http_socket_t * sock)
@@ -411,6 +416,13 @@ int http_socket_read (http_socket_t * sock, char *buf, int bufsize)
 	if (res == -1 && errno != 0) {
             cwmp_log_error("http_socket_read ERRNO: %d, res %d, buf %d, bufsize %d", errno, res, buf, bufsize);
 	}
+
+    if (res > 0) {
+        sock->stat.bytes++;
+        if(!sock->stat.transmission) {
+            time(&sock->stat.transmission);
+        }
+    }
 
 //        cwmp_log_error("http_socket_read ERRNO: %d, res %d, buf %d, bufsize %d", errno, res, buf, bufsize);
 /*	if (res == 1) {
@@ -865,7 +877,9 @@ int http_read_header(http_socket_t * sock, cwmp_chunk_t * header, pool_t * pool)
     char buffer[1024];
     int rc, bytes;
 
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(sock=%p, header=%p, pool=%p)",
+            __func__, (void*)sock, (void*)header, (void*)pool);
+
     bytes = 0;
     for (;;)
     {
@@ -1362,12 +1376,14 @@ int http_read_response(http_socket_t * sock, http_response_t * response, pool_t 
     {
         cont_len = TRatoi(ctxlen);
     }
+
     rc = http_read_body(sock, cont_len);//, &body, pool);
     if (rc < 0 || (code != 200 && code != 204))
     {
         cwmp_log_debug("Http read response code is (%d)\n", code);
     }
     cwmp_log_debug("http_read_response OK");
+    time(&sock->stat.transmission_end);
     return code;
 
 }
@@ -1704,6 +1720,7 @@ int http_write_request(http_socket_t * sock, http_request_t * request, cwmp_chun
         data = buffer;
     }
 
+    time(&sock->stat.request);
     return http_socket_write(sock, data, (int)len1 + len2);
 }
 
@@ -1921,70 +1938,70 @@ out:
 
 }
 
-int http_receive_file(const char *fromurl, const char * tofile)
+int http_receive_file(const char *fromurl, const char * tofile, struct http_statistics *hs)
 {
-        cwmp_log_info("INFO: http_receive_file: from %s to %s",fromurl, tofile);
 
-	pool_t * pool;
-	http_dest_t *  dest;
-	http_socket_t * sock;
-	http_request_t * request;
+    pool_t * pool;
+    http_dest_t *  dest;
+    http_socket_t * sock;
+    http_request_t * request;
 
-	http_response_t * response;
+    http_response_t * response;
 
-	FILE * tf = NULL;
+    FILE * tf = NULL;
 
-	pool = pool_create(POOL_DEFAULT_SIZE);
-	http_dest_create(&dest, fromurl, pool);
+    cwmp_log_trace("%s(formurl=\"%s\", tofile=\"%s\")",
+            __func__, fromurl, tofile);
 
-        int rc = http_socket_create(&sock, AF_INET, SOCK_STREAM, 0, pool);
-        if (rc != CWMP_OK)
-        {
-            cwmp_log_error("http receive file: create socket error.");
+    pool = pool_create(POOL_DEFAULT_SIZE);
+    http_dest_create(&dest, fromurl, pool);
+
+    int rc = http_socket_create(&sock, AF_INET, SOCK_STREAM, 0, pool);
+    if (rc != CWMP_OK) {
+        cwmp_log_error("http receive file: create socket error.");
+        goto out;
+    }
+
+    rc = http_socket_connect(sock, dest->host, dest->port);
+    if(rc != CWMP_OK) {
+        cwmp_log_error("connect to host faild. Host is %s:%d.",
+                dest->host, dest->port);
+        goto out;
+    }
+
+    if (tofile) {
+        tf = fopen(tofile, "wb+");
+        if(!tf) {
+            cwmp_log_error("Unable to create target file: %s\n", tofile);
             goto out;
         }
+        http_socket_set_writefunction(sock, http_receive_file_callback, tf);
+    }
 
-        rc = http_socket_connect(sock, dest->host, dest->port);
-        if(rc != CWMP_OK)
-        {
-            cwmp_log_error("connect to host faild. Host is %s:%d.", dest->host, dest->port);
-            goto out;
-        }
+    http_socket_set_recvtimeout(sock, 30);
 
-	tf = fopen(tofile, "wb+");
-	if(!tf)
-	{
-		cwmp_log_error("Unable to create target file: %s\n", tofile);
-		goto out;
-	}
-
-	http_socket_set_writefunction(sock, http_receive_file_callback, tf);
-        http_socket_set_recvtimeout(sock, 30);
-
-	http_request_create(&request, pool);
-	request->dest = dest;
-	rc = http_get(sock, request, NULL, pool);
-        if(rc <= 0)
-        {
-            cwmp_log_error("http_get failed. Host is %s:%d.", dest->host, dest->port);
-            goto out;
-        }
+    http_request_create(&request, pool);
+    request->dest = dest;
+    rc = http_get(sock, request, NULL, pool);
+    if(rc <= 0) {
+        cwmp_log_error("http_get failed. Host is %s:%d.", dest->host, dest->port);
+        goto out;
+    }
 
 
-        http_response_create(&response, pool);
+    http_response_create(&response, pool);
 
-	rc = http_read_response(sock, response, pool);
-
+    rc = http_read_response(sock, response, pool);
+    if (hs) {
+        memcpy(hs, &sock->stat, sizeof(*hs));
+    }
 out:
-	if(tf)
-	{
-		fclose(tf);
-	}
-	pool_destroy(pool);
+    if(tf) {
+        fclose(tf);
+    }
+    pool_destroy(pool);
 
-	return rc;
-
-
+    return rc;
 }
 
 

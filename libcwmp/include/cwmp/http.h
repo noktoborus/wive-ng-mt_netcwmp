@@ -139,7 +139,23 @@ struct http_dest_t
 
 };
 
-
+struct http_statistics
+{
+	/* dns query time */
+	time_t ns_query;
+	/* tcp connection open */
+	time_t tcp_connect;
+	/* tcp connected */
+	time_t tcp_response;
+	/* request begin (TR-098 ROMTime) */
+	time_t request;
+	/* begin transmission (TR-098 BOMTime) */
+	time_t transmission;
+	/* end transmission (TR-098 EOMTime) */
+	time_t transmission_end;
+	/* overall transmitted bytes */
+	uint64_t bytes;
+};
 
 
 struct http_request_t
@@ -208,7 +224,7 @@ int http_parse_cookie(const char * cookie, char * dest_cookie);
 int http_socket_set_writefunction(http_socket_t * sock, http_write_callback_pt callback, void * calldata);
 
 int http_send_file(const char * fromfile, const char *tourl );
-int http_receive_file(const char *fromurl, const char * tofile);
+int http_receive_file(const char *fromurl, const char * tofile, struct http_statistics *hs);
 
 
 

@@ -686,7 +686,7 @@ int cwmp_agent_download_file(download_arg_t * dlarg)
         return 9001;
     }
 
-    faultcode = (http_receive_file(fromurl, tofile) == HTTP_200) ? CWMP_OK : 9001 ;
+    faultcode = (http_receive_file(fromurl, tofile, NULL) == HTTP_200) ? CWMP_OK : 9001 ;
 
     if(faultcode != CWMP_OK)
     {
@@ -907,7 +907,8 @@ int cwmp_agent_run_tasks(cwmp_t * cwmp)
 				break;
 			case TASK_CALLBACK_TAG:
 				{
-					cwmp_log_debug("execute callback: %p", data);
+					cwmp_log_debug(
+							"execute callback: %p(%p, %p)", data, arg1, arg2);
 					(*(callback_func_t)data)(arg1, arg2);
 				}
 				break;
