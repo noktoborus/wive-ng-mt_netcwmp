@@ -403,7 +403,6 @@ int http_socket_read (http_socket_t * sock, char *buf, int bufsize)
         }
         while (res == -1 && errno == EINTR);
 #endif
-        return res;
     }
     else
     {
@@ -417,12 +416,6 @@ int http_socket_read (http_socket_t * sock, char *buf, int bufsize)
             cwmp_log_error("http_socket_read ERRNO: %d, res %d, buf %d, bufsize %d", errno, res, buf, bufsize);
 	}
 
-    if (res > 0) {
-        sock->stat.bytes++;
-        if(!sock->stat.transmission) {
-            time(&sock->stat.transmission);
-        }
-    }
 
 //        cwmp_log_error("http_socket_read ERRNO: %d, res %d, buf %d, bufsize %d", errno, res, buf, bufsize);
 /*	if (res == 1) {
@@ -434,10 +427,16 @@ int http_socket_read (http_socket_t * sock, char *buf, int bufsize)
             cwmp_log_error("http_socket_read ERRNO: %d, res %d, buf %d, bufsize %d", errno, res, buf, bufsize);
 	}
 */
-
-        return res;
-
     }
+
+    if (res > 0) {
+        sock->stat.bytes_rx += res;
+        if(!sock->stat.transmission_rx) {
+            time(&sock->stat.transmission_rx);
+        }
+    }
+
+    return res;
 }
 
 int http_socket_write (http_socket_t * sock, const char *buf, int bufsize)
@@ -1383,7 +1382,7 @@ int http_read_response(http_socket_t * sock, http_response_t * response, pool_t 
         cwmp_log_debug("Http read response code is (%d)\n", code);
     }
     cwmp_log_debug("http_read_response OK");
-    time(&sock->stat.transmission_end);
+    time(&sock->stat.transmission_rx_end);
     return code;
 
 }

@@ -68,10 +68,13 @@ thread_ddiagnostics(struct thread_ddiagnostics *dd)
 	cwmp_log_debug("%s: run(%p)", __func__, (void*)dd);
 
 	/* download */
-	http_receive_file(dd->dd.url, NULL, &dd->dd.hs);
+	if (http_receive_file(dd->dd.url, NULL, &dd->dd.hs) != CWMP_OK) {
+		dd->dd.state = DD_ERROR_RESPONSE;
+	} else {
+		dd->dd.state = DD_COMPLETED;
+	}
 	time(&dd->endtime);
 
-	cwmp_log_debug("set callback");
 	(*dd->callback_reg)(dd->cwmp,
 			(callback_func_t)&ddiagnostics_cb, dd->cwmp, dd);
 	return NULL;
@@ -112,6 +115,11 @@ cpe_reload_dd(cwmp_t *cwmp, callback_register_func_t callback_reg)
 		cwmp_log_error("DownloadDiagnostics.DownloadURL: empty url");
 		return FAULT_CODE_9007;
 	}
+
+	/* fix unsupported values */
+	memset(ddiagnostics.iface, 0u, sizeof(ddiagnostics.iface));
+	ddiagnostics.dscp = 0u;
+	ddiagnostics.epri = 0u;
 
 	/* fixme: DownloadDiagnostics.Interface not supported */
 
@@ -185,11 +193,11 @@ cpe_get_dd_result(cwmp_t *cwmp, const char *name, char **value, char *args, pool
 	if (!strcmp(pn->name, "ROMTime")) {
 		tm = gmtime(&ddiagnostics.hs.request);
 	} else if (!strcmp(pn->name, "BOMTime")) {
-		tm = gmtime(&ddiagnostics.hs.transmission);
+		tm = gmtime(&ddiagnostics.hs.transmission_rx);
 	} else if (!strcmp(pn->name, "EOMTime")) {
-		tm = gmtime(&ddiagnostics.hs.transmission_end);
+		tm = gmtime(&ddiagnostics.hs.transmission_rx_end);
 	} else if (!strcmp(pn->name, "TestBytesReceived")) {
-		snprintf(buf, sizeof(buf), "%"PRIu64, ddiagnostics.hs.bytes);
+		snprintf(buf, sizeof(buf), "%"PRIu64, ddiagnostics.hs.bytes_rx);
 	} else if (!strcmp(pn->name, "TotalBytesReceived")) {
 		/* FIXME: unsupported */
 	} else if (!strcmp(pn->name, "TCPOpenRequestTime")) {

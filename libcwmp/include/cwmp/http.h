@@ -150,11 +150,11 @@ struct http_statistics
 	/* request begin (TR-098 ROMTime) */
 	time_t request;
 	/* begin transmission (TR-098 BOMTime) */
-	time_t transmission;
+	time_t transmission_rx;
 	/* end transmission (TR-098 EOMTime) */
-	time_t transmission_end;
+	time_t transmission_rx_end;
 	/* overall transmitted bytes */
-	uint64_t bytes;
+	uint64_t bytes_rx;
 };
 
 
