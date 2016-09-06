@@ -92,28 +92,25 @@ cpe_reload_dd(cwmp_t *cwmp, callback_register_func_t callback_reg)
 	if (ddiagnostics.state != DD_REQUESTED) {
 		cwmp_log_error(
 				"DownloadDiagnostics.DiagnosticsState: state != 'Requested'");
-		return FAULT_CODE_9007;
+		goto err;
 	}
 
 	if (ddiagnostics.dscp > 63) {
-		ddiagnostics.state = DD_ERROR_INIT;
 		cwmp_log_error("DownloadDiagnostics.DSCP: value not in range 0-63: %u",
 				ddiagnostics.dscp);
-		return FAULT_CODE_9007;
+		goto err;
 	}
 
 	if (ddiagnostics.epri > 7) {
-		ddiagnostics.state = DD_ERROR_INIT;
 		cwmp_log_error(
 				"DownloadDiagnostics.EthernetPriority: "
 				"value not in range 0-7: %u", ddiagnostics.epri);
-		return FAULT_CODE_9007;
+		goto err;
 	}
 
 	if (!*ddiagnostics.url) {
-		ddiagnostics.state = DD_ERROR_INIT;
 		cwmp_log_error("DownloadDiagnostics.DownloadURL: empty url");
-		return FAULT_CODE_9007;
+		goto err;
 	}
 
 	/* fix unsupported values */
@@ -128,10 +125,9 @@ cpe_reload_dd(cwmp_t *cwmp, callback_register_func_t callback_reg)
 	if (!dd) {
 		cwmp_log_error("%s: calloc(%d) failed: %s",
 				__func__, sizeof(*dd), strerror(errno));
-		ddiagnostics.state = DD_ERROR_INIT;
-		return FAULT_CODE_9002;
+		goto err;
 	}
-	memcpy(&dd->dd, &ddiagnostics, sizeof(*dd));
+	memcpy(&dd->dd, &ddiagnostics, sizeof(ddiagnostics));
 	dd->cwmp = cwmp;
 	dd->callback_reg = callback_reg;
 
@@ -140,12 +136,15 @@ cpe_reload_dd(cwmp_t *cwmp, callback_register_func_t callback_reg)
 	if (terr != 0) {
 		cwmp_log_error("%s: pthread_create() failed: %s",
 			   	__func__, strerror(terr));
-		free(dd);
-		ddiagnostics.state = DD_ERROR_INIT;
-		return FAULT_CODE_9002;
+		goto err;
 	}
-
 	return FAULT_CODE_OK;
+err:
+	if (dd)
+		free(dd);
+	ddiagnostics.state = DD_ERROR_INIT;
+	cwmp_event_set_value(cwmp, INFORM_DIAGNOSTICSCOMPLETE, 1, NULL, 0, 0, 0);
+	return FAULT_CODE_9002;
 }
 
 int
@@ -182,6 +181,8 @@ cpe_get_dd_result(cwmp_t *cwmp, const char *name, char **value, char *args, pool
 	parameter_node_t *pn = NULL;
 	char buf[42] = {};
 	struct tm *tm = NULL;
+	suseconds_t usec = 0u;
+	size_t len = 0;
 
 	DM_TRACE_GET();
 	pn = cwmp_get_parameter_path_node(cwmp->root, name);
@@ -191,22 +192,28 @@ cpe_get_dd_result(cwmp_t *cwmp, const char *name, char **value, char *args, pool
 	/* TODO: ... */
 
 	if (!strcmp(pn->name, "ROMTime")) {
-		tm = gmtime(&ddiagnostics.hs.request);
+		tm = gmtime(&ddiagnostics.hs.request.tv_sec);
+		usec = ddiagnostics.hs.request.tv_usec;
 	} else if (!strcmp(pn->name, "BOMTime")) {
-		tm = gmtime(&ddiagnostics.hs.transmission_rx);
+		tm = gmtime(&ddiagnostics.hs.transmission_rx.tv_sec);
+		usec = ddiagnostics.hs.transmission_rx.tv_usec;
 	} else if (!strcmp(pn->name, "EOMTime")) {
-		tm = gmtime(&ddiagnostics.hs.transmission_rx_end);
+		tm = gmtime(&ddiagnostics.hs.transmission_rx_end.tv_sec);
+		usec = ddiagnostics.hs.transmission_rx_end.tv_usec;
 	} else if (!strcmp(pn->name, "TestBytesReceived")) {
 		snprintf(buf, sizeof(buf), "%"PRIu64, ddiagnostics.hs.bytes_rx);
 	} else if (!strcmp(pn->name, "TotalBytesReceived")) {
 		/* FIXME: unsupported */
 	} else if (!strcmp(pn->name, "TCPOpenRequestTime")) {
-		tm = gmtime(&ddiagnostics.hs.tcp_connect);
+		tm = gmtime(&ddiagnostics.hs.tcp_connect.tv_sec);
+		usec = ddiagnostics.hs.tcp_connect.tv_usec;
 	} else if (!strcmp(pn->name, "TCPOpenResponseTime")) {
-			tm = gmtime(&ddiagnostics.hs.tcp_response);
+		tm = gmtime(&ddiagnostics.hs.tcp_response.tv_sec);
+		usec = ddiagnostics.hs.tcp_response.tv_usec;
 	}
 	if (tm) {
-		strftime(buf, sizeof(buf), "%DT%T", tm);
+		len = strftime(buf, sizeof(buf), "%DT%T", tm);
+		snprintf(buf + len, sizeof(buf) - len, ".%ld", usec);
 	}
 
 	*value = pool_pstrdup(pool, buf);

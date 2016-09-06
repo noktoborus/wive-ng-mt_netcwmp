@@ -225,6 +225,17 @@ model_func_t ModelFunction[] =
     {"cpe_set_dd_iface", cpe_set_dd_iface},
     {"cpe_set_dd_state", cpe_set_dd_state},
     {"cpe_set_dd_url", cpe_set_dd_url},
+
+    {"cpe_reload_ud", cpe_reload_ud},
+    {"cpe_set_ud_iface", cpe_set_ud_iface},
+    {"cpe_set_ud_url", cpe_set_ud_url},
+    {"cpe_set_ud_length", cpe_set_ud_length},
+    {"cpe_set_ud_state", cpe_set_ud_state},
+    {"cpe_get_ud_length", cpe_get_ud_length},
+    {"cpe_get_ud_url", cpe_get_ud_url},
+    {"cpe_get_ud_iface", cpe_get_ud_iface},
+    {"cpe_get_ud_state", cpe_get_ud_state},
+    {"cpe_get_ud", cpe_get_ud},
 };
 
 const char *cwmp_model_ptr_to_func(void *p)

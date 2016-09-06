@@ -267,7 +267,7 @@ int http_socket_connect(http_socket_t * sock, const char * host, int port)
         sock->sockdes = -1;
     }
     memset(&sock->stat, 0, sizeof(sock->stat));
-    time(&sock->stat.ns_query);
+    gettimeofday(&sock->stat.ns_query, NULL);
     snprintf(nport, sizeof(nport), "%d", port);
     rval = getaddrinfo(host, nport, &hints, &result);
     if (rval != 0) {
@@ -282,7 +282,7 @@ int http_socket_connect(http_socket_t * sock, const char * host, int port)
         return CWMP_ERROR;
     }
 
-    time(&sock->stat.tcp_connect);
+    gettimeofday(&sock->stat.tcp_connect, NULL);
     for (res = result; res; res = res->ai_next) {
         char xaddr[96] = {};
         sock->sockdes = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -298,7 +298,7 @@ int http_socket_connect(http_socket_t * sock, const char * host, int port)
             cwmp_log_info("connect(): %s", strerror(errno));
             continue;
         }
-        time(&sock->stat.tcp_response);
+        gettimeofday(&sock->stat.tcp_response, NULL);
         break;
     }
 
@@ -431,8 +431,8 @@ int http_socket_read (http_socket_t * sock, char *buf, int bufsize)
 
     if (res > 0) {
         sock->stat.bytes_rx += res;
-        if(!sock->stat.transmission_rx) {
-            time(&sock->stat.transmission_rx);
+        if(!sock->stat.transmission_rx.tv_sec) {
+            gettimeofday(&sock->stat.transmission_rx, NULL);
         }
     }
 
@@ -1382,7 +1382,7 @@ int http_read_response(http_socket_t * sock, http_response_t * response, pool_t 
         cwmp_log_debug("Http read response code is (%d)\n", code);
     }
     cwmp_log_debug("http_read_response OK");
-    time(&sock->stat.transmission_rx_end);
+    gettimeofday(&sock->stat.transmission_rx_end, NULL);
     return code;
 
 }
@@ -1638,7 +1638,7 @@ int http_parse_digest_auth(const char * auth, http_digest_auth_t * digest_auth, 
 
 
 
-int http_write_request(http_socket_t * sock, http_request_t * request, cwmp_chunk_t * chunk, pool_t * pool)
+int http_write_request(http_socket_t * sock, http_request_t * request, cwmp_chunk_t * chunk, size_t additional_len, pool_t * pool)
 {
     char buffer[HTTP_DEFAULT_LEN+1];
     char * data;
@@ -1659,7 +1659,7 @@ int http_write_request(http_socket_t * sock, http_request_t * request, cwmp_chun
 
     http_dest_t * dest = request->dest;
 
-    len2 = cwmp_chunk_length(chunk);
+    len2 = cwmp_chunk_length(chunk) + additional_len;
 
 	/* formatting header */
     len1 = TRsnprintf(buffer, HTTP_DEFAULT_LEN, header_fmt,
@@ -1719,7 +1719,7 @@ int http_write_request(http_socket_t * sock, http_request_t * request, cwmp_chun
         data = buffer;
     }
 
-    time(&sock->stat.request);
+    gettimeofday(&sock->stat.request, NULL);
     return http_socket_write(sock, data, (int)len1 + len2);
 }
 
@@ -1728,7 +1728,7 @@ int http_get(http_socket_t * sock, http_request_t * request, cwmp_chunk_t * data
     request->method = HTTP_GET;
 
 
-    return http_write_request(sock, request, data, pool);
+    return http_write_request(sock, request, data, 0u, pool);
 
 }
 
@@ -1737,7 +1737,7 @@ int http_post(http_socket_t * sock, http_request_t * request, cwmp_chunk_t * dat
     request->method = HTTP_POST;
 
 
-    return http_write_request(sock, request, data, pool);
+    return http_write_request(sock, request, data, 0u, pool);
 
 }
 
@@ -1756,8 +1756,107 @@ size_t http_receive_file_callback(char *data, size_t size, size_t nmemb, void * 
 	return  fwrite(data, size, nmemb, tf);
 }
 
+static size_t http_send_diagnostics_data(http_socket_t *sock, size_t size)
+{
+    /* magic string for minimize compression effect */
+    const char source[] =
+        "\x92\xcf\xce\xb3"
+        "\x9d\x57\xd9\x14"
+        "\xed\x8b\x14\xd0"
+        "\xe3\x76\x43\xde"
+        "\x07\x97\xae\x56";
+    const size_t len = sizeof(source) - 1;
+    ssize_t r = 0;
 
+    register size_t i = 0u;
+    register size_t si = 0u;
 
+    while (i < size) {
+        if ((si = (i + len)) > size) {
+            si = si % size;
+            if ((r = write(sock->sockdes, source, si)) != -1) {
+                i += r;
+            }
+            break;
+        } else {
+            if ((r = write(sock->sockdes, source, len)) != -1) {
+                i += r;
+            } else {
+                break;
+            }
+        }
+    }
+    return i;
+}
+
+int http_send_diagnostics(size_t size, const char *tourl, struct http_statistics *hs)
+{
+    int rc = 0;
+    pool_t * pool = NULL;
+    http_dest_t * dest = NULL;
+    http_socket_t * sock = NULL;
+    http_request_t * request = NULL;
+    http_response_t * response = NULL;
+
+    cwmp_log_trace("%s(size=%"PRIuPTR", tourl=\"%s\", hs=%p)",
+            __func__, size, tourl, (void*)hs);
+
+    /* prepare */
+    pool = pool_create(POOL_DEFAULT_SIZE);
+    http_dest_create(&dest, tourl, pool);
+    rc = http_socket_create(&sock, AF_INET, SOCK_STREAM, 0, pool);
+    if (rc != CWMP_OK)
+    {
+        cwmp_log_error("%s(): create socket failed", __func__);
+        goto end;
+    }
+
+    rc = http_socket_connect(sock, dest->host, dest->port);
+    if (rc != CWMP_OK)
+    {
+        cwmp_log_error("%s(): connect to %s:%d",
+                __func__, dest->host, dest->port);
+        goto end;
+    }
+
+    http_socket_set_recvtimeout(sock, 30);
+
+    http_request_create(&request, pool);
+
+    request->dest = dest;
+    request->method = HTTP_PUT;
+
+    http_response_create(&response, pool);
+    /* send */
+    http_write_request(sock, request, NULL, size, pool);
+
+    rc = http_read_response(sock, response, pool);
+    if (rc == 401) {
+        /* re-request */
+        char *auth = http_get_variable(response->parser, "WWW-Authenticate");
+        if (!auth) {
+            goto end;
+        }
+        request->dest->auth_type = HTTP_DIGEST_AUTH;
+        http_parse_digest_auth(auth, &request->dest->auth, request->dest->uri);
+        http_write_request(sock, request, NULL, size, pool);
+        rc = http_read_response(sock, response, pool);
+    }
+
+    if (rc != 100) {
+        goto end;
+    }
+
+    gettimeofday(&sock->stat.transmission_tx, NULL);
+    http_send_diagnostics_data(sock, size);
+    rc = http_read_response(sock, response, pool);
+    gettimeofday(&sock->stat.transmission_tx_end, NULL);
+end:
+    pool_destroy(pool);
+    if (rc != 200)
+        return CWMP_ERROR;
+    return CWMP_OK;
+}
 
 int http_send_file_request(http_socket_t * sock , http_request_t * request, const char  * fromfile, pool_t * pool)
 {

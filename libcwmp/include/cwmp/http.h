@@ -19,6 +19,7 @@
 #include <cwmp/cwmp.h>
 #include <cwmp/buffer.h>
 #include <cwmp/pool.h>
+#include <sys/time.h>
 
 #define CIPHER_LIST "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH"
 
@@ -142,17 +143,19 @@ struct http_dest_t
 struct http_statistics
 {
 	/* dns query time */
-	time_t ns_query;
+	struct timeval ns_query;
 	/* tcp connection open */
-	time_t tcp_connect;
+	struct timeval tcp_connect;
 	/* tcp connected */
-	time_t tcp_response;
+	struct timeval tcp_response;
 	/* request begin (TR-098 ROMTime) */
-	time_t request;
+	struct timeval request;
 	/* begin transmission (TR-098 BOMTime) */
-	time_t transmission_rx;
+	struct timeval transmission_rx;
+	struct timeval transmission_tx;
 	/* end transmission (TR-098 EOMTime) */
-	time_t transmission_rx_end;
+	struct timeval transmission_rx_end;
+	struct timeval transmission_tx_end;
 	/* overall transmitted bytes */
 	uint64_t bytes_rx;
 };
@@ -225,6 +228,7 @@ int http_socket_set_writefunction(http_socket_t * sock, http_write_callback_pt c
 
 int http_send_file(const char * fromfile, const char *tourl );
 int http_receive_file(const char *fromurl, const char * tofile, struct http_statistics *hs);
+int http_send_diagnostics(size_t size, const char *tourl, struct http_statistics *hs);
 
 
 
