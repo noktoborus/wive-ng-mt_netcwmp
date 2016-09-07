@@ -142,7 +142,8 @@ struct http_socket_t
     int type;
     int protocol;
     http_sockaddr_t * addr;
-    cwmp_int64_t           timeout;
+    ssize_t send_timeout;
+	ssize_t recv_timeout;
 
     int option;
     http_write_callback_pt write_callback;

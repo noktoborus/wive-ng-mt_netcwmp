@@ -141,7 +141,8 @@ int http_socket_calloc(http_socket_t **news, pool_t * pool)
         return CWMP_ERROR;
     }
     (*news)->sockdes = -1;
-    (*news)->timeout = -1;
+    (*news)->recv_timeout = -1;
+    (*news)->send_timeout = -1;
     (*news)->pool = pool;
 
 
@@ -179,7 +180,8 @@ int http_socket_create(http_socket_t **news, int family, int type, int protocol,
     (*news)->type = type;
     (*news)->protocol = protocol;
     http_sockaddr_set((*news)->addr,family, 0, NULL);
-    (*news)->timeout = -1;
+    (*news)->recv_timeout = -1;
+    (*news)->send_timeout = -1;
 
     return CWMP_OK;
 }
@@ -253,6 +255,7 @@ int http_socket_connect(http_socket_t * sock, const char * host, int port)
     struct addrinfo *res = NULL;
     char nport[16] = {};
     int rval = 0;
+    struct timeval tv = {};
     cwmp_log_trace("%s(sock=%p, host=\"%s\", port=%d)",
             __func__, (void*)sock, host, port);
 
@@ -294,15 +297,33 @@ int http_socket_connect(http_socket_t * sock, const char * host, int port)
             cwmp_log_info("socket(): %s", strerror(errno));
             goto gai_error;
         }
+
+        /* setup options */
+        if (sock->recv_timeout != -1) {
+            tv.tv_sec = sock->recv_timeout;
+            setsockopt(sock->sockdes, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+        }
+        if (sock->send_timeout != -1) {
+            tv.tv_sec = sock->send_timeout;
+            setsockopt(sock->sockdes, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+        }
+        /* connect */
         if (connect(sock->sockdes, res->ai_addr, res->ai_addrlen) == -1) {
             cwmp_log_info("connect(): %s", strerror(errno));
+            close(sock->sockdes);
+            sock->sockdes = -1;
             continue;
         }
         gettimeofday(&sock->stat.tcp_response, NULL);
+        cwmp_log_info("connected to: %s:%d (%s)", host, port, xaddr);
+
         break;
     }
 
     freeaddrinfo(result);
+    if (sock->sockdes == -1) {
+        return CWMP_ERROR;
+    }
     return CWMP_OK;
 
 gai_error:
@@ -474,7 +495,10 @@ void http_socket_set_sendtimeout(http_socket_t * sock, int timeout)
     struct timeval to;
     to.tv_sec = timeout;
     to.tv_usec = 0;
-    sock->timeout = timeout;
+    cwmp_log_trace("%s(sock=%p, timeout=%d)", __func__, (void*)sock, timeout);
+    sock->send_timeout = timeout;
+    if (sock->sockdes == -1)
+        return;
     setsockopt(sock->sockdes, SOL_SOCKET, SO_SNDTIMEO,
                (char *) &to,
                sizeof(to));
@@ -485,7 +509,10 @@ void http_socket_set_recvtimeout(http_socket_t * sock, int timeout)
     struct timeval to;
     to.tv_sec = timeout;
     to.tv_usec = 0;
-    sock->timeout = timeout;
+    cwmp_log_trace("%s(sock=%p, timeout=%d)", __func__, (void*)sock, timeout);
+    sock->recv_timeout = timeout;
+    if (sock->sockdes == -1)
+        return;
     setsockopt(sock->sockdes, SOL_SOCKET, SO_RCVTIMEO,
                (char *) &to,
                sizeof(to));
@@ -506,6 +533,8 @@ int http_socket_set_writefunction(http_socket_t * sock, http_write_callback_pt c
 int http_request_create(http_request_t ** request , pool_t * pool)
 {
     http_request_t * req;
+    cwmp_log_trace("%s(request=%p, pool=%p)",
+            __func__, (void*)request, (void*)pool);
     req = (http_request_t*)pool_pcalloc(pool, sizeof(http_request_t));
     req->parser = (http_parser_t*)pool_pcalloc(pool, sizeof(http_parser_t));
 
@@ -517,6 +546,8 @@ int http_request_create(http_request_t ** request , pool_t * pool)
 int http_response_create(http_response_t ** response, pool_t * pool)
 {
     http_response_t * res;
+    cwmp_log_trace("%s(response=%p, pool=%p)",
+            __func__, (void*)response, (void*)pool);
     res = (http_response_t*)pool_pcalloc(pool, sizeof(http_response_t));
     res->parser = (http_parser_t*)pool_pcalloc(pool, sizeof(http_parser_t));
 
@@ -665,7 +696,6 @@ int http_parse_url(http_dest_t * dest, const char * url)
 #ifdef USE_CWMP_OPENSSL
         dest->port = 443;
 #else
-        cwmp_log_alert("cwmp build without OpenSSL support, force HTTP connection");
         dest->port = 80;
 #endif
     }
@@ -1290,8 +1320,6 @@ int http_parse_request(http_request_t * request, char *data, unsigned long len)
 
 int http_read_response(http_socket_t * sock, http_response_t * response, pool_t * pool)
 {
-    FUNCTION_TRACE();
-
     char *line[MAX_HEADERS];
     int lines, slen,i, whitespace=0, where=0,code;
     char *version=NULL, *resp_code=NULL, *message=NULL;
@@ -1304,6 +1332,9 @@ int http_read_response(http_socket_t * sock, http_response_t * response, pool_t 
     char * data;
     char * ctxlen;
     size_t cont_len;
+
+    cwmp_log_trace("%s(sock=%p, response=%p, pool=%p)",
+            __func__, (void*)sock, (void*)response, (void*)pool);
 
     cwmp_chunk_create(&header, pool);
     rc = http_read_header(sock, header, pool);
@@ -1646,7 +1677,9 @@ int http_write_request(http_socket_t * sock, http_request_t * request, cwmp_chun
 	size_t len1 = 0u;
 	size_t len2 = 0u;
 
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(sock=%p, request=%p, chunk=%p, additional_len=%"PRIuPTR", pool=%p)",
+            __func__,
+            (void*)sock, (void*)request, (void*)chunk, additional_len, (void*)pool);
 
     const char * header_fmt =
         "%s %s HTTP/1.1\r\n"
@@ -1654,12 +1687,11 @@ int http_write_request(http_socket_t * sock, http_request_t * request, cwmp_chun
         "User-Agent: %s\r\n"
         "Accept: */*\r\n"
         "Content-Type: text/xml; charset=utf-8\r\n"
-        "Content-Length: %d\r\n"
         ;
 
     http_dest_t * dest = request->dest;
 
-    len2 = cwmp_chunk_length(chunk) + additional_len;
+    len2 = cwmp_chunk_length(chunk);
 
 	/* formatting header */
     len1 = TRsnprintf(buffer, HTTP_DEFAULT_LEN, header_fmt,
@@ -1667,9 +1699,12 @@ int http_write_request(http_socket_t * sock, http_request_t * request, cwmp_chun
                     dest->uri,
                     dest->host,
                     dest->port,
-                    "CPE Netcwmp Agent",
-                    len2);
+                    "CPE Netcwmp Agent");
 
+    if (len2 || additional_len) {
+        len1 += snprintf(buffer + len1, sizeof(buffer) - len1,
+                "Content-Length: %d\r\n", len2 + additional_len);
+    }
 
 	if(dest->auth_type == HTTP_DIGEST_AUTH && *dest->auth.realm)
 	{
@@ -1706,6 +1741,11 @@ int http_write_request(http_socket_t * sock, http_request_t * request, cwmp_chun
                     dest->cookie);
     }
 
+    if (request->method == HTTP_PUT) {
+        len1 += snprintf(buffer + len1, sizeof(buffer) - len1,
+                "Expect: 100-continue\r\n");
+    }
+
     len1 += TRsnprintf(buffer + len1, sizeof(buffer) - len1, "\r\n");
 
     if(len2 > 0)
@@ -1718,7 +1758,6 @@ int http_write_request(http_socket_t * sock, http_request_t * request, cwmp_chun
     {
         data = buffer;
     }
-
     gettimeofday(&sock->stat.request, NULL);
     return http_socket_write(sock, data, (int)len1 + len2);
 }
@@ -1814,7 +1853,7 @@ int http_send_diagnostics(size_t size, const char *tourl, struct http_statistics
     rc = http_socket_connect(sock, dest->host, dest->port);
     if (rc != CWMP_OK)
     {
-        cwmp_log_error("%s(): connect to %s:%d",
+        cwmp_log_error("%s(): connect to %s:%d failed",
                 __func__, dest->host, dest->port);
         goto end;
     }
@@ -1851,6 +1890,9 @@ int http_send_diagnostics(size_t size, const char *tourl, struct http_statistics
     http_send_diagnostics_data(sock, size);
     rc = http_read_response(sock, response, pool);
     gettimeofday(&sock->stat.transmission_tx_end, NULL);
+    if (hs) {
+        memcpy(hs, &sock->stat, sizeof(*hs));
+    }
 end:
     pool_destroy(pool);
     if (rc != 200)

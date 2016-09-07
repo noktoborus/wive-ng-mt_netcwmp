@@ -10,7 +10,6 @@
  *                                                                      *
  ***********************************************************************/
 
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -18,6 +17,7 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/syscall.h>
 #include <inttypes.h>
 #include <time.h>
 #include <stdio.h>
@@ -155,7 +155,7 @@ void cwmp_log_write(int level, cwmp_log_t * log, const char * fmt, va_list ap)
     time_t t;
     struct tm *tm;
     char tm_str[24] = {};
-    pid_t pid = getpid();
+    pid_t pid = syscall(SYS_gettid);
     if (g_ot_log_file_ptr == NULL) return; /* Uninitialized logger! */
     vsyslog(cwmp_loglevel_to_syslog_level(level), fmt, ap);
 

@@ -154,7 +154,7 @@ cpe_set_ud_length(cwmp_t * cwmp, const char * name, const char * value, int leng
 	char *e = NULL;
 	DM_TRACE_SET();
 	val = strtoul(value, &e, 10);
-	if (e || *e) {
+	if (e && *e) {
 		cwmp_log_error("%s: value not a number: %s", __func__, value);
 		return FAULT_CODE_9007;
 	}
