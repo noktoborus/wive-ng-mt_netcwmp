@@ -26,12 +26,6 @@ cpe_get_wan_eic_stats(cwmp_t * cwmp, const char * name, char ** value, char * ar
 	return FAULT_CODE_OK;
 }
 
-int
-cpe_get_eic_status(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
-{
-	DM_TRACE_GET();
-	return FAULT_CODE_OK;
-}
 
 int
 cpe_get_eic_mac(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
@@ -42,13 +36,13 @@ cpe_get_eic_mac(cwmp_t * cwmp, const char * name, char ** value, char * args, po
 
 
 static int
-_get_wan_eic_duplex_mbr(cwmp_t *cwmp, char *name, char **value, pool_t *pool)
+_get_wan_eic_duplex_mbr_status(cwmp_t *cwmp, char *name, char **value, pool_t *pool)
 {
 	int wan_port = 0;
 	struct port_status ps = {};
 	char buf[42] = {};
 
-	wan_port = cwmp_nvram_get_int("wan_port", -1);
+	wan_port = 4 - cwmp_nvram_get_int("wan_port", 5);
 	if (wan_port == -1) {
 		return FAULT_CODE_9002;
 	}
@@ -66,23 +60,36 @@ _get_wan_eic_duplex_mbr(cwmp_t *cwmp, char *name, char **value, pool_t *pool)
 		} else {
 			*value = "Auto";
 		}
+	} else if (!strcmp(name, "Status")) {
+		if (ps.link) {
+			*value = "Up";
+		} else {
+			*value = "NoLink";
+		}
 	}
 
 	return FAULT_CODE_OK;
 }
 
 int
+cpe_get_eic_status(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+	DM_TRACE_GET();
+	return _get_wan_eic_duplex_mbr_status(cwmp, "Status", value, pool);
+}
+
+int
 cpe_get_wan_eic_mbr(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
 	DM_TRACE_GET();
-	return _get_wan_eic_duplex_mbr(cwmp, "MaxBitRate", value, pool);
+	return _get_wan_eic_duplex_mbr_status(cwmp, "MaxBitRate", value, pool);
 }
 
 int
 cpe_get_wan_eic_duplex(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
 	DM_TRACE_GET();
-	return _get_wan_eic_duplex_mbr(cwmp, "DuplexMode", value, pool);
+	return _get_wan_eic_duplex_mbr_status(cwmp, "DuplexMode", value, pool);
 }
 
 static int
@@ -96,7 +103,7 @@ _set_wan_eic_duplex_mbr(cwmp_t *cwmp, const char *name, int new_speed, char new_
 	int speed = 100;
 	char duplex = 'f';
 
-	wan_port = cwmp_nvram_get_int("wan_port", -1);
+	wan_port = 4 - cwmp_nvram_get_int("wan_port", -5);
 	if (wan_port == -1) {
 		return FAULT_CODE_9002;
 	}

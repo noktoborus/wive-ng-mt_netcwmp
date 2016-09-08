@@ -5,16 +5,18 @@ int cpe_get_wan_elc_status(cwmp_t * cwmp, const char * name, char ** value, char
 
 	DM_TRACE_GET();
 	/* get WAN status */
-	wan_port = cwmp_nvram_get_int("wan_port", -1);
+	wan_port = 4 - cwmp_nvram_get_int("wan_port", 5);
 	if (wan_port == -1) {
 		return FAULT_CODE_9002;
 	}
-	portstatus(&ps, wan_port);
-
-	if (ps.link) {
-		*value = "Up";
+	if (portstatus(&ps, wan_port)) {
+		*value = "Unavailable";
 	} else {
-		*value = "NoLink";
+		if (ps.link) {
+			*value = "Up";
+		} else {
+			*value = "Down";
+		}
 	}
 	return FAULT_CODE_OK;
 }
