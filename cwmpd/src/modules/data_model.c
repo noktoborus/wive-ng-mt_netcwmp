@@ -236,6 +236,17 @@ model_func_t ModelFunction[] =
     {"cpe_get_ud_iface", cpe_get_ud_iface},
     {"cpe_get_ud_state", cpe_get_ud_state},
     {"cpe_get_ud", cpe_get_ud},
+
+    {"cpe_get_wan_elc_status", cpe_get_wan_elc_status},
+
+    {"cpe_get_wan_eic_stats", cpe_get_wan_eic_stats},
+    {"cpe_get_eic_status", cpe_get_eic_status},
+    {"cpe_get_eic_mac", cpe_get_eic_mac},
+    {"cpe_get_wan_eic_mbr", cpe_get_wan_eic_mbr},
+    {"cpe_get_wan_eic_duplex", cpe_get_wan_eic_duplex},
+    {"cpe_set_wan_eic_duplex", cpe_set_wan_eic_duplex},
+    {"cpe_set_wan_eic_mbr", cpe_set_wan_eic_mbr},
+
 };
 
 const char *cwmp_model_ptr_to_func(void *p)

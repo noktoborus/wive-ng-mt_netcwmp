@@ -1,4 +1,23 @@
+int cpe_get_wan_elc_status(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+	int wan_port = 0;
+	struct port_status ps = {};
 
+	DM_TRACE_GET();
+	/* get WAN status */
+	wan_port = cwmp_nvram_get_int("wan_port", -1);
+	if (wan_port == -1) {
+		return FAULT_CODE_9002;
+	}
+	portstatus(&ps, wan_port);
+
+	if (ps.link) {
+		*value = "Up";
+	} else {
+		*value = "NoLink";
+	}
+	return FAULT_CODE_OK;
+}
 
 int  cpe_refresh_igd_wanconnectiondevice(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_func_t callback_reg)
 {
