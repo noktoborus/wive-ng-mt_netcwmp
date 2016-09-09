@@ -4,6 +4,40 @@
 
 static unsigned leic_max_port = 0u;
 
+static int
+_leic_set_speed_duplex(cwmp_t *cwmp, const char *name, int port, int new_speed, char new_duplex)
+{
+	char key[42] = {};
+	char buf[42] = {};
+	char *swmode = NULL;
+
+	int speed = 100;
+	char duplex = 'f';
+
+	/* get old value */
+	snprintf(key, sizeof(key), "port%d_swmode", port);
+	swmode = cwmp_nvram_get(key);
+	if (!*swmode) {
+		cwmp_log_error("%s: unexpected empty nvram value for '%s'", name, key);
+		return FAULT_CODE_9002;
+	}
+
+	sscanf(swmode, "%d%c", &speed, &duplex);
+
+	if (new_speed != 0) {
+		speed = new_speed;
+	}
+	if (new_duplex != '\0') {
+		duplex = new_duplex;
+	}
+
+	/* set new value */
+	snprintf(buf, sizeof(buf), "%d%c", speed, duplex);
+	cwmp_nvram_set(key, buf);
+
+	return FAULT_CODE_OK;
+}
+
 static bool
 leic_get_if_mac(char ifname[IFNAMSIZ], char mac[18])
 {
@@ -41,7 +75,7 @@ leic_get_if_mac(char ifname[IFNAMSIZ], char mac[18])
 static int
 leic_portNo_from_path(cwmp_t *cwmp, const char *path, bool stats)
 {
-	unsigned pno = 0u;
+	int pno = 0u;
 	parameter_node_t *pn = NULL;
 	unsigned wan_port = 0;
 	char *n = NULL;
@@ -146,22 +180,39 @@ cpe_get_LEIC_MAC(cwmp_t *cwmp, const char *name, char **value, char *args, pool_
 int
 cpe_set_LEIC_MaxBitRate(cwmp_t *cwmp, const char *name, char *value, int length, char *args, callback_register_func_t callback_reg)
 {
+	int speed = 0;
+	int pno = 0;
+
 	DM_TRACE_SET();
-	/* TODO: ... */
-	return FAULT_CODE_OK;
+	if ((pno = leic_portNo_from_path(cwmp, name, false)) == -1) {
+		return FAULT_CODE_9005;
+	}
+
+	speed = (int)strtol(value, NULL, 10);
+	switch (speed) {
+		case 10:
+		case 100:
+			break;
+		default:
+			cwmp_log_error("%s: invalid value '%s'. Allowed: 10, 100",
+					name, value);
+			return FAULT_CODE_9007;
+	}
+
+	return _leic_set_speed_duplex(cwmp, name, pno, speed, '\0');
 }
 
 int
 cpe_get_LEIC_MaxBitRate(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
-	unsigned pno = 0u;
+	int pno = 0u;
 	struct port_status ps = {};
 	char b[24] = {};
 
 	DM_TRACE_GET();
 	pno = leic_portNo_from_path(cwmp, name, false);
 	if (pno == -1) {
-		return FAULT_CODE_9003;
+		return FAULT_CODE_9005;
 	}
 
 	portstatus(&ps, pno);
@@ -184,14 +235,14 @@ cpe_get_LEIC_Name(cwmp_t *cwmp, const char *name, char **value, char *args, pool
 int
 cpe_get_LEIC_stats(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
-	unsigned pno = -1;
+	int pno = -1;
 	struct port_counts pc = {};
 	char b[24] = {};
 	parameter_node_t *pn = NULL;
 
 	DM_TRACE_GET();
 	if ((pno = leic_portNo_from_path(cwmp, name, true)) == -1) {
-		return FAULT_CODE_9003;
+		return FAULT_CODE_9005;
 	}
 	pn = cwmp_get_parameter_path_node(cwmp->root, name);
 
@@ -213,13 +264,13 @@ cpe_get_LEIC_stats(cwmp_t *cwmp, const char *name, char **value, char *args, poo
 int
 cpe_get_LEIC_Status(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
-	unsigned pno = 0u;
+	int pno = 0u;
 	struct port_status ps = {};
 
 	DM_TRACE_GET();
 	pno = leic_portNo_from_path(cwmp, name, false);
 	if (pno == -1)
-		return FAULT_CODE_9003;
+		return FAULT_CODE_9005;
 
 	portstatus(&ps, pno);
 
@@ -235,13 +286,13 @@ cpe_get_LEIC_Status(cwmp_t *cwmp, const char *name, char **value, char *args, po
 int
 cpe_get_LEIC_DuplexMode(cwmp_t *cwmp, const char *name, char **value, char *args, pool_t *pool)
 {
-	unsigned pno = 0u;
+	int pno = 0u;
 	struct port_status ps = {};
 
 	DM_TRACE_GET();
 	pno = leic_portNo_from_path(cwmp, name, false);
 	if (pno == -1)
-		return FAULT_CODE_9003;
+		return FAULT_CODE_9005;
 
 	portstatus(&ps, pno);
 
@@ -263,10 +314,24 @@ cpe_get_LEIC_DuplexMode(cwmp_t *cwmp, const char *name, char **value, char *args
 int
 cpe_set_LEIC_DuplexMode(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
 {
-	DM_TRACE_SET();
+	int pno = 0u;
+	char duplex = 'f';
 
-	/* TODO: ... */
-	return FAULT_CODE_OK;
+	DM_TRACE_SET();
+	if ((pno = leic_portNo_from_path(cwmp, name, false)) == -1) {
+		return FAULT_CODE_9005;
+	}
+
+	if (!strcmp("Half", value)) {
+		duplex = 'h';
+	} else if (!strcmp("Full", value)) {
+		duplex = 'f';
+	} else {
+		cwmp_log_error("%s: invalid value: '%s'", name, value);
+		return FAULT_CODE_9007;
+	}
+
+	return _leic_set_speed_duplex(cwmp, name, pno, 0, duplex);
 }
 
 int
