@@ -38,7 +38,7 @@ cpe_reload_all(cwmp_t *cwmp, callback_register_func_t callback_reg)
 #include "WANDevice/WANConnectionDevice/WANPPPConnection.c"
 #include "Layer3Forwarding/Layer3Forwarding.c"
 #include "WANDevice/WANEthernetInterfaceConfig/WANEthernetInterfaceConfig.c"
-
+#include "LANDevice/LANHostConfigManagement/IPInterface/IPInterface.c"
 #include "LANDevice/LANDevice.c"
 #include "LANDevice/X_COM_IgmpSnoopingConfig/X_COM_IgmpSnoopingConfig.c"
 #include "LANDevice/LANHostConfigManagement/LANHostConfigManagement.c"

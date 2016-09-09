@@ -2,6 +2,8 @@
 <cwmp>
 	<model>
 		<!--
+			https://www.broadband-forum.org/cwmp/tr-098-1-8-0.html
+
 			* shared attributes:
 				inform (boolean):
 					add this node to inform list
@@ -205,7 +207,17 @@
 						<param name="Alias" rw="1" set_func="cpe_set_alias" get_func="cpe_get_alias"/>
 						<param name="IPInterfaceIPAddress" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="lan_ipaddr" set_func="cpe_set_nvram_string"/>
 						<param name="IPInterfaceSubnetMask" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" set_func="cpe_set_nvram_string" args="lan_netmask"/>
+						<param name="IPInterfaceAddressingType" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_lhcm_ipi_addr_type" set_func="cpe_set_lhcm_ipi_addr_type"/>
 					</object>
+					</object>
+					<param name="DHCPStaticAddressNumberOfEntries" get_func=""/>
+					<object name="DHCPStaticAddress" add_func="">
+						<object name="{i}" del_func="">
+							<param name="Enable" rw="1" get_func="" set_func=""/>
+							<param name="Alias" rw="1" get_func="" set_func=""/>
+							<param name="Chaddr" rw="1" get_func="" set_func=""/>
+							<param name="Yiaddr" rw="1" get_func="" set_func=""/>
+						</object>
 					</object>
 					<param name="SubnetMask" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="lan_netmask" set_func="cpe_set_nvram_string"/>
 					<param name="DHCPServerEnable" reload_func="cpe_reload_all" rw="1" get_func="cpe_get_nvram_bool" args="dhcpEnabled" set_func="cpe_set_nvram_bool"/>
