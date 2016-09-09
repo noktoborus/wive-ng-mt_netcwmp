@@ -5,23 +5,34 @@
 int
 cpe_get_wan_eic_stats(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
+	int wan_port = 0;
+	struct port_counts pc = {};
 	parameter_node_t *pn = NULL;
-	DM_TRACE_GET();
+	char buf[42] = {'0'};
 
+	DM_TRACE_GET();
 	pn = cwmp_get_parameter_path_node(cwmp->root, name);
 	if (!pn) {
 		return FAULT_CODE_9002;
 	}
 
-	if (!strcmp("BytesSent", pn->name)) {
-		/* TODO */
-	} else if (!strcmp("BytesReceived", pn->name)) {
-		/* TODO */
-	} else if (!strcmp("PacketsSent", pn->name)) {
-		/* TODO */
-	} else if (!strcmp("PacketsReceived", pn->name)) {
-		/* TODO */
+	wan_port = 4 - cwmp_nvram_get_int("wan_port", 5);
+	if (wan_port < 0) {
+		return FAULT_CODE_9002;
 	}
+
+	portscounts(&pc);
+
+	if (!strcmp("BytesSent", pn->name)) {
+		snprintf(buf, sizeof(buf), "%lld", pc.tx_count[wan_port]);
+	} else if (!strcmp("BytesReceived", pn->name)) {
+		snprintf(buf, sizeof(buf), "%lld", pc.rx_count[wan_port]);
+	} else if (!strcmp("PacketsSent", pn->name)) {
+		/* not supported */
+	} else if (!strcmp("PacketsReceived", pn->name)) {
+		/* not supported */
+	}
+	*value = pool_pstrdup(pool, buf);
 
 	return FAULT_CODE_OK;
 }
