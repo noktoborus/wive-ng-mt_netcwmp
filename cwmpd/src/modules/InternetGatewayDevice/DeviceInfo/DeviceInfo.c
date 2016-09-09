@@ -184,3 +184,23 @@ int cpe_get_igd_di_devicelog(cwmp_t * cwmp, const char * name, char ** value, ch
     return FAULT_CODE_OK;
 }
 
+int
+cpe_get_igd_di_uptime(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    FILE *f = NULL;
+    char buf[42] = {};
+
+    DM_TRACE_GET();
+    f = fopen("/proc/uptime", "r");
+    if (!f) {
+        cwmp_log_error("%s: fopen('/proc/uptime', 'r') failed: %s",
+                name, strerror(errno));
+        return FAULT_CODE_9002;
+    }
+    fscanf(f, "%42[0-9]", buf);
+    fclose(f);
+
+    *value = pool_pstrdup(pool, buf);
+    return FAULT_CODE_OK;
+}
+

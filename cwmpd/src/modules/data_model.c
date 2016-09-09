@@ -29,6 +29,7 @@ model_func_t ModelFunction[] =
     {"cpe_reload_all", cpe_reload_all},
     {"cpe_get_alias", cpe_get_alias},
     {"cpe_set_alias", cpe_set_alias},
+    {"cpe_get_igd_di_uptime", cpe_get_igd_di_uptime},
     {"cpe_get_igd_di_manufacturer", cpe_get_igd_di_manufacturer},
     {"cpe_get_igd_di_manufactureroui", cpe_get_igd_di_manufactureroui},
     {"cpe_get_igd_di_productclass", cpe_get_igd_di_productclass},
