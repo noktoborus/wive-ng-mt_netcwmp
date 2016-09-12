@@ -229,21 +229,30 @@ void
 saddr_char(char *str, size_t size, sa_family_t family, struct sockaddr *sa)
 {
     char xhost[40];
+    short port = 0;
     switch(family) {
     case AF_INET:
         inet_ntop(AF_INET, &((struct sockaddr_in*)sa)->sin_addr,
                 xhost, sizeof(xhost));
-        snprintf(str, size, "%s:%u", xhost,
-                ntohs(((struct sockaddr_in*)sa)->sin_port));
+        port = ntohs(((struct sockaddr_in*)sa)->sin_port);
+        if (port) {
+            snprintf(str, size, "%s:%u", xhost, port);
+        } else {
+            snprintf(str, size, "%s", xhost);
+        }
         break;
     case AF_INET6:
         inet_ntop(AF_INET6, &((struct sockaddr_in6*)sa)->sin6_addr,
                 xhost, sizeof(xhost));
-        snprintf(str, size, "[%s]:%u", xhost,
-                ntohs(((struct sockaddr_in6*)sa)->sin6_port));
+        port = ntohs(((struct sockaddr_in6*)sa)->sin6_port);
+        if (port) {
+            snprintf(str, size, "[%s]:%u", xhost, port);
+        } else {
+            snprintf(str, size, "%s", xhost);
+        }
         break;
     default:
-        snprintf(str, size, "[unknown fa]");
+        snprintf(str, size, "[unknown fa: %d]", family);
         break;
     }
 }

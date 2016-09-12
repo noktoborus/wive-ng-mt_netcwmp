@@ -41,6 +41,39 @@ int cpe_get_igd_wan_ppp_authprot(cwmp_t * cwmp, const char * name, char ** value
     return FAULT_CODE_OK;
 }
 
+int cpe_get_igd_wan_ppp_remote(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    struct ifreq ifr = {};
+    int sock = -1;
+    char addr[40] = {};
+
+    DM_TRACE_GET();
+	if ((sock = socket(PF_INET, SOCK_DGRAM, 0)) == -1) {
+        cwmp_log_error("%s: socket(PF_INET, SOCK_DGRAM, 0) failed: %s",
+                __func__, strerror(errno));
+        goto err;
+	}
+
+	snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "ppp0");
+	if (ioctl(sock, SIOCGIFDSTADDR, &ifr) == -1) {
+        cwmp_log_error("%s: ioctl(SIOCGIFDSTADDR) failed: %s",
+                __func__, strerror(errno));
+        goto err;
+    }
+
+    /* get dest ip */
+    saddr_char(addr, sizeof(addr), ifr.ifr_dstaddr.sa_family, &ifr.ifr_dstaddr);
+
+    *value = pool_pstrdup(pool, addr);
+
+    close(sock);
+    return FAULT_CODE_OK;
+err:
+    if (sock != -1)
+        close(sock);
+    return FAULT_CODE_9002;
+}
+
 int cpe_set_igd_wan_ppp_authprot(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
 

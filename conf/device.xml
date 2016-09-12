@@ -321,6 +321,7 @@
 									<param name="ConnectionTrigger" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_const_string" set_func="AlwaysOn"/>
 									<param name="ConnectionStatus" get_func="cpe_get_igd_wan_ppp_stats"/>
 									<param name="Uptime" get_func="cpe_get_igd_wan_ppp_stats"/>
+									<param name="RemoteIPAddress" get_func="cpe_get_igd_wan_ppp_remote"/>
 									<object name="Stats">
 										<param name="EthernetBytesSent" get_func="cpe_get_igd_wan_ppp_stats"/>
 										<param name="EthernetBytesReceived" get_func="cpe_get_igd_wan_ppp_stats"/>

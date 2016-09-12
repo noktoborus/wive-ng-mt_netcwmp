@@ -234,6 +234,7 @@ int http_send_diagnostics(size_t size, const char *tourl, struct http_statistics
 
 int http_post(http_socket_t * sock, http_request_t * request, cwmp_chunk_t * data, pool_t * pool);
 
+void saddr_char(char *str, size_t size, sa_family_t family, struct sockaddr *sa);
 
 #ifdef USE_CWMP_OPENSSL
 
