@@ -249,6 +249,7 @@ model_func_t ModelFunction[] =
     {"cpe_set_wan_eic_mbr", cpe_set_wan_eic_mbr},
 
     {"cpe_get_lhcm_ipi_addr_type", cpe_get_lhcm_ipi_addr_type},
+    {"cpe_set_lhcm_ipi_addr_type", cpe_set_lhcm_ipi_addr_type},
 };
 
 const char *cwmp_model_ptr_to_func(void *p)
