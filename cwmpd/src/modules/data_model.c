@@ -21,6 +21,18 @@
     cwmp_log_trace("%s(cwmp=%p, callback_reg=%p)",\
             __func__, (void*)cwmp, (void*)callback_reg);
 
+#define DM_TRACE_DEL() \
+    cwmp_log_trace("%s(cwmp=%p, param_node=%p [name=%s], instance_number=%d, callback_reg=%p)",\
+            __func__, (void*)cwmp, (void*)param_node,\
+            (param_node ? param_node->name : ""),\
+            instance_number, (void*)callback_reg);
+
+#define DM_TRACE_ADD() \
+    cwmp_log_trace("%s(cwmp=%p, param_node=%p [name=%s], pinstance_number=%p, callback_reg=%p)",\
+            __func__, (void*)cwmp, (void*)param_node,\
+            (param_node ? param_node->name : ""),\
+            (void*)pinstance_number, (void*)callback_reg);
+
 #include "InternetGatewayDevice/InternetGatewayDevice.c"
 #include "alias.c"
 
@@ -252,6 +264,16 @@ model_func_t ModelFunction[] =
 
     {"cpe_get_lhcm_ipi_addr_type", cpe_get_lhcm_ipi_addr_type},
     {"cpe_set_lhcm_ipi_addr_type", cpe_set_lhcm_ipi_addr_type},
+
+    {"cpe_get_dhcpstatic_count", cpe_get_dhcpstatic_count},
+    {"cpe_refresh_dhcpstatic", cpe_refresh_dhcpstatic},
+    {"cpe_del_dhcpstatic", cpe_del_dhcpstatic},
+    {"cpe_add_dhcpstatic", cpe_add_dhcpstatic},
+    {"cpe_reload_dhcpstatic", cpe_reload_dhcpstatic},
+    {"cpe_get_dhcpstatic_chaddr", cpe_get_dhcpstatic_chaddr},
+    {"cpe_get_dhcpstatic_yiaddr", cpe_get_dhcpstatic_yiaddr},
+    {"cpe_set_dhcpstatic_yiaddr", cpe_set_dhcpstatic_yiaddr},
+    {"cpe_set_dhcpstatic_chaddr", cpe_set_dhcpstatic_chaddr},
 };
 
 const char *cwmp_model_ptr_to_func(void *p)

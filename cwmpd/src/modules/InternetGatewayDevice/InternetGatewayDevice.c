@@ -45,7 +45,7 @@ cpe_reload_all(cwmp_t *cwmp, callback_register_func_t callback_reg)
 #include "LANDevice/WLANConfiguration/WLANConfiguration.c"
 #include "LANDevice/LANEthernetInterfaceConfig/LANEthernetInterfaceConfig.c"
 #include "LANDevice/Hosts/Hosts.c"
-
+#include "LANDevice/LANHostConfigManagement/DHCPStaticAddress/DHCPStaticAddress.c"
 
 #include "Services/Services.c"
 #include "Services/X_COM_IPTV/X_COM_IPTV.c"

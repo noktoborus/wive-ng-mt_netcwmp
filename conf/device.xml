@@ -210,13 +210,13 @@
 						<param name="IPInterfaceAddressingType" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_lhcm_ipi_addr_type" set_func="cpe_set_lhcm_ipi_addr_type"/>
 					</object>
 					</object>
-					<param name="DHCPStaticAddressNumberOfEntries" get_func=""/>
-					<object name="DHCPStaticAddress" add_func="">
-						<object name="{i}" del_func="">
-							<param name="Enable" rw="1" get_func="" set_func=""/>
-							<param name="Alias" rw="1" get_func="" set_func=""/>
-							<param name="Chaddr" rw="1" get_func="" set_func=""/>
-							<param name="Yiaddr" rw="1" get_func="" set_func=""/>
+					<param name="DHCPStaticAddressNumberOfEntries" get_func="cpe_get_dhcpstatic_count"/>
+					<object name="DHCPStaticAddress" refresh_func="cpe_refresh_dhcpstatic" add_func="cpe_add_dhcpstatic">
+						<object name="{i}" del_func="cpe_del_dhcpstatic">
+							<param name="Enable" rw="1" get_func="cpe_get_const_string" set_func="cpe_set_null" args="1"/>
+							<param name="Alias" rw="1" get_func="cpe_get_alias" set_func="cpe_set_alias"/>
+							<param name="Chaddr" rw="1" reload_func="cpe_reload_dhcpstatic" get_func="cpe_get_dhcpstatic_chaddr" set_func="cpe_set_dhcpstatic_chaddr"/>
+							<param name="Yiaddr" rw="1" reload_func="cpe_reload_dhcpstatic" get_func="cpe_get_dhcpstatic_yiaddr" set_func="cpe_set_dhcpstatic_yiaddr"/>
 						</object>
 					</object>
 					<param name="SubnetMask" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="lan_netmask" set_func="cpe_set_nvram_string"/>
