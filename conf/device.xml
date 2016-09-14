@@ -257,11 +257,11 @@
 					<param name="TotalPacketsSent" get_func=""/>
 					<param name="TotalPacketsReceived" get_func=""/>
 					<param name="TotalAssociations" get_func=""/>
-					<object name="AssociatedDevice" refresh_func="">
+					<object name="AssociatedDevice" refresh_func="cpe_refresh_igd_lan_wlan_associated">
 						<object name="{i}">
-							<param name="AssociatedDeviceMACAddress" get_func=""/>
-							<param name="AssociatedDeviceIPAddress" get_func=""/>
-							<param name="AssociatedDeviceAuthenticationState" get_func=""/>
+							<param name="AssociatedDeviceMACAddress" get_func="cpe_get_igd_lan_wlan_assoc_mac"/>
+							<param name="AssociatedDeviceIPAddress" get_func="cpe_get_igd_lan_wlan_assoc_addr"/>
+							<param name="AssociatedDeviceAuthenticationState" get_func="cpe_get_igd_lan_wlan_assoc_state"/>
 						</object>
 					</object>
 					<object name="WEPKey" refresh_func="" add_func="">

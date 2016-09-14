@@ -427,3 +427,72 @@ cpe_get_igd_lan_wlan_enabled(cwmp_t * cwmp, const char * name, char ** value, ch
     return FAULT_CODE_OK;
 }
 
+
+
+static struct wlan_assoc
+{
+    char mac[18];
+    char addr[40];
+    bool authenticated;
+} *wlan_assoc;
+
+static unsigned wlan_assoc_count;
+
+int
+cpe_refresh_igd_lan_wlan_associated(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_func_t callback_reg)
+{
+	RT_802_11_MAC_TABLE table24 = {};
+	RT_802_11_MAC_ENTRY *pe = NULL;
+    int row_no = 0;
+    DM_TRACE_REFRESH();
+
+    /* delete */
+    cwmp_model_delete_object_child(cwmp, param_node);
+    if (wlan_assoc) {
+        free(wlan_assoc);
+        wlan_assoc = NULL;
+        wlan_assoc_count = 0u;
+    }
+
+    /* populate */
+	getWlanStationTable(&table24, 1);
+    wlan_assoc = calloc(table24.Num, sizeof(*wlan_assoc));
+    if (!wlan_assoc) {
+        cwmp_log_error("%s: calloc(%d) failed: %s",
+                __func__, table24.Num * sizeof(*wlan_assoc), strerror(errno));
+        return FAULT_CODE_9002;
+    }
+
+    for (row_no = 0; row_no < table24.Num; row_no++) {
+        pe = &(table24.Entry[row_no]);
+        snprintf(wlan_assoc[row_no].mac,
+                sizeof(wlan_assoc[row_no].mac),
+                "%02x:%02x:%02x:%02x:%02x:%02x",
+                pe->Addr[0], pe->Addr[1], pe->Addr[2],
+                pe->Addr[3], pe->Addr[4], pe->Addr[5]);
+    }
+    /* TODO: get arp list */
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_lan_wlan_assoc_mac(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    DM_TRACE_GET();
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_lan_wlan_assoc_addr(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    DM_TRACE_GET();
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_lan_wlan_assoc_state(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    DM_TRACE_GET();
+    return FAULT_CODE_OK;
+}
+

@@ -104,6 +104,11 @@ model_func_t ModelFunction[] =
     {"cpe_set_igd_lan_wlan_enabled", cpe_set_igd_lan_wlan_enabled},
     {"cpe_get_igd_lan_wlan_enabled", cpe_get_igd_lan_wlan_enabled},
 
+    {"cpe_refresh_igd_lan_wlan_associated", cpe_refresh_igd_lan_wlan_associated},
+    {"cpe_get_igd_lan_wlan_assoc_mac", cpe_get_igd_lan_wlan_assoc_mac},
+    {"cpe_get_igd_lan_wlan_assoc_addr", cpe_get_igd_lan_wlan_assoc_addr},
+    {"cpe_get_igd_lan_wlan_assoc_state", cpe_get_igd_lan_wlan_assoc_state},
+
     {"cpe_get_igd_lan_wlan_beacontype", cpe_get_igd_lan_wlan_beacontype},
     {"cpe_set_igd_lan_wlan_beacontype", cpe_set_igd_lan_wlan_beacontype},
     {"cpe_get_igd_lan_wlan_possiblechannels", cpe_get_igd_lan_wlan_possiblechannels},
