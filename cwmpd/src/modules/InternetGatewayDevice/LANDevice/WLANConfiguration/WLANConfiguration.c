@@ -1,3 +1,4 @@
+/* vim: set et: */
 //FIXME: Multichannel auth functions!
 
 BOOL prefix(const char *str, const char *pre)
@@ -287,3 +288,142 @@ int cpe_set_igd_lan_wlan_beacontype(cwmp_t * cwmp, const char * name, const char
     cwmp_log_debug("cpe_set_igd_lan_wlan_beacontype: set value %s\n", authStr);
     return FAULT_CODE_OK;
 }
+
+int
+cpe_get_igd_lan_wlan_possiblechannels(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    int v = 0;
+
+    DM_TRACE_GET();
+    v = cwmp_nvram_get_int("CountryRegion", -1);
+
+    switch (v) {
+        case 0:
+            *value = "1-11";
+            break;
+        case 1:
+            *value = "1-13";
+            break;
+        case 2:
+            *value = "10-11";
+            break;
+        case 3:
+            *value = "10-13";
+            break;
+        case 4:
+            *value = "14";
+            break;
+        case 5:
+            *value = "1-14";
+            break;
+        case 6:
+            *value = "3-9";
+            break;
+        case 7:
+            *value = "5-13";
+            break;
+        default:
+            cwmp_log_error("%s: error get CountryRegion nvram value", __func__);
+            return FAULT_CODE_9002;
+    }
+
+    return FAULT_CODE_OK;
+}
+
+/* WPA Encryptions:
+ *   WEPEncryption (DEPRECATED)
+ *   TKIPEncryption
+ *   WEPandTKIPEncryption (DEPRECATED)
+ *   AESEncryption (OPTIONAL)
+ *   WEPandAESEncryption (DEPRECATED)
+ *   TKIPandAESEncryption (OPTIONAL)
+ *   WEPandTKIPandAESEncryption (DEPRECATED)
+ */
+
+int
+cpe_set_igd_lan_wlan_wpaencryption(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
+{
+    DM_TRACE_SET();
+    if (!strcmp(value, "TKIPEncryption")) {
+        cwmp_nvram_set("EncrypType", "TKIP");
+    } else if (!strcmp(value, "AESEncryption")) {
+        cwmp_nvram_set("EncrypType", "AES");
+    } else if (!strcmp(value, "TKIPandAESEncryption")) {
+        cwmp_nvram_set("EncrypType", "TKIPAES");
+    } else {
+        cwmp_log_trace(
+                "%s: invalid value '%s', supports only: "
+                "TKIPEncryption, AESEncryption, TKIPandAESEncryption",
+                __func__, value);
+        return FAULT_CODE_9007;
+    }
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_lan_wlan_wpaencryption(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    char *mode = NULL;
+
+    DM_TRACE_GET();
+    mode = cwmp_nvram_get("EncrypType");
+
+    if (!strcmp(mode, "TKIPAES")) {
+        *value = "TKIPandAESEncryption";
+    } else if (!strcmp(mode, "TKIP")) {
+        *value = "AESEncryption";
+    } else if (!strcmp(mode, "AES")) {
+        *value = "TKIPEncryption";
+    }
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_lan_wlan_status(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    char *v = NULL;
+    DM_TRACE_GET();
+    v = cwmp_nvram_get("RadioOn");
+    if (*v == '0') {
+        *value = "Disabled";
+    } else if (*v == '1') {
+        *value = "Up";
+    } else {
+        *value = "Error";
+        cwmp_log_error("%s: nvram RadioOn invalid value: '%s'", __func__, v);
+    }
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_set_igd_lan_wlan_enabled(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
+{
+    DM_TRACE_SET();
+    if (*value == '0') {
+        cwmp_nvram_set("RadioOn", "0");
+    } else if (*value == '1') {
+        cwmp_nvram_set("RadioOn", "1");
+    } else {
+        cwmp_log_error("%s: invalid value: '%s'", __func__, value);
+        return FAULT_CODE_9007;
+    }
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_lan_wlan_enabled(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    char *v = NULL;
+    DM_TRACE_GET();
+    v = cwmp_nvram_get("RadioOn");
+    if (*v == '0') {
+        *value = "0";
+    } else if (*v == '1') {
+        *value = "1";
+    } else {
+        *value = "0";
+        cwmp_log_error("%s: nvram RadioOn invalid value: '%s'", __func__, v);
+    }
+    return FAULT_CODE_OK;
+}
+

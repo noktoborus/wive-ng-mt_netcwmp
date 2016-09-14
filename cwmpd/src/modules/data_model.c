@@ -98,8 +98,15 @@ model_func_t ModelFunction[] =
     {"cpe_get_igd_lan_wlan_ieeeauthmode", cpe_get_igd_lan_wlan_ieeeauthmode},
     {"cpe_set_igd_lan_wlan_ieeeauthmode", cpe_set_igd_lan_wlan_ieeeauthmode},
 
+    {"cpe_set_igd_lan_wlan_wpaencryption", cpe_set_igd_lan_wlan_wpaencryption},
+    {"cpe_get_igd_lan_wlan_wpaencryption", cpe_get_igd_lan_wlan_wpaencryption},
+    {"cpe_get_igd_lan_wlan_status", cpe_get_igd_lan_wlan_status},
+    {"cpe_set_igd_lan_wlan_enabled", cpe_set_igd_lan_wlan_enabled},
+    {"cpe_get_igd_lan_wlan_enabled", cpe_get_igd_lan_wlan_enabled},
+
     {"cpe_get_igd_lan_wlan_beacontype", cpe_get_igd_lan_wlan_beacontype},
     {"cpe_set_igd_lan_wlan_beacontype", cpe_set_igd_lan_wlan_beacontype},
+    {"cpe_get_igd_lan_wlan_possiblechannels", cpe_get_igd_lan_wlan_possiblechannels},
 
     {"cpe_get_igd_lan_wlan_bssid", cpe_get_igd_lan_wlan_bssid},
 
