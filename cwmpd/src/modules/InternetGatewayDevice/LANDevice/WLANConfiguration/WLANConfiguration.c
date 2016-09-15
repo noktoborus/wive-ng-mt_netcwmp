@@ -34,7 +34,6 @@ int cpe_get_igd_lan_wlan_autochannel(cwmp_t * cwmp, const char * name, char ** v
     *value = pool_pstrdup(pool, ((chan==0) || autoselect)?"1":"0");
 
     return FAULT_CODE_OK;
-
 }
 
 int cpe_set_igd_lan_wlan_autochannel(cwmp_t * cwmp, const char * name, const char * value, int length, callback_register_func_t callback_reg)
@@ -579,5 +578,143 @@ cpe_get_igd_lan_wlan_associated_count(cwmp_t * cwmp, const char * name, char ** 
     char buf[42] = {};
     DM_TRACE_GET();
     snprintf(buf, sizeof(buf), "%u", wlan_assoc_count);
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_set_igd_lan_wlan_wepkey(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
+{
+    char tkey[42] = {};
+    char key[42] = {};
+    char *end = NULL;
+
+    DM_TRACE_SET();
+    snprintf(tkey, sizeof(tkey), "Key%sType", args);
+    snprintf(key, sizeof(key), "Key%sStr1", args);
+
+    if (length != 10 || length != 26) {
+        cwmp_log_trace("%s: invalid value length: %d, must be equal 10 or 26",
+                __func__, length);
+        return FAULT_CODE_9007;
+    }
+
+    strtoul(value, &end, 16);
+    if (end && *end) {
+        cwmp_log_error("%s: invalid hex: '%s' at symbol number %"PRIuPTR,
+            __func__, value, end - value);
+        return FAULT_CODE_9007;
+    }
+
+    cwmp_nvram_set(tkey, "0");
+    cwmp_nvram_set(key, value);
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_lan_wlan_wepkey(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    char tkey[42] = {};
+    char key[42] = {};
+    char *val = NULL;
+    char hex[27];
+
+    DM_TRACE_GET();
+    snprintf(tkey, sizeof(tkey), "Key%sType", args);
+    snprintf(key, sizeof(key), "Key%sStr1", args);
+
+    if (cwmp_nvram_get_int(tkey, 0) == 0) {
+        /* hex value */
+        *value = cwmp_nvram_pool_get(pool, key);
+    } else {
+        /* ASCII value */
+        val = cwmp_nvram_get(key);
+        if (!*val) {
+            return FAULT_CODE_OK;
+        }
+        cwmp_string_to_hex(val, hex, sizeof(hex));
+        *value = pool_pstrdup(pool, hex);
+    }
+    return FAULT_CODE_OK;
+}
+
+static bool
+get_igd_lan_wlan_txrx(struct nic_counts *result)
+{
+    int count = 0;
+    int i = 0;
+    struct nic_counts *nc = NULL;
+    nc = nicscounts(&count);
+    for (i = 0; i < count; i++) {
+        if (!strcmp(nc[i].ifname, "ra0")) {
+            memcpy(result, &nc[i], sizeof(*result));
+            goto success;
+        }
+    }
+
+    if (nc)
+        free(nc);
+    return false;
+success:
+    free(nc);
+    return true;
+}
+
+int
+cpe_get_igd_lan_wlan_tx_bytes(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    struct nic_counts nc = {};
+    char buf[42] = {};
+    DM_TRACE_GET();
+    if (!get_igd_lan_wlan_txrx(&nc)) {
+        cwmp_log_error("%s: can't get counter for WLAN interface");
+        return FAULT_CODE_9002;
+    }
+    snprintf(buf, sizeof(buf), "%llu", nc.tx_bytes);
+    *value = pool_pstrdup(pool, buf);
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_lan_wlan_rx_bytes(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    struct nic_counts nc = {};
+    char buf[42] = {};
+    DM_TRACE_GET();
+    if (!get_igd_lan_wlan_txrx(&nc)) {
+        cwmp_log_error("%s: can't get counter for WLAN interface");
+        return FAULT_CODE_9002;
+    }
+    snprintf(buf, sizeof(buf), "%llu", nc.rx_bytes);
+    *value = pool_pstrdup(pool, buf);
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_lan_wlan_tx_packets(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    struct nic_counts nc = {};
+    char buf[42] = {};
+    DM_TRACE_GET();
+    if (!get_igd_lan_wlan_txrx(&nc)) {
+        cwmp_log_error("%s: can't get counter for WLAN interface");
+        return FAULT_CODE_9002;
+    }
+    snprintf(buf, sizeof(buf), "%llu", nc.tx_packets);
+    *value = pool_pstrdup(pool, buf);
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_lan_wlan_rx_packets(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    struct nic_counts nc = {};
+    char buf[42] = {};
+    DM_TRACE_GET();
+    if (!get_igd_lan_wlan_txrx(&nc)) {
+        cwmp_log_error("%s: can't get counter for WLAN interface");
+        return FAULT_CODE_9002;
+    }
+    snprintf(buf, sizeof(buf), "%llu", nc.rx_packets);
+    *value = pool_pstrdup(pool, buf);
     return FAULT_CODE_OK;
 }

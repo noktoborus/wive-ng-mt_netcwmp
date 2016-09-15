@@ -85,7 +85,28 @@ void cwmp_hex_to_string(char *to, const unsigned char *p, size_t len)
     *to = '\0';
 }
 
+void cwmp_string_to_hex(char *in, char *out, size_t len)
+{
+    const char hex[16] = "0123456789ABCDEF";
+    size_t i = 0;;
+    size_t in_len = 0;
 
+    if (!out || !len || !in)
+        return;
+    in_len = strlen(in);
+
+    for (i = 0u; i < len - 1 && i < in_len * 2; i++) {
+        if (!(i % 2)) {
+            /* first nibble */
+            out[i] = hex[in[i / 2] >> 4 & 0xf];
+        } else {
+            /* second nibble */
+            out[i] = hex[in[i / 2] & 0xf];
+        }
+    }
+
+    out[i] = '\0';
+}
 
 void MD5(char *buf, ...)
 {

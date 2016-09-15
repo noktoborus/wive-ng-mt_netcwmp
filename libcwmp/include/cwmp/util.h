@@ -274,6 +274,8 @@ static INLINE char * TRlefttrim(char   *s)
 
 void convert_to_hex(const char *Bin, char *Hex);
 
+void cwmp_hex_to_string(char *to, const unsigned char *p, size_t len);
+void cwmp_string_to_hex(char *in, char *out, size_t len);
 
 static INLINE int is_digit(const char *str)
 {

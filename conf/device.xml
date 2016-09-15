@@ -239,7 +239,7 @@
 					<param name="BeaconType" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_beacontype" set_func="cpe_set_igd_lan_wlan_beacontype"/>
 					<param name="MACAddressControlEnabled" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>
 					<param name="Standard" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_standard" set_func="cpe_set_igd_lan_wlan_standard"/>
-					<param name="WEPKeyIndex" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>
+					<param name="WEPKeyIndex" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" set_func="cpe_set_nvram_string" args="DefaultKeyID"/>
 					<param name="KeyPassphrase" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="WPAPSK1" set_func="cpe_set_nvram_string"/>
 					<param name="WEPEncryptionLevel" get_func=""/> <!-- not supported? -->
 					<param name="BasicEncryptionModes" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/> 
@@ -252,10 +252,10 @@
 					<param name="PossibleDataTransmitRates" get_func=""/>
 					<param name="RadioEnabled" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_enabled" set_func="cpe_set_igd_lan_wlan_enabled"/>
 					<param name="AutoRateFallBackEnabled" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>
-					<param name="TotalBytesSent" get_func=""/>
-					<param name="TotalBytesReceived" get_func=""/>
-					<param name="TotalPacketsSent" get_func=""/>
-					<param name="TotalPacketsReceived" get_func=""/>
+					<param name="TotalBytesSent" get_func="cpe_get_igd_lan_wlan_tx_bytes"/>
+					<param name="TotalBytesReceived" get_func="cpe_get_igd_lan_wlan_rx_bytes"/>
+					<param name="TotalPacketsSent" get_func="cpe_get_igd_lan_wlan_tx_packets"/>
+					<param name="TotalPacketsReceived" get_func="cpe_get_igd_lan_wlan_rx_packets"/>
 					<param name="TotalAssociations" get_func="cpe_get_igd_lan_wlan_associated_count"/>
 					<object name="AssociatedDevice" refresh_func="cpe_refresh_igd_lan_wlan_associated">
 						<object name="{i}">
@@ -264,17 +264,28 @@
 							<param name="AssociatedDeviceAuthenticationState" get_func="cpe_get_igd_lan_wlan_assoc_state"/>
 						</object>
 					</object>
-					<object name="WEPKey" refresh_func="" add_func="">
-						<object name="{i}" del_func="">
-							<param name="WEPKey" rw="1" get_func="" set_func=""/>
+					<object name="WEPKey">
+						<object name="1">
+							<param name="WEPKey" rw="1" get_func="cpe_get_igd_lan_wlan_wepkey" set_func="cpe_set_igd_lan_wlan_wepkey" args="1"/>
+						</object>
+						<object name="2">
+							<param name="WEPKey" rw="1" get_func="cpe_get_igd_lan_wlan_wepkey" set_func="cpe_set_igd_lan_wlan_wepkey" args="2"/>
+						</object>
+						<object name="3">
+							<param name="WEPKey" rw="1" get_func="cpe_get_igd_lan_wlan_wepkey" set_func="cpe_set_igd_lan_wlan_wepkey" args="3"/>
+						</object>
+						<object name="4">
+							<param name="WEPKey" rw="1" get_func="cpe_get_igd_lan_wlan_wepkey" set_func="cpe_set_igd_lan_wlan_wepkey" args="4"/>
 						</object>
 					</object>
+					<!-- PreSharedKey not supported
 					<object name="PreSharedKey" refresh_func="" add_func="">
 						<object name="{i}" del_func="">
 							<param name="PreSharedKey" rw="1" get_func="" set_func=""/>
 							<param name="KeyPassphrase" rw="1" get_func="" set_func=""/>
 						</object>
 					</object>
+					-->
 					<!-- WiFiLAN:2 -->
 					<param name="Name" get_func=""/>
 					<param name="AutoChannelEnable" reload_func="cpe_reload_all" rw="1" get_func="cpe_get_igd_lan_wlan_autochannel" args="" set_func="cpe_set_igd_lan_wlan_autochannel"/>

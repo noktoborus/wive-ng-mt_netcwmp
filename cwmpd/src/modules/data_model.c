@@ -110,6 +110,14 @@ model_func_t ModelFunction[] =
     {"cpe_get_igd_lan_wlan_assoc_addr", cpe_get_igd_lan_wlan_assoc_addr},
     {"cpe_get_igd_lan_wlan_assoc_state", cpe_get_igd_lan_wlan_assoc_state},
 
+    {"cpe_get_igd_lan_wlan_tx_bytes", cpe_get_igd_lan_wlan_tx_bytes},
+    {"cpe_get_igd_lan_wlan_rx_bytes", cpe_get_igd_lan_wlan_rx_bytes},
+    {"cpe_get_igd_lan_wlan_tx_packets", cpe_get_igd_lan_wlan_tx_packets},
+    {"cpe_get_igd_lan_wlan_rx_packets", cpe_get_igd_lan_wlan_rx_packets},
+
+    {"cpe_set_igd_lan_wlan_wepkey", cpe_set_igd_lan_wlan_wepkey},
+    {"cpe_get_igd_lan_wlan_wepkey", cpe_get_igd_lan_wlan_wepkey},
+
     {"cpe_get_igd_lan_wlan_beacontype", cpe_get_igd_lan_wlan_beacontype},
     {"cpe_set_igd_lan_wlan_beacontype", cpe_set_igd_lan_wlan_beacontype},
     {"cpe_get_igd_lan_wlan_possiblechannels", cpe_get_igd_lan_wlan_possiblechannels},
@@ -364,8 +372,6 @@ int cpe_set_conf_string(cwmp_t * cwmp, const char * name, const char * value, in
     cwmp_conf_set(args,value);
     return FAULT_CODE_OK;
 }
-
-
 
 //nvram string getter
 int cpe_get_nvram_string(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
