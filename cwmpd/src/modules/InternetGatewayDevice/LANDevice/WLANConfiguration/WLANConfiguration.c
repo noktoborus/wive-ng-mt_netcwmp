@@ -459,7 +459,7 @@ igd_lan_wlan_arp(const char *n, struct wlan_assoc *wa)
 	while ((r = fscanf(f, "%s %*x %*x %s %*s %*s",
 				arp_addr, arp_mac)) != EOF) {
 		/* skip invalid matching */
-		if (r != 5)
+		if (r != 2)
 			continue;
         if (!strcmp(wa->mac, arp_mac)) {
             memcpy(wa->addr, arp_addr, sizeof(wa->addr));
@@ -475,6 +475,7 @@ cpe_refresh_igd_lan_wlan_associated(cwmp_t * cwmp, parameter_node_t * param_node
 	RT_802_11_MAC_TABLE table24 = {};
 	RT_802_11_MAC_ENTRY *pe = NULL;
     int row_no = 0;
+    parameter_node_t *pn = NULL;
 
     DM_TRACE_REFRESH();
     /* delete */
@@ -485,8 +486,9 @@ cpe_refresh_igd_lan_wlan_associated(cwmp_t * cwmp, parameter_node_t * param_node
         wlan_assoc_count = 0u;
     }
 
-    /* populate */
+    /* populate 2.4GHz */
 	getWlanStationTable(&table24, 1);
+
     wlan_assoc = calloc(table24.Num, sizeof(*wlan_assoc));
     if (!wlan_assoc) {
         cwmp_log_error("%s: calloc(%d) failed: %s",
@@ -504,6 +506,7 @@ cpe_refresh_igd_lan_wlan_associated(cwmp_t * cwmp, parameter_node_t * param_node
                 pe->Addr[3], pe->Addr[4], pe->Addr[5]);
         /* FIXME: too simple */
         igd_lan_wlan_arp(__func__, &wlan_assoc[row_no]);
+		cwmp_model_copy_parameter(param_node, &pn, row_no + 1);
     }
     return FAULT_CODE_OK;
 }
@@ -570,3 +573,11 @@ cpe_get_igd_lan_wlan_assoc_state(cwmp_t * cwmp, const char * name, char ** value
     return FAULT_CODE_OK;
 }
 
+int
+cpe_get_igd_lan_wlan_associated_count(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    char buf[42] = {};
+    DM_TRACE_GET();
+    snprintf(buf, sizeof(buf), "%u", wlan_assoc_count);
+    return FAULT_CODE_OK;
+}

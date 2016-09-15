@@ -256,7 +256,7 @@
 					<param name="TotalBytesReceived" get_func=""/>
 					<param name="TotalPacketsSent" get_func=""/>
 					<param name="TotalPacketsReceived" get_func=""/>
-					<param name="TotalAssociations" get_func=""/>
+					<param name="TotalAssociations" get_func="cpe_get_igd_lan_wlan_associated_count"/>
 					<object name="AssociatedDevice" refresh_func="cpe_refresh_igd_lan_wlan_associated">
 						<object name="{i}">
 							<param name="AssociatedDeviceMACAddress" get_func="cpe_get_igd_lan_wlan_assoc_mac"/>
