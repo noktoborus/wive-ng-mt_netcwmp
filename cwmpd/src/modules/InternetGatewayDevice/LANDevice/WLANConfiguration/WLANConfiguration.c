@@ -438,14 +438,45 @@ static struct wlan_assoc
 
 static unsigned wlan_assoc_count;
 
+static void
+igd_lan_wlan_arp(const char *n, struct wlan_assoc *wa)
+{
+    char arp_addr[40];
+    char arp_mac[18];
+    FILE *f = fopen("/proc/net/arp", "r");
+    int r = EOF;
+
+    if (!f) {
+        cwmp_log_error(
+                "%s: fopen(\"/proc/net/arp\", \"r\") failure: %s",
+                n, strerror(errno));
+        return;
+    }
+
+	/* skip header */
+	fscanf(f, "IP address HW type Flags HW address Mask Device");
+	/* process */
+	while ((r = fscanf(f, "%s %*x %*x %s %*s %*s",
+				arp_addr, arp_mac)) != EOF) {
+		/* skip invalid matching */
+		if (r != 5)
+			continue;
+        if (!strcmp(wa->mac, arp_mac)) {
+            memcpy(wa->addr, arp_addr, sizeof(wa->addr));
+            break;
+        }
+    }
+    fclose(f);
+}
+
 int
 cpe_refresh_igd_lan_wlan_associated(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_func_t callback_reg)
 {
 	RT_802_11_MAC_TABLE table24 = {};
 	RT_802_11_MAC_ENTRY *pe = NULL;
     int row_no = 0;
-    DM_TRACE_REFRESH();
 
+    DM_TRACE_REFRESH();
     /* delete */
     cwmp_model_delete_object_child(cwmp, param_node);
     if (wlan_assoc) {
@@ -462,6 +493,7 @@ cpe_refresh_igd_lan_wlan_associated(cwmp_t * cwmp, parameter_node_t * param_node
                 __func__, table24.Num * sizeof(*wlan_assoc), strerror(errno));
         return FAULT_CODE_9002;
     }
+    wlan_assoc_count = table24.Num;
 
     for (row_no = 0; row_no < table24.Num; row_no++) {
         pe = &(table24.Entry[row_no]);
@@ -470,22 +502,63 @@ cpe_refresh_igd_lan_wlan_associated(cwmp_t * cwmp, parameter_node_t * param_node
                 "%02x:%02x:%02x:%02x:%02x:%02x",
                 pe->Addr[0], pe->Addr[1], pe->Addr[2],
                 pe->Addr[3], pe->Addr[4], pe->Addr[5]);
+        /* FIXME: too simple */
+        igd_lan_wlan_arp(__func__, &wlan_assoc[row_no]);
     }
-    /* TODO: get arp list */
     return FAULT_CODE_OK;
 }
+
+static long
+igd_lan_wlan_no_from_path(cwmp_t *cwmp, const char *name)
+{
+	parameter_node_t *pn = NULL;
+	long no = 0;
+
+	pn = cwmp_get_parameter_path_node(cwmp->root, name);
+	if (!pn || !(pn = pn->parent)) {
+		cwmp_log_error("%s: can't get rule's number", name);
+		return -1;
+	}
+
+	no = strtol(pn->name, NULL, 10);
+
+	if (!no) {
+		cwmp_log_error("%s: node name '%s' not a valid number", name, pn->name);
+		return -1;
+	}
+
+	if ((unsigned long)no > wlan_assoc_count) {
+		cwmp_log_error("%s: invalid rule number: %lu", name, no);
+		return -1;
+	}
+
+	return (no - 1);
+}
+
 
 int
 cpe_get_igd_lan_wlan_assoc_mac(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
+    int no = -1;
     DM_TRACE_GET();
+    no = igd_lan_wlan_no_from_path(cwmp, name);
+    if (no == -1) {
+        return FAULT_CODE_9002;
+    }
+    *value = pool_pstrdup(pool, wlan_assoc[no].mac);
     return FAULT_CODE_OK;
 }
 
 int
 cpe_get_igd_lan_wlan_assoc_addr(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
+    int no = -1;
     DM_TRACE_GET();
+    no = igd_lan_wlan_no_from_path(cwmp, name);
+    if (no == -1) {
+        return FAULT_CODE_9002;
+    }
+    *value = pool_pstrdup(pool, wlan_assoc[no].addr);
     return FAULT_CODE_OK;
 }
 
@@ -493,6 +566,7 @@ int
 cpe_get_igd_lan_wlan_assoc_state(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
     DM_TRACE_GET();
+    *value = "1";
     return FAULT_CODE_OK;
 }
 
