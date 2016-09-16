@@ -233,25 +233,25 @@
 					<param name="Enable" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_bool" args="RadioOn" set_func="cpe_set_nvram_bool"/>
 					<param name="Status" get_func="cpe_get_igd_lan_wlan_status"/>
 					<param name="BSSID" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_bssid" args="1" set_func="cpe_set_null"/>
-					<param name="MaxBitRate" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>
+					<!--<param name="MaxBitRate" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>-->
 					<param name="Channel" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_channel" args="Channel" set_func="cpe_set_igd_lan_wlan_channel"/>
 					<param name="SSID" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="SSID1" set_func="cpe_set_nvram_string"/>
 					<param name="BeaconType" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_beacontype" set_func="cpe_set_igd_lan_wlan_beacontype"/>
-					<param name="MACAddressControlEnabled" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>
+					<!--<param name="MACAddressControlEnabled" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>-->
 					<param name="Standard" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_standard" set_func="cpe_set_igd_lan_wlan_standard"/>
 					<param name="WEPKeyIndex" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" set_func="cpe_set_nvram_string" args="DefaultKeyID"/>
 					<param name="KeyPassphrase" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="WPAPSK1" set_func="cpe_set_nvram_string"/>
-					<param name="WEPEncryptionLevel" get_func=""/> <!-- not supported? -->
-					<param name="BasicEncryptionModes" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/> 
+					<!--<param name="WEPEncryptionLevel" get_func=""/>-->
+					<!--<param name="BasicEncryptionModes" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>-->
 					<param name="BasicAuthenticationMode" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_basicauthmode" set_func="cpe_set_igd_lan_wlan_basicauthmode"/>
 					<param name="WPAEncryptionModes" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_wpaencryption" set_func="cpe_set_igd_lan_wlan_wpaencryption"/>
 					<param name="WPAAuthenticationMode" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_wpaauthmode" set_func="cpe_set_igd_lan_wlan_wpaauthmode"/>
 					<param name="PossibleChannels" get_func="cpe_get_igd_lan_wlan_possiblechannels"/>
-					<param name="BasicDataTransmitRates" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>
-					<param name="OperationalDataTransmitRates" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>
-					<param name="PossibleDataTransmitRates" get_func=""/>
+					<!--<param name="BasicDataTransmitRates" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>-->
+					<!--<param name="OperationalDataTransmitRates" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>-->
+					<!--<param name="PossibleDataTransmitRates" get_func=""/>-->
 					<param name="RadioEnabled" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_enabled" set_func="cpe_set_igd_lan_wlan_enabled"/>
-					<param name="AutoRateFallBackEnabled" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>
+					<!--<param name="AutoRateFallBackEnabled" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>-->
 					<param name="TotalBytesSent" get_func="cpe_get_igd_lan_wlan_tx_bytes"/>
 					<param name="TotalBytesReceived" get_func="cpe_get_igd_lan_wlan_rx_bytes"/>
 					<param name="TotalPacketsSent" get_func="cpe_get_igd_lan_wlan_tx_packets"/>
