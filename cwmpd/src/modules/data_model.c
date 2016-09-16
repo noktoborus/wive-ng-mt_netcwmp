@@ -115,6 +115,8 @@ model_func_t ModelFunction[] =
     {"cpe_get_igd_lan_wlan_tx_packets", cpe_get_igd_lan_wlan_tx_packets},
     {"cpe_get_igd_lan_wlan_rx_packets", cpe_get_igd_lan_wlan_rx_packets},
     {"cpe_get_igd_lan_wlan_stats", cpe_get_igd_lan_wlan_stats},
+    {"cpe_set_igd_lan_wlan_ssidadv", cpe_set_igd_lan_wlan_ssidadv},
+    {"cpe_get_igd_lan_wlan_ssidadv", cpe_get_igd_lan_wlan_ssidadv},
 
     {"cpe_set_igd_lan_wlan_wepkey", cpe_set_igd_lan_wlan_wepkey},
     {"cpe_get_igd_lan_wlan_wepkey", cpe_get_igd_lan_wlan_wepkey},

@@ -759,4 +759,45 @@ cpe_get_igd_lan_wlan_stats(cwmp_t * cwmp, const char * name, char ** value, char
 
     return FAULT_CODE_OK;
 }
+int
+cpe_set_igd_lan_wlan_ssidadv(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
+{
+    char *val = NULL;
+    pool_t *pool = NULL;
+
+    DM_TRACE_SET();
+    pool = pool_create(POOL_DEFAULT_SIZE);
+    if (!pool)
+        return FAULT_CODE_9002;
+
+    val = cwmp_nvram_pool_get(pool, "HideSSID");
+    if (!val) {
+        pool_destroy(pool);
+        return FAULT_CODE_9002;
+    }
+
+    if (*value == '0') {
+        *val = '1';
+    } else {
+        *val = '0';
+    }
+    cwmp_nvram_set("HideSSID", val);
+    pool_destroy(pool);
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_lan_wlan_ssidadv(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    char *val = NULL;
+    DM_TRACE_GET();
+
+    val = cwmp_nvram_get("HideSSID");
+    if (*val == '0') {
+        *value = "1";
+    } else {
+        *value = "0";
+    }
+    return FAULT_CODE_OK;
+}
 
