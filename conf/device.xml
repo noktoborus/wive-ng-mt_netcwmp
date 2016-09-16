@@ -293,17 +293,17 @@
 					<param name="TransmitPowerSupported" rw="1" get_func="" set_func=""/>
 					<param name="TransmitPower" rw="1" get_func="" set_func=""/>
 					<object name="Stats">
-						<param name="ErrorsSent" get_func=""/>
-						<param name="ErrorsReceived" get_func=""/>
-						<param name="UnicastPacketsSent" get_func=""/>
-						<param name="UnicastPacketsReceived" get_func=""/>
-						<param name="DiscardPacketsSent" get_func=""/>
-						<param name="DiscardPacketsReceived" get_func=""/>
-						<param name="MulticastPacketsSent" get_func=""/>
-						<param name="MulticastPacketsReceived" get_func=""/>
-						<param name="BroadcastPacketsSent" get_func=""/>
-						<param name="BroadcastPacketsReceived" get_func=""/>
-						<param name="UnknownProtoPacketsReceived" get_func=""/>
+						<param name="ErrorsSent" get_func="cpe_get_igd_lan_wlan_stats"/>
+						<param name="ErrorsReceived" get_func="cpe_get_igd_lan_wlan_stats"/>
+						<!--<param name="UnicastPacketsSent" get_func="cpe_get_igd_lan_wlan_stats"/>--> <!-- not supported -->
+						<!--<param name="UnicastPacketsReceived" get_func="cpe_get_igd_lan_wlan_stats"/>-->
+						<param name="DiscardPacketsSent" get_func="cpe_get_igd_lan_wlan_stats"/>
+						<param name="DiscardPacketsReceived" get_func="cpe_get_igd_lan_wlan_stats"/>
+						<!--<param name="MulticastPacketsSent" get_func="cpe_get_igd_lan_wlan_stats"/>-->
+						<param name="MulticastPacketsReceived" get_func="cpe_get_igd_lan_wlan_stats"/>
+						<!--<param name="BroadcastPacketsSent" get_func="cpe_get_igd_lan_wlan_stats"/>-->
+						<!--<param name="BroadcastPacketsReceived" get_func="cpe_get_igd_lan_wlan_stats"/>-->
+						<!--<param name="UnknownProtoPacketsReceived" get_func="cpe_get_igd_lan_wlan_stats"/>-->
 					</object>
 					<!-- ? -->
 					<param name="TotalPSKFailures" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="RekeyInterval" set_func="cpe_set_nvram_string"/>

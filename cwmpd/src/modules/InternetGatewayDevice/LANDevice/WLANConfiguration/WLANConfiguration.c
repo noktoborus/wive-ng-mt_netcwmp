@@ -578,6 +578,7 @@ cpe_get_igd_lan_wlan_associated_count(cwmp_t * cwmp, const char * name, char ** 
     char buf[42] = {};
     DM_TRACE_GET();
     snprintf(buf, sizeof(buf), "%u", wlan_assoc_count);
+    *value = pool_pstrdup(pool, buf);
     return FAULT_CODE_OK;
 }
 
@@ -718,3 +719,44 @@ cpe_get_igd_lan_wlan_rx_packets(cwmp_t * cwmp, const char * name, char ** value,
     *value = pool_pstrdup(pool, buf);
     return FAULT_CODE_OK;
 }
+
+int
+cpe_get_igd_lan_wlan_stats(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    parameter_node_t *pn = NULL;
+    struct nic_counts nc = {};
+    char buf[42] = "0";
+
+    DM_TRACE_GET();
+    if (!get_igd_lan_wlan_txrx(&nc)) {
+        cwmp_log_error("%s: can't get counter for WLAN interface");
+        return FAULT_CODE_9002;
+    }
+
+    pn  = cwmp_get_parameter_path_node(cwmp->root, name);
+
+    if (!strcmp("ErrorsSent", pn->name)) {
+        snprintf(buf, sizeof(buf), "%llu", nc.tx_errs);
+    } else if (!strcmp("ErrorsReceived", pn->name)) {
+        snprintf(buf, sizeof(buf), "%llu", nc.rx_errs);
+    } else if (!strcmp("UnicastPacketsSent", pn->name)) {
+    } else if (!strcmp("UnicastPacketsReceived", pn->name)) {
+    } else if (!strcmp("DiscardPacketsSent", pn->name)) {
+        snprintf(buf, sizeof(buf), "%llu", nc.tx_drops);
+    } else if (!strcmp("DiscardPacketsReceived", pn->name)) {
+        snprintf(buf, sizeof(buf), "%llu", nc.rx_drops);
+    } else if (!strcmp("MulticastPacketsSent", pn->name)) {
+    } else if (!strcmp("MulticastPacketsReceived", pn->name)) {
+        snprintf(buf, sizeof(buf), "%llu", nc.rx_multi);
+    } else if (!strcmp("BroadcastPacketsSent", pn->name)) {
+    } else if (!strcmp("BroadcastPacketsReceived", pn->name)) {
+    } else if (!strcmp("UnknownProtoPacketsReceived", pn->name)) {
+    } else {
+        cwmp_log_error("%s: unknown node name: %s", __func__, pn->name);
+        return FAULT_CODE_9002;
+    }
+    *value = pool_pstrdup(pool, buf);
+
+    return FAULT_CODE_OK;
+}
+
