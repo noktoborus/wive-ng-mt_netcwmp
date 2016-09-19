@@ -1642,7 +1642,7 @@ int  cwmp_parse_setparameterattributes_message(env_t * env , xmldoc_t * doc, par
         if(!parameter || parameter->fault_code != FAULT_CODE_OK)
         {
 	    cwmp_set_faultcode(fault, FAULT_CODE_9003);
-	    cwmp_log_error("cwmp_parse_setparametervalues_message: parameter (%s) setter returned fault code %i", name, parameter->fault_code);
+	    cwmp_log_error("%s: parameter (%s) setter returned fault code %i", __func__, name, parameter->fault_code);
 	    rc = CWMP_ERROR;
 	}
 	else
@@ -1675,22 +1675,33 @@ int  cwmp_parse_setparameterattributes_message(env_t * env , xmldoc_t * doc, par
 //cwmp_parse_setparametervalues_message
 int  cwmp_parse_setparametervalues_message(env_t * env , xmldoc_t * doc, parameter_node_t * root, parameter_list_t ** ppl, fault_code_t *fault)
 {
+    xmlnode_t * node = NULL;
     xmlnode_t * parameterListNode;
     xmlnode_t * parameterNode;
     parameter_t ** nextpv;
     int rc = CWMP_OK;
 
-    pool_t * pool = pool_create(POOL_DEFAULT_SIZE);
+    char *object_name = NULL;
+    char *parameter_key = NULL;
+    xmlnode_t * parameter_key_node = NULL;
 
-    cwmp_log_trace("%s(env=%p, doc=%p, root=%p, ppl=%p, fault=%p)",
+    pool_t * pool = NULL;
+
+    cwmp_log_trace("%s(env=%p, doc=%p, root=%p [name=%s], ppl=%p, fault=%p)",
             __func__,
-            (void*)env, (void*)doc, (void*)root, (void*)ppl, (void*)fault);
+            (void*)env, (void*)doc,
+            (void*)root, root ? root->name : "",
+            (void*)ppl, (void*)fault);
 
-    parameterListNode = cwmp_xml_get_child_with_name(cwmp_get_rpc_method_node(doc), "ParameterList");
+    pool = pool_create(POOL_DEFAULT_SIZE);
+    node = cwmp_get_rpc_method_node(doc);
 
+    parameterListNode = cwmp_xml_get_child_with_name(node, "ParameterList");
     if (!parameterListNode || !ppl) {
         return CWMP_ERROR;
     }
+
+    parameter_key_node = cwmp_xml_get_child_with_name(node, "ParameterKey");
 
     *ppl = cwmp_create_parameter_list(env);
     ESE(CWMP_ERROR, NULL, *ppl);
@@ -1716,7 +1727,7 @@ int  cwmp_parse_setparametervalues_message(env_t * env , xmldoc_t * doc, paramet
 
         if(!parameter || parameter->fault_code != FAULT_CODE_OK) {
             cwmp_set_faultcode(fault, FAULT_CODE_9003);
-            cwmp_log_error("cwmp_parse_setparametervalues_message: parameter (%s) setter returned fault code %i", name, parameter->fault_code);
+            cwmp_log_error("%s: parameter (%s) setter returned fault code %i", __func__, name, parameter->fault_code);
             rc = CWMP_ERROR;
         } else {
             //FIXME: D-Link refresh
@@ -1742,7 +1753,12 @@ s
 	nextpv++;
     }
 */
-    cwmp_log_error("cwmp_parse_setparametervalues_message OK");
+    if (rc != CWMP_ERROR && parameter_key_node != NULL) {
+        parameter_key = cwmp_xml_get_node_value(parameter_key_node);
+        cwmp_conf_set("env:ParameterKey", parameter_key ? parameter_key : "");
+    }
+
+    cwmp_log_error("%s OK", __func__);
     pool_destroy(pool);
     return rc;
 }
@@ -1799,15 +1815,25 @@ int cwmp_parse_upload_message(env_t * env , xmldoc_t *doc, upload_arg_t ** pular
 int cwmp_parse_addobject_message(env_t * env , xmldoc_t *doc, parameter_node_t * root,  int * instances, int* status, fault_code_t *fault)
 {
 
-    xmlnode_t * node = cwmp_get_rpc_method_node(doc);
+    xmlnode_t * node = NULL;
+    xmlnode_t * parameter_key_node = NULL;
     int fault_code;
     int instance_num;
+    char *object_name = NULL;
+    char *parameter_key = NULL;
 
+    cwmp_log_trace("%s(env=%p, doc=%p, root=%p [name=%s], instaces=%p, status=%p, fault=%p)",
+            __func__,
+            (void*)env,
+            (void*)doc,
+            (void*)root, root ? root->name : "",
+            (void*)instances, (void*)status, (void*)fault);
     //FIXME
     *status = 0;
 
-    char * object_name = cwmp_xml_get_node_value(cwmp_xml_get_child_with_name(node, "ObjectName"));
-//    char * parameter_key = cwmp_xml_get_node_value(cwmp_xml_get_child_with_name(node, "ParameterKey"));
+    node = cwmp_get_rpc_method_node(doc);
+    object_name = cwmp_xml_get_node_value(cwmp_xml_get_child_with_name(node, "ObjectName"));
+    parameter_key_node = cwmp_xml_get_child_with_name(node, "ParameterKey");
 
     parameter_node_t * param = cwmp_get_parameter_path_node(root, object_name);
     if(!param)
@@ -1837,6 +1863,9 @@ int cwmp_parse_addobject_message(env_t * env , xmldoc_t *doc, parameter_node_t *
         cwmp_log_error("exec %s add object function failed\n", object_name);
         cwmp_set_faultcode(fault, FAULT_CODE_9005);
         return CWMP_ERROR;
+    } else if (parameter_key_node != NULL) {
+        parameter_key = cwmp_xml_get_node_value(parameter_key_node);
+        cwmp_conf_set("env:ParameterKey", parameter_key ? parameter_key : "");
     }
 
     *instances = instance_num;
@@ -1848,12 +1877,23 @@ int cwmp_parse_addobject_message(env_t * env , xmldoc_t *doc, parameter_node_t *
 int cwmp_parse_deleteobject_message(env_t * env , xmldoc_t *doc, parameter_node_t * root, int* status, fault_code_t *fault)
 {
 
-    xmlnode_t * node = cwmp_get_rpc_method_node(doc);
+    xmlnode_t * node = NULL;
     int fault_code;
     int instance_num;
 
-    char * object_name = cwmp_xml_get_node_value(cwmp_xml_get_child_with_name(node, "ObjectName"));
+    xmlnode_t * parameter_key_node = NULL;
+    char *parameter_key = NULL;
 
+    char * object_name = NULL;
+    cwmp_log_trace("%s(env=%p, doc=%p, root=%p [name=%s], status=%p, fault=%p)",
+            __func__,
+            (void*)env, (void*)doc,
+            (void*)root, root ? root->name : "",
+            (void*)status, (void*)fault);
+
+    node = cwmp_get_rpc_method_node(doc);
+    object_name = cwmp_xml_get_node_value(cwmp_xml_get_child_with_name(node, "ObjectName"));
+    parameter_key_node = cwmp_xml_get_child_with_name(node, "ParameterKey");
 
     parameter_node_t * param = cwmp_get_parameter_path_node(root, object_name);
     if(!param)
@@ -1896,6 +1936,10 @@ int cwmp_parse_deleteobject_message(env_t * env , xmldoc_t *doc, parameter_node_
         queue_push(env->cwmp->queue, param->reload, TASK_RELOAD_TAG);
     }
 
+    if (parameter_key_node != NULL) {
+        parameter_key = cwmp_xml_get_node_value(parameter_key_node);
+        cwmp_conf_set("env:ParameterKey", parameter_key ? parameter_key : "");
+    }
 
     return CWMP_OK;
 }

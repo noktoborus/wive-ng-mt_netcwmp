@@ -134,7 +134,7 @@
 				<param name="UpTime" inform="1" get_func="cpe_get_igd_di_uptime"/>
 			</object>
 			<object name="ManagementServer">
-				<param name="ParameterKey" inform="1" get_func=""/>
+				<param name="ParameterKey" inform="1" get_func="cpe_get_conf_string" args="env:ParameterKey"/>
 				<param name="ConnectionRequestURL" inform="1" get_func="cpe_get_igd_ms_connectionrequesturl"/>
 				<param name="ConnectionRequestUsername" rw="1" get_func="cpe_get_igd_ms_connectionrequestusername" set_func="cpe_set_igd_ms_connectionrequestusername"/>
 				<param name="ConnectionRequestPassword" rw="1" get_func="cpe_get_igd_ms_connectionrequestpassword" set_func="cpe_set_igd_ms_connectionrequestpassword"/>
