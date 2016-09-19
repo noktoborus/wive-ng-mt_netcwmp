@@ -31,6 +31,7 @@
 					get value function
 		-->
 		<object name="InternetGatewayDevice">
+			<param name="DeviceSummary" inform="1"/>
 			<object name="UPnP">
 				<object name="Device">
 					<param name="Enable" rw="1"/>
@@ -119,6 +120,7 @@
 				<!-- params: LocalTimeZone, DaylightSavingsUsed, DaylightSavingsStart, DaylightSavingsEnd are OBSOLETED -->
 			</object>
 			<object name="DeviceInfo">
+				<param name="SpecVersion" inform="1" get_func="cpe_get_const_string" args="1.0"/>
 				<param name="Manufacturer" inform="1" get_func="cpe_get_igd_di_manufacturer"/>
 				<param name="OUI" inform="1" get_func="cpe_get_igd_di_manufactureroui"/>
 				<param name="SerialNumber" inform="1" get_func="cpe_get_nvram_string" args="WAN_MAC_ADDR" set_func="cpe_set_nvram_string" />
@@ -129,9 +131,10 @@
 				<param name="DeviceLog" inform="0" get_func="cpe_get_igd_di_devicelog"/>
 				<param name="ModelName" inform="1" get_func="cpe_get_const_string" args="Wive-NG"/>
 				<param name="PrivisioningCode" rw="1" inform="1" get_func="cpe_get_conf_string" set_func="cpe_get_conf_string" args="cwmpd:provisinong_code"/>
-				<param name="Uptime" inform="1" get_func="cpe_get_igd_di_uptime"/>
+				<param name="UpTime" inform="1" get_func="cpe_get_igd_di_uptime"/>
 			</object>
 			<object name="ManagementServer">
+				<param name="ParameterKey" inform="1" get_func=""/>
 				<param name="ConnectionRequestURL" inform="1" get_func="cpe_get_igd_ms_connectionrequesturl"/>
 				<param name="ConnectionRequestUsername" rw="1" get_func="cpe_get_igd_ms_connectionrequestusername" set_func="cpe_set_igd_ms_connectionrequestusername"/>
 				<param name="ConnectionRequestPassword" rw="1" get_func="cpe_get_igd_ms_connectionrequestpassword" set_func="cpe_set_igd_ms_connectionrequestpassword"/>
@@ -201,6 +204,7 @@
 					<param name="Enable" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_igmp_enabled" set_func="cpe_set_igd_lan_igmp_enabled"/>
 				</object>
 				<object name="LANHostConfigManagement">
+					<param name="DomainName" get_func="cpe_get_nvram_string" args="SmbNetBIOS"/>
 					<param name="IPInterfaceNumberOfEntries" get_func="cpe_get_const_string" args="1"/>
 					<object name="IPInterface">
 					<object name="1">
@@ -226,6 +230,7 @@
 					<param name="MaxAddress" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="dhcpEnd" set_func="cpe_set_nvram_string"/>
 					<param name="DHCPLeaseTime" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_int" args="dhcpLease" set_func="cpe_set_nvram_string"/>
 				</object>
+				<param name="LANWLANConfigurationNumberOfEntries" get_func="" args="1"/>
 				<object name="WLANConfiguration">
 				<object name="1">
 					<param name="Alias" rw="1" get_func="cpe_get_alias" set_func="cpe_set_alias"/>
@@ -233,7 +238,7 @@
 					<param name="Enable" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_bool" args="RadioOn" set_func="cpe_set_nvram_bool"/>
 					<param name="Status" get_func="cpe_get_igd_lan_wlan_status"/>
 					<param name="BSSID" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_bssid" args="1" set_func="cpe_set_null"/>
-					<!--<param name="MaxBitRate" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>-->
+					<param name="MaxBitRate" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_const_string" set_func="cpe_set_null" args="Auto"/>
 					<param name="Channel" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_channel" args="Channel" set_func="cpe_set_igd_lan_wlan_channel"/>
 					<param name="SSID" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="SSID1" set_func="cpe_set_nvram_string"/>
 					<param name="BeaconType" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_beacontype" set_func="cpe_set_igd_lan_wlan_beacontype"/>
@@ -307,11 +312,13 @@
 					</object>
 					<!-- ? -->
 					<param name="TotalPSKFailures" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="RekeyInterval" set_func="cpe_set_nvram_string"/>
+					<param name="TotalIntegrityFailures" get_func="cpe_get_const_string" args="0"/>
 					<param name="IEEE11iAuthenticationMode" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_ieeeauthmode" set_func="cpe_set_igd_lan_wlan_ieeeauthmode"/>
 				</object>
 				</object>
 			</object>
 			</object>
+			<param name="WANDeviceNumberOfEntries" get_func="cpe_get_const_string" args="1"/>
 			<object name="WANDevice">
 				<object name="1">
 					<object name="WANEthernetInterfaceConfig">
@@ -327,11 +334,13 @@
 							<param name="PacketsReceived" get_func="cpe_get_wan_eic_stats"/>
 						</object>
 					</object>
+					<param name="WANConnectionNumberOfEntries" get_func="cpe_get_const_string" args="1"/>
 					<object name="WANConnectionDevice" rw="1">
 						<object name="1" rw="1">
 							<object name="WANEthernetLinkConfig">
 								<param name="EthernetLinkStatus" get_func="cpe_get_wan_elc_status"/>
 							</object>
+							<param name="WANIPConnectionNumberOfEntries" get_func="cpe_get_const_string" args="1"/>
 							<object name="WANIPConnection" rw="1" add_func="cpe_set_null">
 								<object name="1">
 									<param name="Name" rw="1" type="s" reload_func="cpe_reload_all" get_func="cpe_get_const_string" args="WAN" set_func="cpe_set_null"/>
@@ -369,6 +378,7 @@
 									</object>
 								</object>
 							</object>
+							<param name="WANPPPConnectionNumberOfEntries" get_func="cpe_get_const_string" args="1"/>
 							<object name="WANPPPConnection" rw="1" add_func="cpe_add_null">
 								<object name="1">
 									<param name="PPPAuthenticationProtocol" rw="1" type="s"  reload_func="cpe_reload_all" get_func="cpe_get_igd_wan_ppp_authprot" args="" set_func="cpe_set_igd_wan_ppp_authprot"/>
