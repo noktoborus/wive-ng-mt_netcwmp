@@ -247,8 +247,8 @@
 					<param name="Standard" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_standard" set_func="cpe_set_igd_lan_wlan_standard"/>
 					<param name="WEPKeyIndex" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" set_func="cpe_set_nvram_string" args="DefaultKeyID"/>
 					<param name="KeyPassphrase" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="WPAPSK1" set_func="cpe_set_nvram_string"/>
-					<!--<param name="WEPEncryptionLevel" get_func=""/>-->
-					<!--<param name="BasicEncryptionModes" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>-->
+					<param name="WEPEncryptionLevel" get_func="cpe_get_const_string" args="104-bit"/>
+					<param name="BasicEncryptionModes" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_basicencryption" set_func="cpe_set_igd_lan_wlan_basicencryption"/>
 					<param name="BasicAuthenticationMode" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_basicauthmode" set_func="cpe_set_igd_lan_wlan_basicauthmode"/>
 					<param name="WPAEncryptionModes" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_wpaencryption" set_func="cpe_set_igd_lan_wlan_wpaencryption"/>
 					<param name="WPAAuthenticationMode" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_wpaauthmode" set_func="cpe_set_igd_lan_wlan_wpaauthmode"/>

@@ -6,6 +6,102 @@ BOOL prefix(const char *str, const char *pre)
     return strncmp(pre, str, strlen(pre)) == 0;
 }
 
+static void nvram_set_tuple(const char *key, unsigned index, const char *value)
+{
+    char *v = NULL;
+    char *e = NULL;
+    char *s = NULL;
+    unsigned i = 0;
+    char *nv = NULL;
+
+    size_t vlen = 0u;
+    size_t len = 0u;
+    size_t value_len = strlen(value);
+
+    /* indexes started at 1 */
+    index++;
+
+    e = s = v = cwmp_nvram_get(key);
+    vlen = strlen(v);
+    while ((e = strchr(s, ';')) != NULL) {
+        if (++i == index)
+            break;
+        s = ++e;
+    }
+    /* fix endpos */
+    if (!e) {
+        e = v + vlen;
+        i++;
+    }
+
+    if (i != index) {
+        cwmp_log_info("%s: grow list from %u i to %u", __func__, i, index);
+        i = index - i;
+    } else {
+        i = 0;
+    }
+
+
+    /* format new nvram value */
+    len = len - (e - s) + value_len + i + 1;
+    nv = calloc(1, len);
+    if (!nv) {
+        cwmp_log_error("%s: calloc(%"PRIuPTR") failed: %s",
+                __func__,
+                len, strerror(errno));
+        return;
+    }
+    if (i) {
+        snprintf(nv, len, "%s%*.0s%s", v, i, "", value);
+        memset(nv + vlen, ';', i);
+    } else {
+        snprintf(nv, len, "%.*s%s%s", (s - v), v, value, e);
+    }
+    cwmp_nvram_set(key, nv);
+    free(nv);
+
+    return;
+}
+
+static size_t nvram_get_tuple(const char *key, unsigned index,
+        char *value, size_t value_size)
+{
+    char *v = NULL;
+    char *e = NULL;
+    char *s = NULL;
+    unsigned i = 0;
+    size_t len = 0u;
+
+    /* indexes started at 1 */
+    index++;
+
+    e = s = v = cwmp_nvram_get(key);
+    len = strlen(v);
+    while ((e = strchr(s, ';')) != NULL) {
+        if (++i == index)
+            break;
+        /* next */
+        s = ++e;
+    }
+    /* fix endpos */
+    if (!e) {
+        e = v + len;
+        i++;
+    }
+
+    if (i != index) {
+        cwmp_log_error("%s: invalid index: %u, maximum: %u",
+                __func__, index, i);
+    }
+
+    memset(value, 0u, value_size);
+    len = (e - s);
+    if (len && value) {
+        snprintf(value, value_size, "%.*s", len, s);
+    }
+    return len;
+}
+
 int cpe_get_igd_lan_wlan_bssid(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
     cwmp_log_debug("DEBUG: cpe_get_igd_lan_wlan_bssid\n");
@@ -151,46 +247,106 @@ int cpe_set_igd_lan_wlan_standard(cwmp_t * cwmp, const char * name, const char *
 //InternetGatewayDevice.LANDevice.WLANConfiguration.BasicAuthenticationMode
 int cpe_get_igd_lan_wlan_basicauthmode(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    const char* authMode = NULL;
+    char authMode[128] = {};
+    const unsigned index = 0u;
 
-	DM_TRACE_GET();
-	authMode = cwmp_nvram_pool_get(pool, "AuthMode");
-    if (authMode == NULL) {
-	cwmp_log_error("cpe_get_igd_lan_wlan_basicauthmode: undefined AuthMode param!");
-	return FAULT_CODE_9002;
+    DM_TRACE_GET();
+
+    if (!nvram_get_tuple("AuthMode", index, authMode, sizeof(authMode))) {
+        cwmp_log_error("%s: (index %u) undefined AuthMode param",
+                __func__, index);
+        return FAULT_CODE_9002;
     }
 
-    char* valStr = prefix(authMode,"Disable;")?"None":"EAPAuthentication";
+    if (!strcmp(authMode, "SHARED")) {
+        *value = "SharedAuthentication";
+    } else if (!strcmp(authMode, "OPEN")) {
+        /* open authentication */
+        *value = "None";
+    } else {
+        /* over: unknown, wep, wpa2 */
+        *value = "EAPAuthentication";
+    }
 
-
-    *value = pool_pstrdup(pool, valStr);
-
-    cwmp_log_debug("cpe_get_igd_lan_wlan_basicauthmode: value is %s", valStr);
     return FAULT_CODE_OK;
 }
 
 int cpe_set_igd_lan_wlan_basicauthmode(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
+    const unsigned index = 0u;
     DM_TRACE_SET();
 
-    if (strcmp(value,"None") == 0 ) cwmp_nvram_set("AuthMode", "Disable;Disable;Disable");
+    if (!strcmp(value,"None")) {
+        nvram_set_tuple("AuthMode", index, "OPEN");
+        nvram_set_tuple("EncrypType", index, "NONE");
+    } else if (!strcmp(value, "SharedAuthentication")) {
+        nvram_set_tuple("AuthMode", index, "SHARED");
+        nvram_set_tuple("EncrypType", index, "NONE");
+    } else if (!strcmp(value, "EAPAuthentication")) {
+        nvram_set_tuple("AuthMode", index, "WEPAUTO");
+        nvram_set_tuple("EncrypType", index, "WEP");
+    } else {
+        cwmp_log_error("%s: (index %u) invalid value: '%s'",
+                __func__, index, value);
+        return FAULT_CODE_9007;
+    }
+
+    return FAULT_CODE_OK;
+}
+int
+cpe_get_igd_lan_wlan_basicencryption(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    char encrypType[128] = {};
+    const unsigned index = 0u;
+
+    DM_TRACE_GET();
+    if (!nvram_get_tuple("EncrypType", index, encrypType, sizeof(encrypType))) {
+        cwmp_log_error("%s: (index %u) undefined nvram's EncrypType value",
+                __func__, index);
+        return FAULT_CODE_9002;
+    }
+
+    if (!strcmp(encrypType, "NONE")) {
+        *value = "None";
+    } else if (!strcmp(encrypType, "WEP")) {
+        *value = "WEPEncryption";
+    } else {
+        /* no basic encrypted */
+        *value = "None";
+    }
 
     return FAULT_CODE_OK;
 }
 
+int
+cpe_set_igd_lan_wlan_basicencryption(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
+{
+    const unsigned index = 0u;
+
+    DM_TRACE_SET();
+    if (!strcmp(value, "None")) {
+        nvram_set_tuple("EncrypType", index, "NONE");
+        nvram_set_tuple("AuthMode", index, "OPEN");
+    } else if (!strcmp(value, "WEPEncryption")) {
+        nvram_set_tuple("EncrypType", index, "WEP");
+        nvram_set_tuple("authMode", index, "SHARED");
+    }
+    return FAULT_CODE_OK;
+}
 
 int cpe_get_igd_lan_wlan_wpaauthmode(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    const char* authMode = NULL;
+    char auth[128] = {};
+    const unsigned index = 0u;
 
 	DM_TRACE_GET();
-	authMode = cwmp_nvram_pool_get(pool, "AuthMode");
-    if (authMode == NULL) {
-	cwmp_log_error("cpe_get_igd_lan_wlan_wpaauthmode: undefined AuthMode param!");
-	return FAULT_CODE_9002;
+    if (!nvram_get_tuple("AuthMode", index, auth, sizeof(auth))) {
+        cwmp_log_error("%s: (index %u) undefined nvram's AuthMode value",
+                __func__, index);
+        return FAULT_CODE_9002;
     }
-
-
+    /* TODO: ... */
+#if 0
     char* valStr = "EAPAuthentication";//prefix(authMode,"Disable;")?"None":"EAPAuthentication";
     if (prefix(authMode,"WPAPSK;")) valStr = "PSKAuthentication"; else
     if (prefix(authMode,"WPA2PSK;")) valStr = "PSKAuthentication"; else
@@ -199,6 +355,7 @@ int cpe_get_igd_lan_wlan_wpaauthmode(cwmp_t * cwmp, const char * name, char ** v
     *value = pool_pstrdup(pool, valStr);
 
     cwmp_log_debug("DEBUG: cpe_get_igd_lan_wlan_wpaauthmode value is %s \n", valStr);
+#endif
     return FAULT_CODE_OK;
 }
 
@@ -342,13 +499,19 @@ cpe_get_igd_lan_wlan_possiblechannels(cwmp_t * cwmp, const char * name, char ** 
 int
 cpe_set_igd_lan_wlan_wpaencryption(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
+    const unsigned index = 0u;
+    const char auth[128] = {};
+
     DM_TRACE_SET();
+    nvram_get_tuple("AuthMode", index, auth, sizeof(auth));
+    /* set EncrypType to requested
+     */
     if (!strcmp(value, "TKIPEncryption")) {
-        cwmp_nvram_set("EncrypType", "TKIP");
+        nvram_set_tuple("EncrypType", index, "TKIP");
     } else if (!strcmp(value, "AESEncryption")) {
-        cwmp_nvram_set("EncrypType", "AES");
+        nvram_set_tuple("EncrypType", index, "AES");
     } else if (!strcmp(value, "TKIPandAESEncryption")) {
-        cwmp_nvram_set("EncrypType", "TKIPAES");
+        nvram_set_tuple("EncrypType", index, "TKIPAES");
     } else {
         cwmp_log_trace(
                 "%s: invalid value '%s', supports only: "
@@ -356,16 +519,26 @@ cpe_set_igd_lan_wlan_wpaencryption(cwmp_t * cwmp, const char * name, const char 
                 __func__, value);
         return FAULT_CODE_9007;
     }
+    /* set AuthMode to WPA family (if not setted) */
+    if (strncmp(auth, "WPA", 3)) {
+        nvram_set_tuple("AuthMode", index, "WPA2PSK");
+    }
+
     return FAULT_CODE_OK;
 }
 
 int
 cpe_get_igd_lan_wlan_wpaencryption(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    char *mode = NULL;
+    char mode[128] = {};
+    const unsigned index = 0u;
 
     DM_TRACE_GET();
-    mode = cwmp_nvram_get("EncrypType");
+    if (!nvram_get_tuple("EncrypType", index, mode, sizeof(mode))) {
+        cwmp_log_error("%s: (index %u) undefined nvram's EncrypType value",
+                __func__, index);
+        return FAULT_CODE_9002;
+    }
 
     if (!strcmp(mode, "TKIPAES")) {
         *value = "TKIPandAESEncryption";
@@ -373,6 +546,9 @@ cpe_get_igd_lan_wlan_wpaencryption(cwmp_t * cwmp, const char * name, char ** val
         *value = "AESEncryption";
     } else if (!strcmp(mode, "AES")) {
         *value = "TKIPEncryption";
+    } else {
+        /* no WPA encryption */
+        *value = "AESEncryption";
     }
     return FAULT_CODE_OK;
 }

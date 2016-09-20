@@ -89,6 +89,8 @@ model_func_t ModelFunction[] =
     {"cpe_get_igd_lan_wlan_autochannel", cpe_get_igd_lan_wlan_autochannel},
     {"cpe_set_igd_lan_wlan_autochannel", cpe_set_igd_lan_wlan_autochannel},
 
+    {"cpe_set_igd_lan_wlan_basicencryption", cpe_set_igd_lan_wlan_basicencryption},
+    {"cpe_get_igd_lan_wlan_basicencryption", cpe_get_igd_lan_wlan_basicencryption},
     {"cpe_get_igd_lan_wlan_basicauthmode", cpe_get_igd_lan_wlan_basicauthmode},
     {"cpe_set_igd_lan_wlan_basicauthmode", cpe_set_igd_lan_wlan_basicauthmode},
 
