@@ -133,6 +133,61 @@ static size_t nvram_get_tuple(const char *key, unsigned index,
     return len;
 }
 
+static void nvram_wlan_normalize(unsigned index, struct wlan_security_mode *wsm)
+{
+    if (wsm->mode == WLAN_BASIC) {
+        /* normalization for Basic mode */
+        if (wsm->authMode != WLAN_OPEN || wsm->authMode != WLAN_SHARED) {
+            cwmp_log_info(
+                    "WLANConfiguration: "
+                    "set BasicAuthenticationMode to None for index %u", index);
+            wsm->authMode = WLAN_OPEN;
+        }
+        if (wsm->encrypt != WLAN_NO_ENCRYPTION || wsm->encrypt != WLAN_WEP) {
+            cwmp_log_info(
+                    "WLANConfiguration: "
+                    "set BasicEncryptionModes to None for index %u", index);
+            wsm->encrypt = WLAN_NO_ENCRYPTION;
+        }
+    } else if (wsm->mode == WLAN_WPA ||
+            wsm->mode == WLAN_11i ||
+            wsm->mode == WLAN_WPAand11i) {
+        /* WPA/WPA2 */
+        const char *v = NULL;
+        switch (wsm->mode) {
+            case WLAN_WPA:
+                v = "WPA";
+                break;
+            case WLAN_11i:
+            case WLAN_WPAand11i:
+                v = "IEEE11i";
+                break;
+            default:
+                v = "";
+        }
+        if (wsm->authMode != WLAN_PSK || wsm->authMode != WLAN_EAP) {
+            cwmp_log_info(
+                    "WLANConfiguration: "
+                    "set %sAuthenticationMode to PSKAuthentication for index %u", v, index);
+            wsm->authMode = WLAN_PSK;
+        }
+        if (wsm->encrypt != WLAN_AES || wsm->encrypt != WLAN_TKIP || wsm->encrypt != WLAN_TKIPAES) {
+            cwmp_log_info(
+                    "WLANConfiguration: "
+                    "set %sEncryptionModes to AESEncryption for index %u", v, index);
+            wsm->encrypt = WLAN_AES;
+        }
+    } else {
+        /* unknown? */
+        wsm->mode = WLAN_BASIC;
+        wsm->authMode = WLAN_OPEN;
+        wsm->encrypt = WLAN_NO_ENCRYPTION;
+        cwmp_log_info(
+                "WLANConfiguration: "
+                "BasicAuthenticationMode as default for index %u", index);
+    }
+}
+
 static bool nvram_wlan_load(unsigned index, struct wlan_security_mode *wsm)
 {
     char auth[128] = {};
@@ -196,57 +251,6 @@ static bool nvram_wlan_load(unsigned index, struct wlan_security_mode *wsm)
                 "unknown nvram's AuthMode value for index %u: '%s'",
                 index, auth);
     }
-
-    /* normalization */
-    if (wsm->mode == WLAN_BASIC) {
-        if (wsm->authMode != WLAN_OPEN || wsm->authMode != WLAN_SHARED) {
-            cwmp_log_info(
-                    "WLANConfiguration: "
-                    "set BasicAuthenticationMode to None for index %u", index);
-            wsm->authMode = WLAN_OPEN;
-        }
-        if (wsm->encrypt != WLAN_NO_ENCRYPTION || wsm->encrypt != WLAN_WEP) {
-            cwmp_log_info(
-                    "WLANConfiguration: "
-                    "set BasicEncryptionModes to None for index %u", index);
-            wsm->encrypt = WLAN_NO_ENCRYPTION;
-        }
-    } else if (wsm->mode == WLAN_WPA ||
-            wsm->mode == WLAN_11i ||
-            wsm->mode == WLAN_WPAand11i) {
-        const char *v = NULL;
-        switch (wsm->mode) {
-            case WLAN_WPA:
-                v = "WPA";
-                break;
-            case WLAN_11i:
-            case WLAN_WPAand11i:
-                v = "IEEE11i";
-                break;
-            default:
-                v = "";
-        }
-        if (wsm->authMode != WLAN_PSK || wsm->authMode != WLAN_EAP) {
-            cwmp_log_info(
-                    "WLANConfiguration: "
-                    "set %sAuthenticationMode to PSKAuthentication for index %u", v, index);
-            wsm->authMode = WLAN_PSK;
-        }
-        if (wsm->encrypt != WLAN_AES || wsm->encrypt != WLAN_TKIP || wsm->encrypt != WLAN_TKIPAES) {
-            cwmp_log_info(
-                    "WLANConfiguration: "
-                    "set %sEncryptionModes to AESEncryption for index %u", v, index);
-            wsm->encrypt = WLAN_AES;
-        }
-    } else {
-        wsm->mode = WLAN_BASIC;
-        wsm->authMode = WLAN_OPEN;
-        wsm->encrypt = WLAN_NO_ENCRYPTION;
-        cwmp_log_info(
-                "WLANConfiguration: "
-                "BasicAuthenticationMode as default for index %u", index);
-    }
-
     return true;
 }
 
@@ -257,9 +261,39 @@ static bool nvram_wlan_save(unsigned index, struct wlan_security_mode *wsm)
     struct wlan_security_mode wsm_orig = {};
     nvram_wlan_load(index, &wsm_orig);
 
-    if (wsm->authMode == WLAN_NULL) {
-        /* TODO */
+    /* merge */
+    if (wsm->authMode != WLAN_NULL) {
+        switch (wsm->authMode) {
+            case WLAN_OPEN:
+            case WLAN_SHARED:
+                wsm->mode = WLAN_BASIC;
+                break;
+            case WLAN_PSK:
+            case WLAN_EAP:
+                wsm->mode = WLAN_WPAand11i;
+                break;
+        }
+        wsm->encrypt = wsm_orig.encrypt;
+    } else if (!wsm->encrypt != WLAN_NULL) {
+        switch (wsm->encrypt) {
+            case WLAN_NO_ENCRYPTION:
+            case WLAN_WEP:
+                wsm->mode = WLAN_BASIC;
+            case WLAN_AES:
+            case WLAN_TKIP:
+            case WLAN_TKIPAES:
+                wsm->mode = WLAN_WPAand11i;
+        }
+        wsm->authMode = wsm_orig.authMode;
+    } else if (wsm->mode != WLAN_NULL) {
+        wsm->encrypt = wsm_orig.encrypt;
+        wsm->authMode = wsm_orig.authMode;
     }
+
+    nvram_wlan_normalize(index, wsm);
+
+    /* save value */
+    /* TODO */
 
     return true;
 }
