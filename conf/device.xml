@@ -315,6 +315,7 @@
 					<param name="TotalPSKFailures" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="RekeyInterval" set_func="cpe_set_nvram_string"/>
 					<param name="TotalIntegrityFailures" get_func="cpe_get_const_string" args="0"/>
 					<param name="IEEE11iAuthenticationMode" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_ieeeauthmode" set_func="cpe_set_igd_lan_wlan_ieeeauthmode"/>
+					<param name="IEEE11iEncryptionModes" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_wpaencryption" set_func="cpe_set_igd_lan_wlan_wpaencryption"/>
 				</object>
 				</object>
 			</object>
