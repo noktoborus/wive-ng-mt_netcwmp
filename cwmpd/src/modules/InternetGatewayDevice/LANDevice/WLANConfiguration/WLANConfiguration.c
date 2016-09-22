@@ -26,9 +26,9 @@ enum wlan_auth {
 enum wlan_encryption {
     WLAN_NO_ENCRYPTION = 1,
     WLAN_WEP = 2,
-    WLAN_AES = 3,
-    WLAN_TKIP = 4,
-    WLAN_TKIPAES = 7
+    WLAN_AES = 4,
+    WLAN_TKIP = 8,
+    WLAN_TKIPAES = 12
 };
 
 struct wlan_security_mode {
@@ -292,8 +292,55 @@ static bool nvram_wlan_save(unsigned index, struct wlan_security_mode *wsm)
 
     nvram_wlan_normalize(index, wsm);
 
-    /* save value */
-    /* TODO */
+    /* nvram AuthMode */
+    switch (wsm->authMode) {
+        case WLAN_OPEN:
+            auth = "OPEN";
+            break;
+        case WLAN_SHARED:
+            auth = "SHARED";
+            break;
+        case WLAN_PSK:
+            if (wsm->mode == WLAN_WPA) {
+                auth = "WPAPSK";
+            } else if (wsm->mode == WLAN_11i) {
+                auth = "WPA2PSK";
+            } else if (wsm->mode == WLAN_WPAand11i) {
+                auth = "WPAPSKWPA2PSK";
+            }
+            break;
+        case WLAN_EAP:
+            if (wsm->mode == WLAN_WPA) {
+                auth = "WPA";
+            } else if (wsm->mode == WLAN_11i) {
+                auth = "WPA2";
+            } else if (wsm->mode == WLAN_WPAand11i) {
+                auth = "WPA1WPA2";
+            }
+            break;
+    }
+    /* nvram EncrypType */
+    switch(wsm->encrypt) {
+        case WLAN_NO_ENCRYPTION:
+            encr = "NONE";
+            break;
+        case WLAN_WEP:
+            encr = "WEP";
+            break;
+        case WLAN_AES:
+            encr = "AES";
+            break;
+        case WLAN_TKIP:
+            encr = "TKIP";
+            break;
+        case WLAN_TKIPAES:
+            encr = "TKIPAES";
+            break;
+    }
+
+    /* write */
+    nvram_set_tuple("AuthMode", index, auth);
+    nvram_set_tuple("EncrypType", index, encr);
 
     return true;
 }
@@ -438,30 +485,34 @@ int cpe_set_igd_lan_wlan_standard(cwmp_t * cwmp, const char * name, const char *
     return FAULT_CODE_OK;
 }
 
-
-
-//InternetGatewayDevice.LANDevice.WLANConfiguration.BasicAuthenticationMode
+/* BasicAuthenticationMode */
 int cpe_get_igd_lan_wlan_basicauthmode(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    char authMode[128] = {};
     const unsigned index = 0u;
+    struct wlan_security_mode wsm = {};
 
     DM_TRACE_GET();
-
-    if (!nvram_get_tuple("AuthMode", index, authMode, sizeof(authMode))) {
-        cwmp_log_error("%s: (index %u) undefined AuthMode param",
-                __func__, index);
+    if (!nvram_wlan_load(index, &wsm)) {
         return FAULT_CODE_9002;
     }
 
-    if (!strcmp(authMode, "SHARED")) {
-        *value = "SharedAuthentication";
-    } else if (!strcmp(authMode, "OPEN")) {
-        /* open authentication */
+    if (wsm.mode != WLAN_BASIC) {
         *value = "None";
-    } else {
-        /* over: unknown, wep, wpa2 */
-        *value = "EAPAuthentication";
+        return FAULT_CODE_OK;
+    }
+
+    switch (wsm.authMode) {
+        case WLAN_OPEN:
+            *value = "None";
+            break;
+        case WLAN_SHARED:
+            *value = "SharedAuthentication";
+            break;
+        case WLAN_EAP:
+            *value = "EAPAuthentication";
+            break;
+        default:
+            return FAULT_CODE_9002;
     }
 
     return FAULT_CODE_OK;
@@ -470,45 +521,54 @@ int cpe_get_igd_lan_wlan_basicauthmode(cwmp_t * cwmp, const char * name, char **
 int cpe_set_igd_lan_wlan_basicauthmode(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
     const unsigned index = 0u;
+    struct wlan_security_mode wsm = {};
     DM_TRACE_SET();
 
     if (!strcmp(value,"None")) {
-        nvram_set_tuple("AuthMode", index, "OPEN");
-        nvram_set_tuple("EncrypType", index, "NONE");
+        /* Open */
+        wsm.authMode = WLAN_OPEN;
     } else if (!strcmp(value, "SharedAuthentication")) {
-        nvram_set_tuple("AuthMode", index, "SHARED");
-        nvram_set_tuple("EncrypType", index, "NONE");
+        /* Shared */
+        wsm.authMode = WLAN_SHARED;
     } else if (!strcmp(value, "EAPAuthentication")) {
-        nvram_set_tuple("AuthMode", index, "WEPAUTO");
-        nvram_set_tuple("EncrypType", index, "WEP");
+        /* not supported */
+        cwmp_log_info("%s: (index %u) Radius auth not supported");
+        wsm.authMode = WLAN_OPEN;
     } else {
         cwmp_log_error("%s: (index %u) invalid value: '%s'",
                 __func__, index, value);
         return FAULT_CODE_9007;
     }
+    nvram_wlan_save(index, &wsm);
 
     return FAULT_CODE_OK;
 }
+
+/* BasicEncryptionModes */
 int
 cpe_get_igd_lan_wlan_basicencryption(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    char encrypType[128] = {};
     const unsigned index = 0u;
+    struct wlan_security_mode wsm = {};
 
     DM_TRACE_GET();
-    if (!nvram_get_tuple("EncrypType", index, encrypType, sizeof(encrypType))) {
-        cwmp_log_error("%s: (index %u) undefined nvram's EncrypType value",
-                __func__, index);
+    if (!nvram_wlan_load(index, &wsm)) {
         return FAULT_CODE_9002;
     }
 
-    if (!strcmp(encrypType, "NONE")) {
+    if (wsm.mode != WLAN_BASIC) {
         *value = "None";
-    } else if (!strcmp(encrypType, "WEP")) {
-        *value = "WEPEncryption";
-    } else {
-        /* no basic encrypted */
-        *value = "None";
+        return FAULT_CODE_OK;
+    }
+
+    switch (wsm.encrypt) {
+        case WLAN_NO_ENCRYPTION:
+            *value = "None";
+            break;
+        case WLAN_WEP:
+            *value = "WEPEncryption";
+        default:
+            return FAULT_CODE_9002;
     }
 
     return FAULT_CODE_OK;
@@ -518,15 +578,18 @@ int
 cpe_set_igd_lan_wlan_basicencryption(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
 {
     const unsigned index = 0u;
+    struct wlan_security_mode wsm = {};
 
     DM_TRACE_SET();
     if (!strcmp(value, "None")) {
-        nvram_set_tuple("EncrypType", index, "NONE");
-        nvram_set_tuple("AuthMode", index, "OPEN");
+        wsm.encrypt = WLAN_NO_ENCRYPTION;
     } else if (!strcmp(value, "WEPEncryption")) {
-        nvram_set_tuple("EncrypType", index, "WEP");
-        nvram_set_tuple("authMode", index, "SHARED");
+        wsm.encrypt = WLAN_WEP;
+    } else {
+        cwmp_log_error("%s: invalid value: '%s'", __func__, value);
+        return FAULT_CODE_9007;
     }
+    nvram_wlan_save(index, &wsm);
     return FAULT_CODE_OK;
 }
 
@@ -534,21 +597,28 @@ cpe_set_igd_lan_wlan_basicencryption(cwmp_t *cwmp, const char *name, const char 
 
 int cpe_get_igd_lan_wlan_wpaauthmode(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    char auth[128] = {};
     const unsigned index = 0u;
+    struct wlan_security_mode wsm = {};
 
 	DM_TRACE_GET();
-    if (!nvram_get_tuple("AuthMode", index, auth, sizeof(auth))) {
-        cwmp_log_error("%s: (index %u) undefined nvram's AuthMode value",
-                __func__, index);
+    if (!nvram_wlan_load(index, &wsm)) {
         return FAULT_CODE_9002;
     }
 
-    if (!strcmp(auth, "WPAPSK") || !strcmp(auth, "WPA2PSK") || !strcmp(auth, "WPAPSKWPA2PSK")) {
+    if (wsm.mode != WLAN_WPA) {
         *value = "PSKAuthentication";
-    } else {
-        /* WPA non-PSK or other */
-        *value = "EAPAuthentication";
+        return FAULT_CODE_OK;
+    }
+
+    switch (wsm.authMode) {
+        case WLAN_PSK:
+            *value = "PSKAuthentication";
+            break;
+        case WLAN_EAP:
+            *value = "EAPAuthentication";
+            break;
+        default:
+            return FAULT_CODE_9002;
     }
     return FAULT_CODE_OK;
 }
@@ -556,40 +626,39 @@ int cpe_get_igd_lan_wlan_wpaauthmode(cwmp_t * cwmp, const char * name, char ** v
 int cpe_set_igd_lan_wlan_wpaauthmode(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
     const unsigned index = 0u;
+    struct wlan_security_mode wsm = {};
     /* only WPA1 */
 
 	DM_TRACE_SET();
     if (!strcmp(value, "PSKAuthentication")) {
-        nvram_set_tuple("AuthMode", index, "WPAPSK");
+        wsm.authMode = WLAN_PSK;
     } else if (!strcmp(value, "EAPAuthentication")) {
-        /* Radius auth */
-        nvram_set_tuple("AuthMode", index, "WPA");
+        wsm.authMode = WLAN_EAP;
     } else {
         cwmp_log_error("%s: unknown value: %s", __func__, value);
         return FAULT_CODE_9007;
     }
 
+    nvram_wlan_save(index, &wsm);
+
     return FAULT_CODE_OK;
 }
 
 /* WPAEncryptionModes */
-
 int
 cpe_set_igd_lan_wlan_wpaencryption(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
     const unsigned index = 0u;
-    char auth[128] = {};
+    struct wlan_security_mode wsm = {};
 
     DM_TRACE_SET();
-    nvram_get_tuple("AuthMode", index, auth, sizeof(auth));
-    /* set EncrypType to requested
-     */
+
     if (!strcmp(value, "TKIPEncryption")) {
-        nvram_set_tuple("EncrypType", index, "TKIP");
+        wsm.encrypt = WLAN_TKIP;
     } else if (!strcmp(value, "AESEncryption")) {
-        nvram_set_tuple("EncrypType", index, "AES");
+        wsm.encrypt = WLAN_AES;
     } else if (!strcmp(value, "TKIPandAESEncryption")) {
-        nvram_set_tuple("EncrypType", index, "TKIPAES");
+        wsm.encrypt = WLAN_TKIPAES;
     } else {
         cwmp_log_trace(
                 "%s: invalid value '%s', supports only: "
@@ -597,10 +666,7 @@ cpe_set_igd_lan_wlan_wpaencryption(cwmp_t * cwmp, const char * name, const char 
                 __func__, value);
         return FAULT_CODE_9007;
     }
-    /* set AuthMode to WPA1 family (if not setted) */
-    if (strncmp(auth, "WPA", 3)) {
-        nvram_set_tuple("AuthMode", index, "WPAPSK");
-    }
+    nvram_wlan_save(index, &wsm);
 
     return FAULT_CODE_OK;
 }
@@ -608,66 +674,83 @@ cpe_set_igd_lan_wlan_wpaencryption(cwmp_t * cwmp, const char * name, const char 
 int
 cpe_get_igd_lan_wlan_wpaencryption(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    char mode[128] = {};
     const unsigned index = 0u;
+    struct wlan_security_mode wsm = {};
 
     DM_TRACE_GET();
-    if (!nvram_get_tuple("EncrypType", index, mode, sizeof(mode))) {
-        cwmp_log_error("%s: (index %u) undefined nvram's EncrypType value",
-                __func__, index);
+    if (!nvram_wlan_load(index, &wsm)) {
         return FAULT_CODE_9002;
     }
 
-    if (!strcmp(mode, "TKIPAES")) {
-        *value = "TKIPandAESEncryption";
-    } else if (!strcmp(mode, "TKIP")) {
+    if (!(wsm.mode & WLAN_WPA)) {
+        /* default value */
         *value = "AESEncryption";
-    } else if (!strcmp(mode, "AES")) {
-        *value = "TKIPEncryption";
-    } else {
-        /* no WPA encryption */
-        *value = "AESEncryption";
+        return FAULT_CODE_OK;
     }
+
+    switch (wsm.encrypt) {
+        case WLAN_TKIP:
+            *value = "TKIPEncryption";
+            break;
+        case WLAN_AES:
+            *value = "AESEncryption";
+            break;
+        case WLAN_TKIPAES:
+            *value = "TKIPandAESEncryption";
+            break;
+        default:
+            return FAULT_CODE_9002;
+    }
+
     return FAULT_CODE_OK;
 }
 
-
 /* IEEE11iAuthenticationMode */
-
 int cpe_get_igd_lan_wlan_ieeeauthmode(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
     const unsigned index = 0u;
-    char auth[128] = {};
+    struct wlan_security_mode wsm = {};
     /* WPA2 only */
 	DM_TRACE_GET();
-    if (!nvram_get_tuple("AuthMode", index, auth, sizeof(auth))) {
-        cwmp_log_error("%s: (index %u) undefined nvram's AuthMode value",
-                __func__, index);
+    if (!nvram_wlan_load(index, &wsm)) {
         return FAULT_CODE_9002;
     }
-    if (!strcmp(auth, "WPAPSK") || !strcmp(auth, "WPA2PSK") || !strcmp(auth, "WPAPSKWPA2PSK")) {
+
+    if (!(wsm.mode & WLAN_11i)) {
         *value = "PSKAuthentication";
-    } else {
-        /* WPA non-PSK or other */
-        *value = "EAPAuthentication";
+        return FAULT_CODE_OK;
     }
+
+    switch (wsm.authMode) {
+        case WLAN_PSK:
+            *value = "PSKAuthentication";
+            break;
+        case WLAN_EAP:
+            *value = "EAPAuthentication";
+            break;
+        default:
+            return FAULT_CODE_9002;
+    }
+
     return FAULT_CODE_OK;
 }
 
 int cpe_set_igd_lan_wlan_ieeeauthmode(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
     const unsigned index = 0u;
+    struct wlan_security_mode wsm = {};
     /* WPA2 */
 	DM_TRACE_SET();
     if (!strcmp(value, "PSKAuthentication")) {
-        nvram_set_tuple("AuthMode", index, "WPA2PSK");
+        wsm.authMode = WLAN_PSK;
     } else if (!strcmp(value, "EAPAuthentication")) {
         /* Radius auth */
-        nvram_set_tuple("AuthMode", index, "WPA2");
+        wsm.authMode = WLAN_EAP;
     } else {
         cwmp_log_error("%s: unknown value: %s", __func__, value);
         return FAULT_CODE_9007;
     }
+    nvram_wlan_save(index, &wsm);
 
     return FAULT_CODE_OK;
 }
@@ -676,29 +759,26 @@ int cpe_set_igd_lan_wlan_ieeeauthmode(cwmp_t * cwmp, const char * name, const ch
 int cpe_get_igd_lan_wlan_beacontype(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
     const unsigned index = 0u;
-    char auth[128] = {};
+    struct wlan_security_mode wsm = {};
 
 	DM_TRACE_GET();
-    if (!nvram_get_tuple("AuthMode", index, auth, sizeof(auth))) {
-        cwmp_log_error("%s: (index %u) undefined nvram's AuthMode value",
-                __func__, index);
+    if (!nvram_wlan_load(index, &wsm)) {
         return FAULT_CODE_9002;
     }
 
-    if (!strncmp(auth, "WPA1WPA2", 8) || !strncmp(auth, "WPAWPA2", 7)) {
-        *value = "WPAand11i";
-    } else if (!strncmp(auth, "WPA2", 4)) {
-        *value = "11i";
-    } else if (!strncmp(auth, "WPA", 3)) {
-        *value = "WPA";
-    } else if (!strcmp(auth, "SHARED")) {
-        *value = "Basic";
-    } else if (!strcmp(auth, "OPEN")) {
-        *value = "None";
-    } else {
-        cwmp_log_error("%s: (index %u) unsupported AuthMode: '%s'",
-                __func__, index, auth);
-        return FAULT_CODE_9002;
+    switch (wsm.mode) {
+        case WLAN_WPA:
+            *value = "WPA";
+            break;
+        case WLAN_11i:
+            *value = "11i";
+            break;
+        case WLAN_BASIC:
+            *value = "Basic";
+            break;
+        case WLAN_WPAand11i:
+            *value = "WPAand11i";
+            break;
     }
 
     return FAULT_CODE_OK;
@@ -706,25 +786,34 @@ int cpe_get_igd_lan_wlan_beacontype(cwmp_t * cwmp, const char * name, char ** va
 
 int cpe_set_igd_lan_wlan_beacontype(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
-    char auth[128] = {};
-    char encr[128] = {};
     const unsigned index = 0u;
+    struct wlan_security_mode wsm = {};
 
 	DM_TRACE_SET();
-    nvram_get_tuple("AuthMode", index, auth, sizeof(auth));
-    nvram_get_tuple("EncrypType", index, encr, sizeof(encr));
 
     if (!strcmp(value, "WPAand11i")) {
         /* WPA1WPA2 */
+        wsm.mode = WLAN_WPAand11i;
     } else if (!strcmp(value, "11i")) {
         /* WPA2* */
+        wsm.mode = WLAN_11i;
     } else if (!strcmp(value, "WPA")) {
         /* WPA* */
+        wsm.mode = WLAN_WPA;
     } else if (!strcmp(value, "Basic")) {
-        /* SHARED */
+        /* OPEN */
+        wsm.mode = WLAN_BASIC;
     } else if(!strcmp(value, "None")) {
-        /* Open */
+        /* disable station */
+        /* TODO: ... */
+        cwmp_log_info("%s: (index: %u) disabling WLAN not supported in this case",
+                __func__, index);
+        wsm.mode = WLAN_BASIC;
+    } else {
+        cwmp_log_error("%s: (index: %u) unknown value: '%s'",
+                __func__, index, value);
     }
+    nvram_wlan_save(index, &wsm);
     return FAULT_CODE_OK;
 }
 
