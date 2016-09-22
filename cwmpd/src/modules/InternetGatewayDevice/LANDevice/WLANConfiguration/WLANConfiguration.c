@@ -68,13 +68,13 @@ static void nvram_set_tuple(const char *key, unsigned index, const char *value)
     if (i != index) {
         cwmp_log_info("%s: grow list from %u i to %u", __func__, i, index);
         i = index - i;
+        s = e;
     } else {
         i = 0;
     }
 
-
     /* format new nvram value */
-    len = len - (e - s) + value_len + i + 1;
+    len = vlen - (e - s) + value_len + i + 1;
     nv = calloc(1, len);
     if (!nv) {
         cwmp_log_error("%s: calloc(%"PRIuPTR") failed: %s",
@@ -82,6 +82,7 @@ static void nvram_set_tuple(const char *key, unsigned index, const char *value)
                 len, strerror(errno));
         return;
     }
+
     if (i) {
         snprintf(nv, len, "%s%*.0s%s", v, i, "", value);
         memset(nv + vlen, ';', i);
@@ -121,6 +122,7 @@ static size_t nvram_get_tuple(const char *key, unsigned index,
     }
 
     if (i != index) {
+        s = e;
         cwmp_log_error("%s: invalid index: %u, maximum: %u",
                 __func__, index, i);
     }
