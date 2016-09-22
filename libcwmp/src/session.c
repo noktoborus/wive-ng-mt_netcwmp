@@ -1085,6 +1085,7 @@ int cwmp_session_recv_response(cwmp_session_t * session)
             if (!session->cwmp->acs_auth) {
                 cwmp_log_debug("%s: force auth flag", __func__);
                 session->cwmp->acs_auth = true;
+                cwmp_set_request(session->cwmp, CWMP_TRUE);
             }
             auth = http_get_variable(response->parser, "WWW-Authenticate");
             if(auth)
