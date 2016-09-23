@@ -231,7 +231,7 @@
 					<param name="MaxAddress" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="dhcpEnd" set_func="cpe_set_nvram_string"/>
 					<param name="DHCPLeaseTime" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_int" args="dhcpLease" set_func="cpe_set_nvram_string"/>
 				</object>
-				<param name="LANWLANConfigurationNumberOfEntries" get_func="" args="1"/>
+				<param name="LANWLANConfigurationNumberOfEntries" get_func="cpe_get_const_string" args="1"/>
 				<object name="WLANConfiguration">
 				<object name="1">
 					<param name="Alias" rw="1" get_func="cpe_get_alias" set_func="cpe_set_alias"/>
