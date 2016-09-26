@@ -35,25 +35,25 @@
 			<object name="UPnP">
 				<object name="Device">
 					<param name="Enable" rw="1"/>
-					<param name="UPnPMediaServer" rw="1" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
+					<param name="UPnPMediaServer" rw="1" get_func="cpe_get_nvram_bool" args="xupnpd" set_func="cpe_set_nvram_bool" reload_func="cpe_reload_all"/>
 					<param name="UPnPMediaRenderer" rw="1" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
 					<param name="UPnPWLANAccessPoint" rw="1" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
 					<param name="UPnPQoSDevice" rw="1" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
 					<param name="UPnPQoSPolicyHolder" rw="1" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
-					<param name="UPnPIGD" rw="1" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
+					<param name="UPnPIGD" rw="1" get_func="cpe_get_nvram_bool" args="upnpEnabled" set_func="cpe_set_nvram_bool" reload_func="cpe_reload_all"/>
 					<param name="UPnPDMBasicMgmt" rw="1" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
 					<param name="UPnPDMConfigurationMgmt" rw="1" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
 					<param name="UPnPDMSoftwareMgmt" rw="1" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
 					<object name="Capabilities">
 						<param name="UPnPArchitecture" get_func="cpe_get_const_string" args="0"/>
 						<param name="UPnPArchitectureMinorVer" get_func="cpe_get_const_string" args="0"/>
-						<param name="UPnPMediaServer" get_func="cpe_get_const_string" args="0"/>
+						<param name="UPnPMediaServer" get_func="cpe_get_const_string" args="1"/>
 						<param name="UPnPMediaRenderer" get_func="cpe_get_const_string" args="0"/>
 						<param name="UPnPWLANAccessPoint" get_func="cpe_get_const_string" args="0"/>
 						<param name="UPnPBasicDevice" get_func="cpe_get_const_string" args="0"/>
 						<param name="UPnPQoSDevice" get_func="cpe_get_const_string" args="0"/>
 						<param name="UPnPQoSPolicyHolder" get_func="cpe_get_const_string" args="0"/>
-						<param name="UPnPIGD" get_func="cpe_get_const_string" args="0"/>
+						<param name="UPnPIGD" get_func="cpe_get_const_string" args="1"/>
 						<param name="UPnPDMBasicMgmt" get_func="cpe_get_const_string" args="0"/>
 						<param name="UPnPDMConfigurationMgmt" get_func="cpe_get_const_string" args="0"/>
 						<param name="UPnPDMSoftwareMgmt" get_func="cpe_get_const_string" args="0"/>
