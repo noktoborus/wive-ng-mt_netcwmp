@@ -367,6 +367,8 @@ cwmp_session_t * cwmp_session_create(cwmp_t * cwmp)
     session->envpool = NULL;
     session->connpool = NULL;
 
+    session->resend_counter = 0u;
+
     session->root = cwmp->root;
     session->retry_count = 0;
 
@@ -452,13 +454,11 @@ int cwmp_session_connect(cwmp_session_t * session, const char * url)
 
 int cwmp_session_set_auth(cwmp_session_t * session, const char * user, const char * pwd)
 {
-    char buffer[256] = {0};
-    TRsnprintf(buffer, 255, "%s:%s", user==NULL?"":user, pwd==NULL?"":pwd);
-
-    session->dest->auth_type = HTTP_DIGEST_AUTH;
-    session->dest->auth.active = CWMP_FALSE;
-    TRstrncpy(session->dest->user, user, URL_USER_LEN);
-    TRstrncpy(session->dest->password, pwd, URL_PWD_LEN);
+    if (*user && *pwd) {
+        session->dest->auth_type = HTTP_DIGEST_AUTH;
+        TRstrncpy(session->dest->user, user, URL_USER_LEN);
+        TRstrncpy(session->dest->password, pwd, URL_PWD_LEN);
+    }
 
     return CWMP_OK;
 }
@@ -1007,55 +1007,23 @@ xmldoc_t *  cwmp_session_create_factoryreset_response_message(cwmp_session_t * s
 
 int cwmp_session_send_request(cwmp_session_t * session)
 {
-    size_t alength = cwmp_chunk_length(session->writers);
-    cwmp_log_debug("cwmp_session_send_request len: %u",alength);
-    //    http_request_t * request;
-    //    http_request_create(&request, session->env->pool);
-    //    request->dest = session->dest;
-    //
-    //    http_post(session->sock, request, session->writers, session->env->pool);
-
-
     int rv;
     http_request_t * request;
-    FUNCTION_TRACE();
-
-//    cwmp_log_debug("session dest url: %s", session->dest->url);
-
+    cwmp_log_trace("%s(session=%p)", __func__, (void*)session);
 
     http_request_create(&request, session->envpool);
     request->dest = session->dest;
-
-
-    if(session->dest->auth_type == HTTP_DIGEST_AUTH)
-    {
-        if(!session->dest->auth.active)
-        {
-            //post empty
-            //receive msg
-
-            http_post(session->sock, request, NULL, session->envpool);
-            rv = cwmp_session_recv_response(session);
-        }
-    }
-
 
     rv = http_post(session->sock, request, session->writers, session->envpool);
 
     if (rv <= 0)
     {
-        cwmp_log_error("cwmp_session_send_request ERR");
         return CWMP_ERROR;
     }
     else
     {
-        cwmp_log_debug("cwmp_session_send_request OK");
         return CWMP_OK;
     }
-
-
-
-
 }
 
 int cwmp_session_recv_response(cwmp_session_t * session)
@@ -1085,21 +1053,13 @@ int cwmp_session_recv_response(cwmp_session_t * session)
             if (!session->cwmp->acs_auth) {
                 cwmp_log_debug("%s: force auth flag", __func__);
                 session->cwmp->acs_auth = true;
-                cwmp_set_request(session->cwmp, CWMP_TRUE);
             }
             auth = http_get_variable(response->parser, "WWW-Authenticate");
             if(auth)
             {
-                session->dest->auth.active = CWMP_FALSE;
-
                 http_parse_digest_auth(auth, &session->dest->auth, session->dest->uri);
             }
         }
-
-    }
-    else
-    {
-        session->dest->auth.active = CWMP_TRUE;
     }
 
     if(session->last_method == CWMP_INFORM_METHOD)
@@ -1111,16 +1071,6 @@ int cwmp_session_recv_response(cwmp_session_t * session)
         }
     }
 
-    if(respcode == HTTP_200 || respcode == HTTP_204)
-    	{
-	    cwmp_log_debug("cwmp_session_recv_response OK");
-		return respcode;
-    	}
-    else
-    	{
-	    cwmp_log_error("cwmp_session_recv_response ERR");
-		return CWMP_ERROR;
-    	}
-
-
+    return respcode;
 }
+

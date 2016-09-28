@@ -53,6 +53,8 @@
 #define HTTP_200		200
 #define HTTP_204		204
 #define HTTP_400		400
+#define HTTP_401		401
+#define HTTP_407		407
 
 
 
@@ -88,8 +90,6 @@ typedef size_t (*http_write_callback_pt)(char *data, size_t size, size_t nmemb, 
 
 struct http_digest_auth_t
 {
-	int		active; //digest auth
-
 	 /* CDRouter will test largest size ConnectionRequest Username */
 	char	username[256];
 

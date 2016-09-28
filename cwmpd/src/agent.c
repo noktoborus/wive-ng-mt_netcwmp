@@ -198,12 +198,13 @@ int cwmp_agent_get_active_event(cwmp_t *cwmp, cwmp_session_t * session,  event_l
 
 int cwmp_agent_send_request(cwmp_session_t * session)
 {
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(session=%p)", __func__, (void*)session);
     return cwmp_session_send_request(session);
 }
 
 int cwmp_agent_recv_response(cwmp_session_t * session)
 {
+    cwmp_log_trace("%s(session=%p)", __func__, (void*)session);
     return cwmp_session_recv_response(session);
 }
 
@@ -216,11 +217,11 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
     xmldoc_t * newdoc;
     event_list_t  *evtlist;
 
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(cwmp=%p)", __func__, (void*)cwmp);
 
     while (TRUE) {
         if (cwmp->new_request == CWMP_NO) {
-            cwmp_log_debug("No new request from ACS");
+            cwmp_log_debug("http session: No new request from ACS");
 
             sleep(1);
             periodic++;
@@ -237,13 +238,13 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
                  * (passive notification in SetParameterAttributesStruct)
                  */
                 if (cwmp_conf_get_int("cwmpd:notification") != 0) {
-                    cwmp_log_info("Periodic response");
+                    cwmp_log_info("http session: Periodic connection");
                     queue_push(cwmp->queue, NULL, TASK_NOTIFY_TAG);
                 }
                 periodic = 0;
             }
         } else {
-            cwmp_log_info("### ### ### New request from ACS ### ### ###");
+            cwmp_log_debug("http session: ### ### ### New request from ACS ### ### ###");
         }
 
         cwmp_set_request(cwmp, CWMP_NO);
@@ -251,20 +252,18 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
         session_close  = CWMP_NO;
         session->timeout = cwmp_conf_get_int("cwmpd:http_timeout");
         //cwmp_session_set_timeout(cwmp_conf_get_int("cwmpd:http_timeout"));
-        cwmp_log_debug("session timeout is %d", session->timeout);
+        cwmp_log_debug("http session: timeout is %d", session->timeout);
         cwmp_session_open(session);
 
         while (!session_close) {
-            cwmp_log_info("session status: %d (%s)",
+            cwmp_log_debug("http session: status: %d (%s)",
                 session->status, cwmp_status_string(session->status));
 
             switch (session->status) {
             case CWMP_ST_START:
                 //create a new connection to acs
-                cwmp_log_debug("session status: New START");
-
                 if (cwmp_session_connect(session, cwmp->acs_url) != CWMP_OK) {
-                    cwmp_log_error("connect to acs: %s failed.", cwmp->acs_url);
+                    cwmp_log_error("http session: connect to acs: %s failed.", cwmp->acs_url);
                     session->status = CWMP_ST_RETRY;
                 } else {
                     session->status = CWMP_ST_INFORM;
@@ -276,9 +275,8 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
                 if(evtlist != NULL) {
                     cwmp_event_clear_active(cwmp);
                 }
-                if (cwmp->acs_auth) {
-                    cwmp_session_set_auth(session,   cwmp->acs_user  , cwmp->acs_pwd );
-                }
+
+                cwmp_session_set_auth(session, cwmp->acs_user, cwmp->acs_pwd);
 
                 newdoc = cwmp_session_create_inform_message(session, evtlist, session->envpool);
 
@@ -287,29 +285,44 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
                 session->status = CWMP_ST_SEND;
                 break;
             case CWMP_ST_SEND:
-                cwmp_log_debug("session data request length: %d", cwmp_chunk_length(session->writers));
+                cwmp_log_debug("http session: data request length: %d", cwmp_chunk_length(session->writers));
                 session->newdata = CWMP_NO;
 
                 rv = cwmp_agent_send_request(session);
 
                 if (rv == CWMP_OK) {
-                    cwmp_log_debug("session data sended OK, rv=%d", rv);
+                    cwmp_log_debug("http session: data sended OK, rv=%d", rv);
                     session->status = CWMP_ST_RECV;
                 } else {
-                    cwmp_log_debug("session data sended faild! rv=%d", rv);
+                    cwmp_log_debug("http session: data sended faild! rv=%d", rv);
                     session->status = CWMP_ST_EXIT;
                 }
 
                 break;
             case CWMP_ST_RECV:
                 cwmp_chunk_clear(session->readers);
+                session->status = CWMP_ST_END;
 
                 rv = cwmp_agent_recv_response(session);
 
                 if (rv == HTTP_200 || rv == CWMP_OK) {
                     session->status = CWMP_ST_ANSLYSE;
+                    session->resend_counter = 0u;
+                    cwmp_log_debug("http session: response received");
+                } else if (rv == HTTP_401 || rv == HTTP_407) {
+                    if (session->resend_counter >= 2) {
+                        cwmp_log_error("http session: ACS authorization failed");
+                    }
+                    if (!session->dest->auth_type) {
+                        cwmp_log_error("http session: ACS authorization failed: no password or username");
+                    } else {
+                        cwmp_log_debug("http session: Send authorization credentials: '%s', for realm '%s'",
+                                session->dest->user, session->dest->auth.realm);
+                        session->status = CWMP_ST_SEND;
+                        session->resend_counter++;
+                    }
                 } else {
-                    session->status = CWMP_ST_END;
+                    cwmp_log_error("http session: response status: %d", rv);
                 }
                 break;
 
@@ -323,7 +336,7 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
                 break;
             case CWMP_ST_RETRY:
                 if (cwmp_agent_retry_session(session) == CWMP_TIMEOUT) {
-                    cwmp_log_debug("session retry timeover, go out");
+                    cwmp_log_debug("http session: retry timeover, go out");
                     session->status = CWMP_ST_EXIT;
                 } else {
                     session->status = CWMP_ST_START;
@@ -350,12 +363,12 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
                 session_close = CWMP_YES;
                 break;
             default:
-                cwmp_log_error("ERROR: Unknown session status! (%i)", session->status);
+                cwmp_log_error("http session: ERROR: Unknown session status! (%i)", session->status);
                 break;
             }//end switch
         }//end while(!session_close)
 
-        cwmp_log_debug("session status: EXIT");
+        cwmp_log_debug("http session: EXIT");
         cwmp_session_free(session);
         session = NULL;
 
@@ -901,7 +914,7 @@ int cwmp_agent_run_tasks(cwmp_t * cwmp)
 
 			case TASK_NOTIFY_TAG:
 				{
-					cwmp->new_request = CWMP_YES;
+                    cwmp_set_request(cwmp, CWMP_YES);
 					cwmp_event_set_value(cwmp, INFORM_VALUECHANGE, 1, NULL, 0, 0, 0);
 				}
 				break;
