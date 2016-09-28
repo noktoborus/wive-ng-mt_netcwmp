@@ -54,7 +54,6 @@ Supported Functions:
 
 Config File:
 
-	acs_auth:           ACS auth CPE
 	cpe_auth:           CPE auth ACS
 	acs_url:            ACS URL
 	cpe_manufacture:    Manufacture

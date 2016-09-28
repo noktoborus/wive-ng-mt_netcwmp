@@ -43,7 +43,6 @@ void cwmp_conf_init(cwmp_t * cwmp)
 
     cwmp->httpd_port =  cwmp_conf_get_int("cwmpd:httpd_port"); //cwmp_nvram_get_int("cwmp:httpd_port",8080);
 
-    cwmp->acs_auth  =   cwmp_conf_get_int("cwmp:acs_auth");
     cwmp->cpe_auth  =   cwmp_conf_get_int("cwmp:cpe_auth");
 
 	cwmp->acs_user = cwmp_conf_pool_get(pool, "cwmp:acs_username");

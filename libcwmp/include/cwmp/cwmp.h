@@ -327,7 +327,6 @@ struct cwmp_st
 	int httpd_port;
 
 	int    cpe_auth;
-	int    acs_auth;
 
 	char * acs_url;
 	char * cpe_mf;
