@@ -304,11 +304,12 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
                 session->status = CWMP_ST_END;
 
                 rv = cwmp_agent_recv_response(session);
-
-                if (rv == HTTP_200 || rv == CWMP_OK) {
+                if (rv == HTTP_204) {
+                    cwmp_log_debug("http session: receive no content, closing session");
+                } else if (rv == HTTP_200 || rv == CWMP_OK) {
                     session->status = CWMP_ST_ANSLYSE;
                     session->resend_counter = 0u;
-                    cwmp_log_debug("http session: response received");
+                    cwmp_log_debug("http session: good response received (code: %d)", rv);
                 } else if (rv == HTTP_401 || rv == HTTP_407) {
                     if (session->resend_counter >= 2) {
                         cwmp_log_error("http session: ACS authorization failed");
@@ -325,7 +326,6 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
                     cwmp_log_error("http session: response status: %d", rv);
                 }
                 break;
-
             case CWMP_ST_ANSLYSE:
                 rv = cwmp_agent_analyse_session(session);
                 if (rv == CWMP_OK) {

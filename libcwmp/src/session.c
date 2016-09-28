@@ -713,7 +713,7 @@ xmldoc_t *  cwmp_session_create_getrpcmethods_response_message(cwmp_session_t * 
     FUNCTION_TRACE();
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
     if (rv != CWMP_OK) {
-        cwmp_log_error("no header node");
+        cwmp_log_warn("no header node");
     }
     return cwmp_create_getrpcmethods_response_message(session->env, header, rpc_methods, sizeof(rpc_methods)/sizeof(rpc_methods[0]));
 }
@@ -733,7 +733,7 @@ xmldoc_t *  cwmp_session_create_getparameternames_response_message(cwmp_session_
 
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
     if (rv != CWMP_OK) {
-        cwmp_log_error("no header node");
+        cwmp_log_warn("no header node");
     }
 
     rv = cwmp_parse_getparameternames_message(session->env, doc, &path, &next_level, &fault);
@@ -766,7 +766,7 @@ xmldoc_t *  cwmp_session_create_getparametervalues_response_message(cwmp_session
 
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
     if (rv != CWMP_OK) {
-        cwmp_log_error("no header node");
+        cwmp_log_warn("no header node");
     }
 
     rv = cwmp_parse_getparametervalues_message(session->env, doc, session->root, &pl, &fault);
@@ -793,7 +793,7 @@ xmldoc_t *  cwmp_session_create_setparametervalues_response_message(cwmp_session
             __func__, (void*)session, (void*)doc, (void*)pool);
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
     if (rv != CWMP_OK) {
-        cwmp_log_error("no header node");
+        cwmp_log_warn("no header node");
     }
 
     rv = cwmp_parse_setparametervalues_message(session->env, doc, session->root, &pl, &fault);
@@ -829,7 +829,7 @@ xmldoc_t *  cwmp_session_create_setparameterattributes_response_message(cwmp_ses
 
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
     if (rv != CWMP_OK) {
-        cwmp_log_error("no header node");
+        cwmp_log_warn("no header node");
     }
 
     rv = cwmp_parse_setparameterattributes_message(session->env, doc, session->root, &pl, &fault);
@@ -861,7 +861,7 @@ xmldoc_t *  cwmp_session_create_download_response_message(cwmp_session_t * sessi
     FUNCTION_TRACE();
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
     if (rv != CWMP_OK) {
-        cwmp_log_error("no header node");
+        cwmp_log_warn("no header node");
     }
 
     download_arg_t * dlarg;
@@ -898,7 +898,7 @@ xmldoc_t *  cwmp_session_create_upload_response_message(cwmp_session_t * session
     FUNCTION_TRACE();
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
     if (rv != CWMP_OK) {
-        cwmp_log_error("no header node");
+        cwmp_log_warn("no header node");
     }
 
     upload_arg_t * uparg;
@@ -929,7 +929,7 @@ xmldoc_t *  cwmp_session_create_addobject_response_message(cwmp_session_t * sess
     FUNCTION_TRACE();
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
     if (rv != CWMP_OK) {
-        cwmp_log_error("no header node");
+        cwmp_log_warn("no header node");
     }
     rv = cwmp_parse_addobject_message(session->env, doc, session->root, &instances, &status,  &fault);
     if(rv != CWMP_OK)
@@ -948,7 +948,7 @@ xmldoc_t *  cwmp_session_create_deleteobject_response_message(cwmp_session_t * s
     FUNCTION_TRACE();
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
     if (rv != CWMP_OK) {
-        cwmp_log_error("no header node");
+        cwmp_log_warn("no header node");
     }
 
     rv = cwmp_parse_deleteobject_message(session->env, doc, session->root, &status, &fault);
@@ -976,7 +976,7 @@ xmldoc_t *  cwmp_session_create_reboot_response_message(cwmp_session_t * session
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
     if (rv != CWMP_OK)
     {
-        cwmp_log_error("no header node");
+        cwmp_log_warn("no header node");
     }
 
     rv = cwmp_parse_reboot_message(session->env, doc, &key, &fault);
@@ -996,7 +996,7 @@ xmldoc_t *  cwmp_session_create_factoryreset_response_message(cwmp_session_t * s
     FUNCTION_TRACE();
     rv = cwmp_parse_header_node(cwmp_get_header_node(doc), &header, pool);
     if (rv != CWMP_OK) {
-        cwmp_log_error("no header node");
+        cwmp_log_warn("no header node");
     }
 
     cwmp_t * cwmp = session->cwmp;
@@ -1045,8 +1045,6 @@ int cwmp_session_recv_response(cwmp_session_t * session)
 
     if(respcode != HTTP_200 && respcode != HTTP_204)
     {
-        cwmp_log_error("http read response failed. return code is %d, %d", respcode, response->status);
-
         if(response->status == 401 ||response->status == 407)
         {
             auth = http_get_variable(response->parser, "WWW-Authenticate");
@@ -1054,6 +1052,8 @@ int cwmp_session_recv_response(cwmp_session_t * session)
             {
                 http_parse_digest_auth(auth, &session->dest->auth, session->dest->uri);
             }
+        } else {
+            cwmp_log_error("http read response failed. return code is %d", response->status);
         }
     }
 

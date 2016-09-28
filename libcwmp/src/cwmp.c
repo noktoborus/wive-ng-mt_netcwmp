@@ -1758,7 +1758,6 @@ s
         cwmp_conf_set("env:ParameterKey", parameter_key ? parameter_key : "");
     }
 
-    cwmp_log_error("%s OK", __func__);
     pool_destroy(pool);
     return rc;
 }

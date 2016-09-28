@@ -355,14 +355,10 @@ int cpe_get_conf_string(cwmp_t * cwmp, const char * name, char ** value, char * 
 {
     DM_TRACE_GET();
 
-    char* nvval = cwmp_conf_pool_get(pool, args);
-    if (nvval == NULL) {
-        cwmp_log_error("cpe_get_conf_string: undefined param (%s)!",args);
-	return FAULT_CODE_9002;
+    *value = cwmp_conf_pool_get(pool, args);
+    if (!*value) {
+        cwmp_log_warn("%s: empty value (%s)!", __func__, args);
     }
-
-    *value = nvval;
-//    cwmp_log_error("cpe_get_conf_string: value is %s",*value);
     return FAULT_CODE_OK;
 }
 
@@ -385,14 +381,10 @@ int cpe_get_nvram_string(cwmp_t * cwmp, const char * name, char ** value, char *
 {
     DM_TRACE_GET();
 
-    char* nvval = cwmp_nvram_pool_get(pool, args);
-    if (nvval == NULL) {
-        cwmp_log_error("cpe_get_nvram_string: undefined param (%s)!",args);
-	return FAULT_CODE_9002;
+    *value = cwmp_nvram_pool_get(pool, args);
+    if (!*value) {
+        cwmp_log_warn("%s: empty value (%s)!", __func__, args);
     }
-
-    *value = nvval;
-//    cwmp_log_error("cpe_get_nvram_string: value is %s",*value);
     return FAULT_CODE_OK;
 }
 
