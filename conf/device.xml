@@ -130,12 +130,12 @@
 				<param name="ProductClass" inform="1" get_func="cpe_get_igd_di_productclass"/>
 				<param name="DeviceLog" inform="0" get_func="cpe_get_igd_di_devicelog"/>
 				<param name="ModelName" inform="1" get_func="cpe_get_const_string" args="Wive-NG"/>
-				<param name="PrivisioningCode" rw="1" inform="1" get_func="cpe_get_conf_string" set_func="cpe_get_conf_string" args="cwmpd:provisinong_code"/>
+				<param name="ProvisioningCode" rw="1" inform="1" get_func="cpe_get_igd_di_provisioningcode" set_func="cpe_set_igd_di_provisioningcode"/>
 				<param name="UpTime" inform="1" get_func="cpe_get_igd_di_uptime"/>
 				<param name="FirstUseDate" get_func="cpe_get_const_string" args="0001-01-01T00:00:00Z"/>
 			</object>
 			<object name="ManagementServer">
-				<param name="ParameterKey" inform="1" get_func="cpe_get_conf_string" args="env:ParameterKey"/>
+				<param name="ParameterKey" inform="1" get_func="cpe_get_ms_parameter_key"/>
 				<param name="ConnectionRequestURL" inform="1" get_func="cpe_get_igd_ms_connectionrequesturl"/>
 				<param name="ConnectionRequestUsername" rw="1" get_func="cpe_get_igd_ms_connectionrequestusername" set_func="cpe_set_igd_ms_connectionrequestusername"/>
 				<param name="ConnectionRequestPassword" rw="1" get_func="cpe_get_igd_ms_connectionrequestpassword" set_func="cpe_set_igd_ms_connectionrequestpassword"/>

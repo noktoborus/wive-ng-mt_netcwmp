@@ -117,14 +117,20 @@ int cpe_get_igd_di_softwareversion(cwmp_t * cwmp, const char * name, char ** val
 }
 */
 //InternetGatewayDevice.DeviceInfo.ProvisioningCode
-/*
 int cpe_get_igd_di_provisioningcode(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
     DM_TRACE_GET();
     *value = cwmp_conf_pool_get(pool, "cwmp:cpe_prov");
     return	FAULT_CODE_OK;
 }
-*/
+
+int cpe_set_igd_di_provisioningcode(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
+{
+    DM_TRACE_SET();
+    cwmp_conf_set("cwmp:cpe_prov", value);
+    return FAULT_CODE_OK;
+}
+
 //InternetGatewayDevice.DeviceInfo.DeviceLog
 int cpe_get_igd_di_devicelog(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
