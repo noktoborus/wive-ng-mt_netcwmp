@@ -31,10 +31,10 @@
 					get value function
 		-->
 		<object name="InternetGatewayDevice">
-			<param name="DeviceSummary" inform="1"/>
+			<param name="DeviceSummary" inform="1" get_func="cpe_get_const_string" args=""/>
 			<object name="UPnP">
 				<object name="Device">
-					<param name="Enable" rw="1"/>
+					<param name="Enable" rw="1" get_func="cpe_get_const_string" args="1" set_func="cpe_set_null"/>
 					<param name="UPnPMediaServer" rw="1" get_func="cpe_get_nvram_bool" args="xupnpd" set_func="cpe_set_nvram_bool" reload_func="cpe_reload_all"/>
 					<param name="UPnPMediaRenderer" rw="1" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
 					<param name="UPnPWLANAccessPoint" rw="1" get_func="cpe_get_const_string" args="0" set_func="cpe_set_null"/>
@@ -68,8 +68,8 @@
 				<param name="DiagnosticsState" rw="1" get_func="cpe_get_ud_state" set_func="cpe_set_ud_state" reload_func="cpe_reload_ud"/>
 				<param name="Interface" rw="1" get_func="cpe_get_ud_iface" set_func="cpe_set_ud_iface"/>
 				<param name="UploadURL" rw="1" get_func="cpe_get_ud_url" set_func="cpe_set_ud_url"/>
-				<param name="DSCP" rw="1" get_func="cpe_get_cost_string" set_func="cpe_set_null" args="0"/>
-				<param name="EthernetPriority" rw="1" get_func="cpe_get_cost_string" set_func="cpe_set_null" args="0"/>
+				<param name="DSCP" rw="1" get_func="cpe_get_const_string" set_func="cpe_set_null" args="0"/>
+				<param name="EthernetPriority" rw="1" get_func="cpe_get_const_string" set_func="cpe_set_null" args="0"/>
 				<param name="TestFileLength" rw="1" get_func="cpe_get_ud_length" set_func="cpe_set_ud_length"/>
 				<param name="ROMTime" get_func="cpe_get_ud"/>
 				<param name="BOMTime" get_func="cpe_get_ud"/>

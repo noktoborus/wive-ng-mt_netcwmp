@@ -229,14 +229,14 @@ void
 saddr_char(char *str, size_t size, sa_family_t family, struct sockaddr *sa)
 {
     char xhost[40];
-    short port = 0;
+    unsigned short port = 0;
     switch(family) {
     case AF_INET:
         inet_ntop(AF_INET, &((struct sockaddr_in*)sa)->sin_addr,
                 xhost, sizeof(xhost));
         port = ntohs(((struct sockaddr_in*)sa)->sin_port);
         if (port) {
-            snprintf(str, size, "%s:%u", xhost, port);
+            snprintf(str, size, "%s:%u", xhost, (unsigned short)port);
         } else {
             snprintf(str, size, "%s", xhost);
         }
@@ -268,7 +268,7 @@ int http_socket_connect(http_socket_t * sock, const char * host, int port)
     cwmp_log_trace("%s(sock=%p, host=\"%s\", port=%d)",
             __func__, (void*)sock, host, port);
 
-    cwmp_log_info("connecting to %s:%d", host, port);
+    cwmp_log_info("resolving destination %s:%d", host, port);
 
     if (sock->sockdes != 0 && sock->sockdes != -1) {
         /* sucks functions:
@@ -300,7 +300,7 @@ int http_socket_connect(http_socket_t * sock, const char * host, int port)
         sock->sockdes = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
         saddr_char(xaddr, sizeof(xaddr),\
                 res->ai_family, (struct sockaddr*)res->ai_addr);
-        cwmp_log_info("connect to addr: %s", xaddr);
+        cwmp_log_info("connecting to address: %s", xaddr);
 
         if (sock->sockdes == -1) {
             cwmp_log_info("socket(): %s", strerror(errno));
@@ -346,6 +346,7 @@ int http_socket_accept(http_socket_t *sock, http_socket_t ** news)
     size_t len;
     pool_t * pool;
     int rc, s;
+    char xaddr[96] = {};
     cwmp_log_trace("%s(sock=%p, news=%p)", __func__, (void*)sock, (void*)news);
 
     len = sizeof addr;
@@ -354,6 +355,9 @@ int http_socket_accept(http_socket_t *sock, http_socket_t ** news)
     {
         return CWMP_ERROR;
     }
+
+    saddr_char(xaddr, sizeof(xaddr), addr.sa_family, &addr);
+    cwmp_log_info("accepted connection from: %s", xaddr);
 
     pool = pool_create(POOL_DEFAULT_SIZE);
     rc = http_socket_calloc(news, pool);
@@ -1511,10 +1515,10 @@ int http_check_digest_auth(const char * auth_realm, const char * auth, char * cp
     http_calc_digest_response("GET", digest.username, cpepwd, &digest);
 
     if (TRstrcasecmp(response, digest.response) == 0) {
-		cwmp_log_info("[response: %s] CPE auth ok", digest.response);
+		cwmp_log_info("[response: %s] auth on CPE ok", digest.response);
         return 0;
 	} else {
-        cwmp_log_info("[response: %s, expected: %s] CPE auth fail",
+        cwmp_log_error("[response: %s, expected: %s] auth on CPE fail",
                 response, digest.response);
         return -1;
     }
@@ -1655,7 +1659,7 @@ int http_parse_digest_auth(const char * auth, http_digest_auth_t * digest_auth, 
 	TRstrncpy(digest_auth->opaque, opaque, MIN_DEFAULT_LEN);
     TRstrncpy(digest_auth->username, user, sizeof(user));
 
-    cwmp_log_info("user[%s], realm[%s], "
+    cwmp_log_debug("user[%s], realm[%s], "
 			"nonce[%s], response[%s], uri[%s], "
 			"qop[%s], cnonce[%s], nc[%s:%"PRIuPTR"], opaque[%s]\n",
                   digest_auth->username,

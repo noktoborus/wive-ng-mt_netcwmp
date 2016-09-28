@@ -247,6 +247,8 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
             cwmp_log_debug("http session: ### ### ### New request from ACS ### ### ###");
         }
 
+        cwmp_log_info("http session: open (requested=%s)",
+                cwmp->new_request ? "yes" : "no");
         cwmp_set_request(cwmp, CWMP_NO);
         session = cwmp_session_create(cwmp);
         session_close  = CWMP_NO;
@@ -368,7 +370,7 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
             }//end switch
         }//end while(!session_close)
 
-        cwmp_log_debug("http session: EXIT");
+        cwmp_log_info("http session: close");
         cwmp_session_free(session);
         session = NULL;
 

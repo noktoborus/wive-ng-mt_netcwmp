@@ -102,10 +102,11 @@ void cwmp_log_set(const char * filename, int level)
         }
 
         g_cwmp_log_file.name = strdup(filename);
+        cwmp_log_info("Log set filename=%s", filename);
     }
 
     if (level) {
-        cwmp_log_debug("set level to: %s", cwmp_loglevel_to_syslog_level(level));
+        cwmp_log_info("Log set level=%s", cwmp_loglevel_to_string(level));
         g_cwmp_log_file.level = level;
     }
 }
