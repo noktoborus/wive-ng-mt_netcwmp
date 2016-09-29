@@ -690,9 +690,10 @@ void cwmp_agent_session(cwmp_t * cwmp)
 
 int cwmp_agent_download_file(download_arg_t * dlarg)
 {
-    int faultcode = 0;
+    int httpcode = 0;
     char * fromurl = dlarg->url;
     char * tofile = "/tmp/download.img";
+    bool upgrade = false;
 
     FUNCTION_TRACE();
 
@@ -701,17 +702,27 @@ int cwmp_agent_download_file(download_arg_t * dlarg)
         return 9001;
     }
 
-    faultcode = (http_receive_file(fromurl, tofile, NULL) == HTTP_200) ? CWMP_OK : 9001 ;
+    if(strcmp(dlarg->filetype, "1 Firmware Upgrade Image") == 0) {
+        upgrade = true;
+        if (!upgrade_set_status(UPGRADE_DOWNLOAD)) {
+            return 9001;
+        }
+    }
 
-    if(faultcode != CWMP_OK)
+    httpcode = http_receive_file(fromurl, tofile, NULL);
+
+    if(httpcode != HTTP_200)
     {
-        cwmp_log_error("ERROR: cwmp_agent_download_file FAULT %i", faultcode);
+        if (upgrade) {
+            upgrade_set_status(UPGRADE_NONE);
+        }
+        cwmp_log_error("ERROR: cwmp_agent_download_file FAULT %i", httpcode);
         return 9001;
     }
 
     cwmp_log_debug("FILETYPE: %s", dlarg->filetype);
 
-    if(strcmp(dlarg->filetype, "1 Firmware Upgrade Image") == 0)
+    if (upgrade)
     {
         cwmp_log_info(" ### FIRMWARE UPGRADE ###");
 
@@ -741,7 +752,7 @@ int cwmp_agent_download_file(download_arg_t * dlarg)
     }
 
 
-    return faultcode;
+    return CWMP_OK;
 }
 
 int cwmp_agent_upload_file(cwmp_t * cwmp, upload_arg_t * ularg)

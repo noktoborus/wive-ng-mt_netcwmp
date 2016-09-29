@@ -14,6 +14,126 @@
 #include "cwmp/log.h"
 #include "cwmp/cfg.h"
 #include "cwmp/md5.h"
+
+#include <paths.h>
+#include <sys/types.h>
+#include <signal.h>
+
+/* TODO: to libwive */
+#define UPGRADE_FILE _PATH_TMP "/z_upgrade_firmware"
+
+const char *
+upgrade_status_to_string(enum upgrade_status s)
+{
+	switch (s) {
+		case UPGRADE_NONE:
+			return NULL;
+		case UPGRADE_DOWNLOAD:
+			return "download";
+		case UPGRADE_CHECK:
+			return "check";
+		case UPGRADE_PREPARE:
+			return "prepare";
+		case UPGRADE_WRITE:
+			return "upgrade";
+	}
+	return NULL;
+}
+
+enum upgrade_status
+upgrade_get_status()
+{
+	char status[32] = {};
+	int pid = -1;
+	FILE *f = NULL;
+	if (access(UPGRADE_FILE, F_OK)) {
+		/* file not exists */
+		return UPGRADE_NONE;
+	}
+
+	if (access(UPGRADE_FILE, R_OK)) {
+		/* file exists, but not readable */
+		cwmp_log_critical(
+				"firmware upgrade: file '%s' not available for reading: %s",
+				UPGRADE_FILE, strerror(errno));
+		/* unknown behavior */
+		return UPGRADE_DOWNLOAD;
+	}
+
+	f = fopen(UPGRADE_FILE, "r");
+	if (!f) {
+		cwmp_log_critical(
+				"firmware upgrade: file '%s' not available for reading: %s",
+				UPGRADE_FILE, strerror(errno));
+		/* unknown behavior */
+		return UPGRADE_DOWNLOAD;
+	}
+	fscanf(f, "%d:%32s", &pid, status);
+	fclose(f);
+
+	/* check program state */
+	if (kill(pid, 0)) {
+		/* program not running */
+		unlink(UPGRADE_FILE);
+		return UPGRADE_NONE;
+	}
+
+	if (!strcmp(status, "download")) {
+		return UPGRADE_DOWNLOAD;
+	} else if (!strcmp(status, "check")) {
+		return UPGRADE_CHECK;
+	} else if (!strcmp(status, "prepare")) {
+		return UPGRADE_PREPARE;
+	} else if (!strcmp(status, "upgrade")) {
+		return UPGRADE_WRITE;
+	}
+
+	return UPGRADE_NONE;
+}
+
+bool
+upgrade_set_status(enum upgrade_status s)
+{
+	enum upgrade_status so = UPGRADE_NONE;
+	const char *status = NULL;
+	FILE *f = NULL;
+
+	status = upgrade_status_to_string(s);
+
+	if ((so = upgrade_get_status()) != UPGRADE_NONE) {
+		cwmp_log_error(
+				"firmware upgrade: set status to '%s' failed: "
+				"already in status: %s",
+				status, upgrade_status_to_string(so));
+	}
+
+	if (s == UPGRADE_NONE) {
+		if (!access(UPGRADE_FILE, F_OK)) {
+			/* file exists */
+			if (!unlink(UPGRADE_FILE)) {
+				/* delete file ok */
+				return true;
+			}
+			/* delete file failed */
+			return false;
+		}
+		/* file not exists */
+		return true;
+	}
+
+	f = fopen(UPGRADE_FILE, "w");
+	if (!f) {
+		cwmp_log_error(
+				"firmware upgrade: file %s not available for writing: %s",
+				UPGRADE_FILE, strerror(errno));
+		return false;
+	}
+
+	fprintf(f, "%d:%s", getpid(), status);
+	fclose(f);
+	return true;
+}
+
 /*
 static const char base64[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -521,17 +641,25 @@ int firmware_upgrade(char* filename)
 {
 	unsigned long file_size = 0;
 
+	cwmp_log_trace("%s(filename='%s')", __func__, filename);
+
+	if (!upgrade_set_status(UPGRADE_CHECK)) {
+		return 3;
+	}
+
 	char* buffer = ReadFile(filename, &file_size);
 	if (buffer == NULL)
 	{
 	    cwmp_log_error("Check image error: unable to read image file: %s", filename);
+		upgrade_set_status(UPGRADE_NONE);
 	    return 1;
 	}
 
 #if defined(CONFIG_RT2880_ROOTFS_IN_FLASH)
 	if(file_size > MAX_IMG_SIZE || file_size < MIN_FIRMWARE_SIZE){
 		cwmp_log_error("Check image error: size incompatible image. Size: %d", (int)file_size);
-    		return 2;
+		upgrade_set_status(UPGRADE_NONE);
+		return 2;
 	}
 #endif
 
@@ -539,16 +667,22 @@ int firmware_upgrade(char* filename)
 	if (!checkimage(filename, 0, (int)file_size))
 	{
 		cwmp_log_error("Check image error: corrupted or uncompatable image. Size: %d", (int)file_size);
+		upgrade_set_status(UPGRADE_NONE);
 		return 3;
 	}
 
+	upgrade_set_status(UPGRADE_PREPARE);
 	system("fs restore > /dev/null 2>&1");
 
 	// flash write
+	upgrade_set_status(UPGRADE_WRITE);
 	if (mtd_write_firmware(filename, 0, (int)file_size) == -1) {
 		cwmp_log_error("MTD_WRITE ERROR: NEED RESTORE OVER RECOVERY MODE!!!");
+		upgrade_set_status(UPGRADE_NONE);
 		return -1;
 	}
+
+	upgrade_set_status(UPGRADE_NONE);
 
 //	sleep (3);
 //	reboot(RB_AUTOBOOT);
@@ -557,3 +691,4 @@ int firmware_upgrade(char* filename)
 //#else
 //#error "no upload support defined!"
 //#endif
+

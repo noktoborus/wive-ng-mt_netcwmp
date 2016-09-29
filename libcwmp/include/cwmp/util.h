@@ -18,6 +18,7 @@
 #include <cwmp/upload.h>
 
 #include <libwive.h>
+#include <stdbool.h>
 
 #define Public		/* Accessible outside this module     */
 #define Private static		/* Accessible only within this module */
@@ -299,9 +300,29 @@ static INLINE int is_digit(const char *str)
     return 0;
 }
 
+/* TODO: to libwive */
+enum upgrade_status {
+	/* no upgrade workers */
+	UPGRADE_NONE,
+	/* download image */
+	UPGRADE_DOWNLOAD,
+	/* check image */
+	UPGRADE_CHECK,
+	/* prepare to upgrade */
+	UPGRADE_PREPARE,
+	/* write image to nvram */
+	UPGRADE_WRITE
+};
 
 
+const char *
+upgrade_status_to_string(enum upgrade_status s);
 
+enum upgrade_status
+upgrade_get_status();
+
+bool
+upgrade_set_status(enum upgrade_status s);
 
 #endif
 
