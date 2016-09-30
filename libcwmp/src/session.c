@@ -363,7 +363,6 @@ cwmp_session_t * cwmp_session_create(cwmp_t * cwmp)
     session->pool = pool;
     session->status = 0;
     session->newdata = 0;
-    session->timeout = 0;
     session->envpool = NULL;
     session->connpool = NULL;
 
@@ -443,11 +442,9 @@ int cwmp_session_connect(cwmp_session_t * session, const char * url)
     rv = cwmp_session_create_connection(session);
     if(rv != CWMP_OK)
     {
-	cwmp_log_error("ACS session connect error: %i", rv);
         return rv;
     }
     cwmp_session_set_headers(session, 0);
-    cwmp_log_debug("ACS session connect url: %s", url);
 
     return CWMP_OK;
 }
@@ -478,8 +475,9 @@ int cwmp_session_create_connection(cwmp_session_t * session)
     http_socket_t * sock;
     int use_ssl = 0;
     http_dest_t *  dest = session->dest;
+    int timeout = -1;
 
-	FUNCTION_TRACE();
+	cwmp_log_trace("%s(session=%p)", __func__, (void*)session);
 
     if(dest)
     {
@@ -502,8 +500,13 @@ int cwmp_session_create_connection(cwmp_session_t * session)
     }
 
     cwmp_log_debug("dest host: %s, dest port: %d", session->dest->host, session->dest->port);
-
-    http_socket_set_sendtimeout(sock, 10);
+    if ((timeout = cwmp_conf_get_int("cwmpd:session_connect_timeout")) >= -1) {
+        http_socket_set_recvtimeout(sock, timeout);
+        http_socket_set_sendtimeout(sock, timeout);
+    } else {
+        http_socket_set_recvtimeout(sock, -1);
+        http_socket_set_sendtimeout(sock, -1);
+    }
 
     rc = http_socket_connect(sock, session->dest->host, session->dest->port);
     if(rc != CWMP_OK)
@@ -523,12 +526,15 @@ int cwmp_session_create_connection(cwmp_session_t * session)
         }
 #endif
     }
+    if ((timeout = cwmp_conf_get_int("cwmpd:session_response_timeout")) >= -1) {
+        http_socket_set_recvtimeout(sock, timeout);
+        http_socket_set_sendtimeout(sock, timeout);
+    } else {
+        http_socket_set_recvtimeout(sock, -1);
+        http_socket_set_sendtimeout(sock, -1);
+    }
 
     http_socket_set_writefunction(sock, cwmp_session_write_callback, session);
-    if(session->timeout > 0)
-    {
-        http_socket_set_recvtimeout(sock, session->timeout);
-    }
 
     session->sock = sock;
 

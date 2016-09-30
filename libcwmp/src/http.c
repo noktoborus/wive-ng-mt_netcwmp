@@ -257,6 +257,61 @@ saddr_char(char *str, size_t size, sa_family_t family, struct sockaddr *sa)
     }
 }
 
+/* substract tv2 from tv1, result in tv1
+ * if tv2 > tv1 result is tv1.tv_sec = 0, tv1.tv_usec = 0
+ */
+static void
+timeval_substract_tv(struct timeval *tv1, const struct timeval *tv2)
+{
+	if (tv2->tv_usec > tv1->tv_usec) {
+		if (tv1->tv_sec >= 1) {
+			tv1->tv_sec--;
+			tv1->tv_usec += 1000000;
+		}
+	}
+	if (tv2->tv_sec > tv1->tv_sec || tv2->tv_usec > tv1->tv_usec) {
+		tv1->tv_sec = 0u;
+		tv1->tv_usec = 0u;
+	} else {
+		tv1->tv_sec -= tv2->tv_sec;
+		tv1->tv_usec -= tv2->tv_usec;
+	}
+}
+
+static bool
+timeval_is_null(struct timeval *tv)
+{
+    if (!tv->tv_sec && !tv->tv_usec)
+        return true;
+    return false;
+}
+
+static void
+timeval_calc_timeout(const struct timeval *begin, unsigned segments, int timeout, struct timeval *result)
+{
+    struct timeval tv_timeout = { .tv_sec = timeout, .tv_usec = 0 };
+    struct timeval ctv = {};
+    useconds_t usec = 0;
+    gettimeofday(&ctv, NULL);
+
+    memset(result, 0u, sizeof(*result));
+
+    timeval_substract_tv(&ctv, begin);
+    if (timeval_is_null(&ctv)) {
+        return;
+    }
+
+    timeval_substract_tv(&tv_timeout, &ctv);
+    if (segments) {
+        /* get part of global timeout */
+        usec = tv_timeout.tv_sec * 1000000 + tv_timeout.tv_usec;
+        usec = usec / segments;
+        tv_timeout.tv_sec = usec / 1000000;
+        tv_timeout.tv_usec = usec % 1000000;
+    }
+    memcpy(result, &tv_timeout, sizeof(*result));
+}
+
 int http_socket_connect(http_socket_t * sock, const char * host, int port)
 {
     struct addrinfo hints = {.ai_family = AF_UNSPEC, .ai_socktype = SOCK_STREAM};
@@ -265,6 +320,10 @@ int http_socket_connect(http_socket_t * sock, const char * host, int port)
     char nport[16] = {};
     int rval = 0;
     struct timeval tv = {};
+    struct timeval tvr = {};
+    struct timeval tvs = {};
+    unsigned segments = 0u;
+    unsigned no = 0u;
     cwmp_log_trace("%s(sock=%p, host=\"%s\", port=%d)",
             __func__, (void*)sock, host, port);
 
@@ -295,12 +354,16 @@ int http_socket_connect(http_socket_t * sock, const char * host, int port)
     }
 
     gettimeofday(&sock->stat.tcp_connect, NULL);
+    /* calc */
     for (res = result; res; res = res->ai_next) {
+        segments++;
+    }
+    /* try connect */
+    for (res = result, no = 1u; res; no++, res = res->ai_next) {
         char xaddr[96] = {};
         sock->sockdes = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
         saddr_char(xaddr, sizeof(xaddr),\
                 res->ai_family, (struct sockaddr*)res->ai_addr);
-        cwmp_log_info("connecting to address: %s", xaddr);
 
         if (sock->sockdes == -1) {
             cwmp_log_info("socket(): %s", strerror(errno));
@@ -308,23 +371,63 @@ int http_socket_connect(http_socket_t * sock, const char * host, int port)
         }
 
         /* setup options */
-        if (sock->recv_timeout != -1) {
-            tv.tv_sec = sock->recv_timeout;
-            setsockopt(sock->sockdes, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+        if (sock->recv_timeout > 0) {
+            timeval_calc_timeout(&sock->stat.tcp_connect, segments, sock->recv_timeout, &tvr);
+            if (timeval_is_null(&tvr)) {
+                cwmp_log_error("connect: recv timeout reached, value=%d", sock->recv_timeout);
+                goto timeout;
+            }
+            setsockopt(sock->sockdes, SOL_SOCKET, SO_RCVTIMEO, &tvr, sizeof(tvr));
         }
-        if (sock->send_timeout != -1) {
-            tv.tv_sec = sock->send_timeout;
-            setsockopt(sock->sockdes, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+        if (sock->send_timeout > 0) {
+            timeval_calc_timeout(&sock->stat.tcp_connect, segments, sock->send_timeout, &tvs);
+            if (timeval_is_null(&tvs)) {
+                cwmp_log_error("connect: send timeout reached, value=%d", sock->send_timeout);
+                goto timeout;
+            }
+            setsockopt(sock->sockdes, SOL_SOCKET, SO_SNDTIMEO, &tvs, sizeof(tvs));
         }
+
+        cwmp_log_info(
+                "connecting to address: %s (%u/%u, timeouts=["
+                    "recv: %"PRIdPTR".%.06"PRIdPTR", "
+                    "send: %"PRIdPTR".%.06"PRIdPTR"])",
+                xaddr, no, segments,
+                tvr.tv_sec, tvr.tv_usec,
+                tvs.tv_sec, tvs.tv_usec
+                );
+
         /* connect */
         if (connect(sock->sockdes, res->ai_addr, res->ai_addrlen) == -1) {
-            cwmp_log_info("connect(): %s", strerror(errno));
+            if (errno == EINPROGRESS) {
+                cwmp_log_info("connect(): timeout reached, value=%d",
+                        (sock->send_timeout > sock->recv_timeout ?
+                            sock->recv_timeout : sock->send_timeout));
+            } else {
+                cwmp_log_info("connect(): %s", strerror(errno));
+            }
             close(sock->sockdes);
             sock->sockdes = -1;
             continue;
         }
         gettimeofday(&sock->stat.tcp_response, NULL);
-        cwmp_log_info("connected to: %s:%d (%s)", host, port, xaddr);
+        memcpy(&tv, &sock->stat.tcp_response, sizeof(tv));
+        timeval_substract_tv(&tv, &sock->stat.tcp_connect);
+        if (sock->recv_timeout != -1 || sock->send_timeout != -1) {
+            timeval_calc_timeout(&sock->stat.tcp_connect, 0u, sock->send_timeout, &tvs);
+            timeval_calc_timeout(&sock->stat.tcp_connect, 0u, sock->recv_timeout, &tvr);
+            cwmp_log_info(
+                    "connected to: %s:%d (%s), reaming timeouts=["
+                    "recv: %"PRIdPTR".%.06"PRIdPTR", "
+                    "send: %"PRIdPTR".%.06"PRIdPTR"], time=%"PRIdPTR".%.06"PRIdPTR,
+                    host, port, xaddr,
+                    tvr.tv_sec, tvr.tv_usec,
+                    tvs.tv_sec, tvs.tv_usec,
+                    tv.tv_sec, tv.tv_usec);
+        } else {
+            cwmp_log_info("connected to: %s:%d (%s), time=%"PRIdPTR".%.06"PRIdPTR,
+                    host, port, xaddr, tv.tv_sec, tv.tv_usec);
+        }
 
         break;
     }
@@ -338,6 +441,9 @@ int http_socket_connect(http_socket_t * sock, const char * host, int port)
 gai_error:
     freeaddrinfo(result);
     return CWMP_ERROR;
+timeout:
+    freeaddrinfo(result);
+    return CWMP_TIMEOUT;
 }
 
 int http_socket_accept(http_socket_t *sock, http_socket_t ** news)

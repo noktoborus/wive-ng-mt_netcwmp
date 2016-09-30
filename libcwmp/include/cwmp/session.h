@@ -25,7 +25,6 @@ struct cwmp_session_t
     int status;
     int reconnect;
     int newdata;
-    int	timeout;
     int retry_count;
 
     int	last_method;

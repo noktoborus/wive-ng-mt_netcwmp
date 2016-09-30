@@ -252,9 +252,6 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
         cwmp_set_request(cwmp, CWMP_NO);
         session = cwmp_session_create(cwmp);
         session_close  = CWMP_NO;
-        session->timeout = cwmp_conf_get_int("cwmpd:http_timeout");
-        //cwmp_session_set_timeout(cwmp_conf_get_int("cwmpd:http_timeout"));
-        cwmp_log_debug("http session: timeout is %d", session->timeout);
         cwmp_session_open(session);
 
         while (!session_close) {
@@ -264,10 +261,15 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
             switch (session->status) {
             case CWMP_ST_START:
                 //create a new connection to acs
-                if (cwmp_session_connect(session, cwmp->acs_url) != CWMP_OK) {
+                rv = cwmp_session_connect(session, cwmp->acs_url);
+                if (rv == CWMP_TIMEOUT) {
+                    cwmp_log_error("http session: connection timeout reached");
+                    session->status = CWMP_ST_RETRY;
+                } else if (rv != CWMP_OK) {
                     cwmp_log_error("http session: connect to acs: %s failed.", cwmp->acs_url);
                     session->status = CWMP_ST_RETRY;
                 } else {
+                    cwmp_log_info("http session: connected to url: %s", cwmp->acs_url);
                     session->status = CWMP_ST_INFORM;
                 }
                 break;
