@@ -985,6 +985,8 @@ int http_read_line(http_socket_t * sock, char * buffer, int max)
         if (readnum < 0)
         {
             cwmp_log_error("recv, CANNOT READ 1 char");
+            if (errno == EAGAIN)
+                return CWMP_TIMEOUT;
             return CWMP_ERROR;
         };
 
@@ -999,6 +1001,8 @@ int http_read_line(http_socket_t * sock, char * buffer, int max)
             if ( http_socket_read(sock, &c, 1) < 0 )
             {
                 cwmp_log_error("http_read_line ERROR 2");
+                if (errno == EAGAIN)
+                    return CWMP_TIMEOUT;
                 return CWMP_ERROR;
             };
 
@@ -1074,6 +1078,8 @@ int http_read_body(http_socket_t * sock, int max)//, cwmp_chunk_t * body, pool_t
         if ( (len = http_socket_read(sock, buffer, 512)) < 0 )
         {
             cwmp_log_error("recv, CANNOT READ 512 chars");
+            if (errno == EAGAIN)
+                return CWMP_TIMEOUT;
             return CWMP_ERROR;
         }
         if (len <= 0)
@@ -1460,7 +1466,9 @@ int http_read_response(http_socket_t * sock, http_response_t * response, pool_t 
     if (rc <= 0)
     {
         cwmp_log_error("http_read_response ERROR 1");
-        return -1;
+        if (rc == CWMP_TIMEOUT)
+            return rc;
+        return CWMP_ERROR;
     }
 
     len = cwmp_chunk_length(header);
@@ -2001,7 +2009,7 @@ int http_send_diagnostics(size_t size, const char *tourl, struct http_statistics
         rc = http_read_response(sock, response, pool);
     }
 
-    if (rc != 100) {
+    if (rc != HTTP_100) {
         goto end;
     }
 
@@ -2014,7 +2022,9 @@ int http_send_diagnostics(size_t size, const char *tourl, struct http_statistics
     }
 end:
     pool_destroy(pool);
-    if (rc != 200)
+    if (rc != HTTP_200)
+        if (rc == CWMP_TIMEOUT)
+            return CWMP_TIMEOUT;
         return CWMP_ERROR;
     return CWMP_OK;
 }
@@ -2093,6 +2103,9 @@ int http_send_file_request(http_socket_t * sock , http_request_t * request, cons
 	{
 		fclose(tf);
 	}
+        if (rc == CWMP_TIMEOUT) {
+            return CWMP_TIMEOUT;
+        }
 	return CWMP_ERROR;
     }
 
@@ -2187,6 +2200,8 @@ out:
 	if(rc != HTTP_200)
 	{
     	        cwmp_log_error("http_send_file response code %i",rc);
+        if (rc == CWMP_TIMEOUT)
+            return CWMP_TIMEOUT;
 		return CWMP_ERROR;
 	}
 	else

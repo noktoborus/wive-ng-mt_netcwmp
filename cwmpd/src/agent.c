@@ -308,7 +308,10 @@ void cwmp_agent_start_session(cwmp_t * cwmp)
                 session->status = CWMP_ST_END;
 
                 rv = cwmp_agent_recv_response(session);
-                if (rv == HTTP_204) {
+                if (rv == CWMP_TIMEOUT) {
+                    cwmp_log_error("http session: receive timeout reached");
+                    session->status = CWMP_ST_RETRY;
+                } else if (rv == HTTP_204) {
                     cwmp_log_debug("http session: receive no content, closing session");
                 } else if (rv == HTTP_200 || rv == CWMP_OK) {
                     session->status = CWMP_ST_ANSLYSE;
