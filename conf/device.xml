@@ -32,6 +32,10 @@
 		-->
 		<object name="InternetGatewayDevice">
 			<param name="DeviceSummary" inform="1" get_func="cpe_get_const_string" args=""/>
+			<object name="QueueManagement">
+				<!-- QoS:1 -->
+				<param name="Enable" rw="1" get_func="cpe_get_nvram_bool_onoff" set_func="cpe_set_nvram_bool_onoff" args="QoSEnable"/>
+			</object>
 			<object name="UPnP">
 				<object name="Device">
 					<param name="Enable" rw="1" get_func="cpe_get_const_string" args="1" set_func="cpe_set_null"/>
