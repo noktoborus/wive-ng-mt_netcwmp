@@ -1356,16 +1356,20 @@ int cwmp_parse_getparametervalues_message_parameter_iterator(env_t * env, parame
 //cwmp_parse_getparametervalues_message
 int cwmp_parse_getparametervalues_message(env_t * env , xmldoc_t * doc, parameter_node_t * root, parameter_list_t ** ppl, fault_code_t *fault)
 {
-    cwmp_log_debug("DEBUG: cwmp_parse_getparametervalues_message");
     xmlnode_t * parameterListNode;
     xmlnode_t * parameterNode;
+    xmlnode_t * node = NULL;
 //    parameter_t ** nextpv;
 //    int rc;
 
+    cwmp_log_trace("%s(env=%p, doc=%p, root=%p, ppl=%p, fault=%p)",
+            __func__, (void*)env, (void*)doc, (void*)root, (void*)ppl, (void*)fault);
     nvram_init(RT2860_NVRAM);
 
-    parameterListNode = cwmp_xml_get_child_with_name(cwmp_get_rpc_method_node(doc), CWMP_RPC_PARAMETERNAMES);
-
+    node = cwmp_get_rpc_method_node(doc);
+    if (!(parameterListNode = cwmp_xml_get_child_with_name(node, CWMP_RPC_PARAMETERNAMES))) {
+        parameterListNode = cwmp_xml_get_child_with_name(node, CWMP_RPC_PARAMETERNAMES_SHORT);
+    }
 
     if (!parameterListNode || !ppl)
     {
@@ -2160,7 +2164,7 @@ xmlnode_t * cwmp_create_header_node(env_t * env ,   xmlnode_t * root, header_t *
 xmlnode_t * cwmp_create_body_node(env_t * env ,  xmlnode_t * root)
 {
     xmlnode_t * bodyNode;
-    FUNCTION_TRACE();
+    cwmp_log_trace("%s(env=%p, root=%p)", __func__, (void*)env, (void*)root);
     ESA(bodyNode, cwmp_xml_create_child_node(env ,  root, NULL, SOAP_ENV_BODY, NULL));
     return bodyNode;
 }

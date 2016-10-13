@@ -1841,6 +1841,9 @@ int http_write_request(http_socket_t * sock, http_request_t * request, cwmp_chun
     if (len2 || additional_len) {
         len1 += snprintf(buffer + len1, sizeof(buffer) - len1,
                 "Content-Length: %d\r\n", len2 + additional_len);
+    } else {
+        len1 += snprintf(buffer + len1, sizeof(buffer) - len1,
+                "Content-Length: 0\r\n");
     }
 
 	if(dest->auth.type == HTTP_DIGEST_AUTH)
