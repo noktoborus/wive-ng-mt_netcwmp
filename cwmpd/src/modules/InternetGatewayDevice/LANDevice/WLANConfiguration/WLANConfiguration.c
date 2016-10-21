@@ -1284,3 +1284,223 @@ cpe_get_igd_lan_wlan_ssidadv(cwmp_t * cwmp, const char * name, char ** value, ch
     return FAULT_CODE_OK;
 }
 
+/* *** dynamic config *** */
+static struct wlanc_node {
+    unsigned id;
+    char name[16];
+    struct wlanc_node *next;
+} *wlanc = NULL;
+static unsigned wlanc_count = 0u;
+
+static void
+wlanc_free_all(struct wlanc_node *root)
+{
+    struct wlanc_node *n = root;
+
+    while (root) {
+        n = n->next;
+        free(root);
+        root = n;
+    }
+}
+
+static struct wlanc_node *
+wlanc_nget(struct wlanc_node *root, const char *name, unsigned id)
+{
+    struct wlanc_node *n = NULL;
+
+    for (n = root; n; n = n->next) {
+        if (name) {
+            if (!strcmp(n->name, name)) {
+                break;
+            }
+        } else if (id != -1u) {
+            if (n->id == id) {
+                break;
+            }
+        }
+    }
+
+    if (!n) {
+        cwmp_log_error(
+                "InternetGatewayDevice...WLANConfiguration: "
+                "can't get wlan with name=%s, id=%u",
+                name ? name : "", id);
+    }
+    return n;
+}
+
+static struct wlanc_node *
+wlanc_nnew(struct wlanc_node *root, char *prefix_filter, char *name)
+{
+    struct wlanc_node *n = NULL;
+    struct wlanc_node *l = NULL;
+    unsigned id = 0u;
+    size_t prefix_len = 0u;
+
+    if (!name || !*name)
+        return NULL;
+
+    if (prefix_filter) {
+        prefix_len = strlen(prefix_filter);
+        if (strncmp(name, prefix_filter, prefix_len) != 0) {
+            return NULL;
+        }
+        id = (unsigned)strtoul(name + prefix_len, NULL, 10);
+    } else {
+        /* get id from tail */
+        size_t name_max = strlen(name) - 1;
+        size_t name_len = name_max;
+        for (; name_len > 0; --name_len) {
+            if (name[name_len] >= '0' || name[name_len] <= '9') {
+                id += (name[name_len] - '0') * ((name_max - name_len) * 10);
+            } else {
+                break;
+            }
+        }
+    }
+
+    for (n = root; n; n = n->next) {
+        if (!strcmp(n->name, name)) {
+            break;
+        }
+        if (n->id == id) {
+            break;
+        }
+        l = n;
+    }
+
+    if (n) {
+        return NULL;
+    }
+
+    n = calloc(1, sizeof(*n));
+    if (!n) {
+        cwmp_log_error("InternetGatewayDevice...WLANConfiguration: calloc(%d) failed: %s",
+                sizeof(*n), strerror(errno));
+        return NULL;
+    }
+
+    if (name) {
+        strncpy(n->name, name, sizeof(n->name));
+    }
+    n->id = id;
+
+    if (l) {
+        l->next = n;
+    }
+
+    return n;
+}
+
+int
+cpe_refresh_wlanc(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_func_t callback_reg)
+{
+    int i = 0;
+    int count = 0;
+    struct nic_counts *nc = NULL;
+    struct wlanc_node *w = NULL;
+    parameter_node_t *new_param = NULL;
+
+    DM_TRACE_REFRESH();
+    /* free */
+    cwmp_model_delete_object_child(cwmp, param_node);
+    wlanc_free_all(wlanc);
+
+    wlanc = NULL;
+    wlanc_count = 0u;
+
+    /* generate */
+    nc = nicscounts(&count);
+    for (i = 0; i < count; i++) {
+        /* FIXME: hardcoded name */
+        w = wlanc_nnew(wlanc, "ra", nc[i].ifname);
+        if (!w) {
+            continue;
+        }
+        cwmp_model_copy_parameter(param_node, &new_param, w->id);
+        if (!wlanc) {
+            wlanc = w;
+        }
+    }
+
+    return FAULT_CODE_OK;
+}
+
+static unsigned
+wlanc_get_id(cwmp_t *cwmp, const char *name)
+{
+    unsigned id = (unsigned)-1;
+    parameter_node_t *pn = NULL;
+    char *p = NULL;
+
+    pn = cwmp_get_parameter_path_node(cwmp->root, name);
+    if (!pn) {
+        cwmp_log_error(
+                "InternetGatewayDevice...WLANConfiguration: "
+                "can't process path: %s",
+                name);
+        return (unsigned)-1;
+    }
+
+    /* find */
+    for (; pn; pn = pn->parent) {
+        id = (unsigned)strtoul(pn->name, &p, 10);
+        if (!*p) {
+            break;
+        }
+    }
+
+    if (!pn) {
+        cwmp_log_error(
+                "InternetGatewayDevice...WLANConfiguration: "
+                "can't get number from path: %s",
+                name
+                );
+        return (unsigned)-1;
+    }
+
+    return id;
+}
+
+int
+cpe_get_igd_wlanc_bssid(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    unsigned id = -1u;
+    struct wlanc_node *w = NULL;
+
+    DM_TRACE_GET();
+
+    if ((id = wlanc_get_id(cwmp, name)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
+    wlanc = wlanc_nget(wlanc, NULL, id);
+    if (!wlanc) {
+        return FAULT_CODE_9002;
+    }
+
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_wlanc_channel(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    DM_TRACE_GET();
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_wlanc_ssid(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    DM_TRACE_GET();
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_wlanc_beacontype(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    DM_TRACE_GET();
+    return FAULT_CODE_OK;
+}
+

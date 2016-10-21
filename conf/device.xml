@@ -236,94 +236,19 @@
 					<param name="DHCPLeaseTime" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_int" args="dhcpLease" set_func="cpe_set_nvram_string"/>
 				</object>
 				<param name="LANWLANConfigurationNumberOfEntries" get_func="cpe_get_const_string" args="1"/>
-				<object name="WLANConfiguration">
-				<object name="1">
-					<param name="Alias" rw="1" get_func="cpe_get_alias" set_func="cpe_set_alias"/>
-					<!-- WiFiLAN:1 -->
-					<param name="Enable" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_bool" args="RadioOn" set_func="cpe_set_nvram_bool"/>
-					<param name="Status" get_func="cpe_get_igd_lan_wlan_status"/>
-					<param name="BSSID" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_bssid" args="1" set_func="cpe_set_null"/>
-					<param name="MaxBitRate" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_const_string" set_func="cpe_set_null" args="Auto"/>
-					<param name="Channel" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_channel" args="Channel" set_func="cpe_set_igd_lan_wlan_channel"/>
-					<param name="SSID" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="SSID1" set_func="cpe_set_nvram_string"/>
-					<param name="BeaconType" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_beacontype" set_func="cpe_set_igd_lan_wlan_beacontype"/>
-					<!--<param name="MACAddressControlEnabled" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>-->
-					<param name="Standard" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_standard" set_func="cpe_set_igd_lan_wlan_standard"/>
-					<param name="WEPKeyIndex" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" set_func="cpe_set_nvram_string" args="DefaultKeyID"/>
-					<param name="KeyPassphrase" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="WPAPSK1" set_func="cpe_set_nvram_string"/>
-					<param name="WEPEncryptionLevel" get_func="cpe_get_const_string" args="104-bit"/>
-					<param name="BasicEncryptionModes" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_basicencryption" set_func="cpe_set_igd_lan_wlan_basicencryption"/>
-					<param name="BasicAuthenticationMode" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_basicauthmode" set_func="cpe_set_igd_lan_wlan_basicauthmode"/>
-					<param name="WPAEncryptionModes" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_wpaencryption" set_func="cpe_set_igd_lan_wlan_wpaencryption"/>
-					<param name="WPAAuthenticationMode" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_wpaauthmode" set_func="cpe_set_igd_lan_wlan_wpaauthmode"/>
-					<param name="PossibleChannels" get_func="cpe_get_igd_lan_wlan_possiblechannels"/>
-					<!--<param name="BasicDataTransmitRates" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>-->
-					<!--<param name="OperationalDataTransmitRates" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>-->
-					<!--<param name="PossibleDataTransmitRates" get_func=""/>-->
-					<param name="RadioEnabled" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_enabled" set_func="cpe_set_igd_lan_wlan_enabled"/>
-					<!--<param name="AutoRateFallBackEnabled" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>-->
-					<param name="TotalBytesSent" get_func="cpe_get_igd_lan_wlan_tx_bytes"/>
-					<param name="TotalBytesReceived" get_func="cpe_get_igd_lan_wlan_rx_bytes"/>
-					<param name="TotalPacketsSent" get_func="cpe_get_igd_lan_wlan_tx_packets"/>
-					<param name="TotalPacketsReceived" get_func="cpe_get_igd_lan_wlan_rx_packets"/>
-					<param name="TotalAssociations" get_func="cpe_get_igd_lan_wlan_associated_count"/>
-					<object name="AssociatedDevice" refresh_func="cpe_refresh_igd_lan_wlan_associated">
-						<object name="{i}">
-							<param name="AssociatedDeviceMACAddress" get_func="cpe_get_igd_lan_wlan_assoc_mac"/>
-							<param name="AssociatedDeviceIPAddress" get_func="cpe_get_igd_lan_wlan_assoc_addr"/>
-							<param name="AssociatedDeviceAuthenticationState" get_func="cpe_get_igd_lan_wlan_assoc_state"/>
-						</object>
+				<object name="WLANConfiguration" refresh_func="cpe_refresh_wlanc">
+					<object name="{i}">
+						<param name="Alias" rw="1" get_func="cpe_get_alias" set_func="cpe_set_alias"/>
+						<!-- WiFiLAN:1 -->
+						<param name="Enable" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_bool" args="RadioOn" set_func="cpe_set_nvram_bool"/>
+						<param name="Status" get_func="cpe_get_igd_lan_wlan_status"/>
+						<param name="BSSID" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_wlanc_bssid" set_func="cpe_set_igd_wlanc_bssid"/>
+						<param name="MaxBitRate" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_const_string" set_func="cpe_set_null" args="Auto"/>
+						<param name="Channel" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_wlanc_channel" set_func="cpe_set_igd_wlanc_channel"/>
+						<param name="SSID" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_wlanc_ssid" set_func="cpe_set_igd_wlanc_ssid"/>
+						<param name="BeaconType" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_wlanc_beacontype" set_func="cpe_set_igd_wlanc_beacontype"/>
+						<!--<param name="MACAddressControlEnabled" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>-->
 					</object>
-					<object name="WEPKey">
-						<object name="1">
-							<param name="WEPKey" rw="1" get_func="cpe_get_igd_lan_wlan_wepkey" set_func="cpe_set_igd_lan_wlan_wepkey" args="1"/>
-						</object>
-						<object name="2">
-							<param name="WEPKey" rw="1" get_func="cpe_get_igd_lan_wlan_wepkey" set_func="cpe_set_igd_lan_wlan_wepkey" args="2"/>
-						</object>
-						<object name="3">
-							<param name="WEPKey" rw="1" get_func="cpe_get_igd_lan_wlan_wepkey" set_func="cpe_set_igd_lan_wlan_wepkey" args="3"/>
-						</object>
-						<object name="4">
-							<param name="WEPKey" rw="1" get_func="cpe_get_igd_lan_wlan_wepkey" set_func="cpe_set_igd_lan_wlan_wepkey" args="4"/>
-						</object>
-					</object>
-					<!-- PreSharedKey not supported
-					<object name="PreSharedKey" refresh_func="" add_func="">
-						<object name="{i}" del_func="">
-							<param name="PreSharedKey" rw="1" get_func="" set_func=""/>
-							<param name="KeyPassphrase" rw="1" get_func="" set_func=""/>
-						</object>
-					</object>
-					-->
-					<!-- WiFiLAN:2 -->
-					<param name="Name" get_func="cpe_get_const_string" args="ra0"/>
-					<param name="AutoChannelEnable" reload_func="cpe_reload_all" rw="1" get_func="cpe_get_igd_lan_wlan_autochannel" args="" set_func="cpe_set_igd_lan_wlan_autochannel"/>
-					<param name="SSIDAdvertisementEnabled" rw="1" get_func="cpe_get_igd_lan_wlan_ssidadv" set_func="cpe_set_igd_lan_wlan_ssidadv"/>
-					<param name="TransmitPowerSupported" get_func="cpe_get_const_string" args="5,10,20,40,70,100"/>
-					<param name="TransmitPower" rw="1" get_func="cpe_get_nvram_int" set_func="cpe_set_nvram_int" args="TxPower"/>
-					<object name="Stats">
-						<param name="ErrorsSent" get_func="cpe_get_igd_lan_wlan_stats"/>
-						<param name="ErrorsReceived" get_func="cpe_get_igd_lan_wlan_stats"/>
-						<!--<param name="UnicastPacketsSent" get_func="cpe_get_igd_lan_wlan_stats"/>--> <!-- not supported -->
-						<!--<param name="UnicastPacketsReceived" get_func="cpe_get_igd_lan_wlan_stats"/>-->
-						<param name="DiscardPacketsSent" get_func="cpe_get_igd_lan_wlan_stats"/>
-						<param name="DiscardPacketsReceived" get_func="cpe_get_igd_lan_wlan_stats"/>
-						<!--<param name="MulticastPacketsSent" get_func="cpe_get_igd_lan_wlan_stats"/>-->
-						<param name="MulticastPacketsReceived" get_func="cpe_get_igd_lan_wlan_stats"/>
-						<!--<param name="BroadcastPacketsSent" get_func="cpe_get_igd_lan_wlan_stats"/>-->
-						<!--<param name="BroadcastPacketsReceived" get_func="cpe_get_igd_lan_wlan_stats"/>-->
-						<!--<param name="UnknownProtoPacketsReceived" get_func="cpe_get_igd_lan_wlan_stats"/>-->
-					</object>
-					<!-- ? -->
-					<param name="TotalPSKFailures" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_string" args="RekeyInterval" set_func="cpe_set_nvram_string"/>
-					<param name="TotalIntegrityFailures" get_func="cpe_get_const_string" args="0"/>
-					<param name="IEEE11iAuthenticationMode" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_ieeeauthmode" set_func="cpe_set_igd_lan_wlan_ieeeauthmode"/>
-					<param name="IEEE11iEncryptionModes" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_lan_wlan_wpaencryption" set_func="cpe_set_igd_lan_wlan_wpaencryption"/>
-					<!-- WiFiWMM:1 -->
-					<param name="WMMSupported" get_func="cpe_get_const_string" args="1"/>
-					<param name="WMMEnable" rw="1" get_func="cpe_get_nvram_bool_onoff" set_func="cpe_set_nvram_bool_onoff" args="WmmCapable" reload_func="cpe_reload_all"/>
-				</object>
 				</object>
 			</object>
 			</object>
