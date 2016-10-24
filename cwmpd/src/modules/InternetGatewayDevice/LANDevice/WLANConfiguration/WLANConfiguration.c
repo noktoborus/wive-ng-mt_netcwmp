@@ -1285,12 +1285,16 @@ cpe_get_igd_lan_wlan_ssidadv(cwmp_t * cwmp, const char * name, char ** value, ch
 }
 
 /* *** dynamic config *** */
-static struct wlanc_node {
+struct wlanc_node {
     unsigned id;
     char name[16];
     struct wlanc_node *next;
-} *wlanc = NULL;
-static unsigned wlanc_count = 0u;
+};
+
+static struct {
+    struct wlanc_node *root;
+    unsigned count;
+} wlanc;
 
 static void
 wlanc_free_all(struct wlanc_node *root)
@@ -1405,22 +1409,23 @@ cpe_refresh_wlanc(cwmp_t * cwmp, parameter_node_t * param_node, callback_registe
     DM_TRACE_REFRESH();
     /* free */
     cwmp_model_delete_object_child(cwmp, param_node);
-    wlanc_free_all(wlanc);
+    wlanc_free_all(wlanc.root);
 
-    wlanc = NULL;
-    wlanc_count = 0u;
+    wlanc.root = NULL;
+    wlanc.count = 0u;
 
     /* generate */
     nc = nicscounts(&count);
     for (i = 0; i < count; i++) {
         /* FIXME: hardcoded name */
-        w = wlanc_nnew(wlanc, "ra", nc[i].ifname);
+        w = wlanc_nnew(wlanc.root, "ra", nc[i].ifname);
         if (!w) {
             continue;
         }
         cwmp_model_copy_parameter(param_node, &new_param, w->id);
-        if (!wlanc) {
-            wlanc = w;
+        wlanc.count++;
+        if (!wlanc.root) {
+            wlanc.root = w;
         }
     }
 
@@ -1468,8 +1473,6 @@ cpe_get_igd_wlanc_bssid(cwmp_t * cwmp, const char * name, char ** value, char * 
 {
     unsigned id = -1u;
     struct wlanc_node *w = NULL;
-    struct ifreq ifr = {};
-    int s = -1;
     char mac[18] = {};
 
     DM_TRACE_GET();
@@ -1478,35 +1481,17 @@ cpe_get_igd_wlanc_bssid(cwmp_t * cwmp, const char * name, char ** value, char * 
         return FAULT_CODE_9002;
     }
 
-    wlanc = wlanc_nget(wlanc, NULL, id);
-    if (!wlanc) {
+    w = wlanc_nget(wlanc.root, NULL, id);
+    if (!w) {
         return FAULT_CODE_9002;
     }
 
-    if ((s = socket(PF_INET, SOCK_DGRAM, 0)) == -1) {
-        cwmp_log_error("%s: socket(PF_INET, SOCK_DGRAM, 0) failed: %s",
-                __func__, strerror(errno));
-        return FAULT_CODE_9002;
-	}
-
-	snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), wlanc->name);
-    if (ioctl(s, SIOCGIFHWADDR, &ifr) == -1) {
-        cwmp_log_error("%s: ioctl(SIOCGIFHWADDR) failed: %s",
-                __func__, strerror(errno));
-        close(s);
-        return FAULT_CODE_9002;
+    if (getIfMac(w->name, mac, ':') == -1)
+        *value = pool_pstrdup(pool,"00:00:00:00:00:00");
+    else {
+        *value = pool_pstrdup(pool, mac);
     }
-    close(s);
 
-	sprintf(mac, "%02x:%02x:%02x:%02x:%02x:%02x",
-			(unsigned char)ifr.ifr_hwaddr.sa_data[0],
-			(unsigned char)ifr.ifr_hwaddr.sa_data[1],
-			(unsigned char)ifr.ifr_hwaddr.sa_data[2],
-			(unsigned char)ifr.ifr_hwaddr.sa_data[3],
-			(unsigned char)ifr.ifr_hwaddr.sa_data[4],
-			(unsigned char)ifr.ifr_hwaddr.sa_data[5]);
-
-    *value = pool_pstrdup(pool, mac);
     return FAULT_CODE_OK;
 }
 
