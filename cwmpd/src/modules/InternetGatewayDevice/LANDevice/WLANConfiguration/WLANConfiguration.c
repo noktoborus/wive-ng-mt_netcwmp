@@ -1465,7 +1465,15 @@ wlanc_get_id(cwmp_t *cwmp, const char *name)
         return (unsigned)-1;
     }
 
-    return id;
+    if (id == 0) {
+        cwmp_log_error(
+                "InternetGatewayDevice...WLANConfiguration: "
+                "invalid number '%u' in path: %s",
+                id, name);
+        return (unsigned)-1;
+    }
+
+    return id - 1;
 }
 
 int
@@ -1505,7 +1513,17 @@ cpe_get_igd_wlanc_channel(cwmp_t * cwmp, const char * name, char ** value, char 
 int
 cpe_get_igd_wlanc_ssid(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
+    unsigned id = -1u;
+    char ssid_id[128] = {};
     DM_TRACE_GET();
+
+    if ((id = wlanc_get_id(cwmp, name)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
+    snprintf(ssid_id, sizeof(ssid_id), "SSID%u", id + 1);
+    *value = cwmp_nvram_pool_get(pool, ssid_id);
+
     return FAULT_CODE_OK;
 }
 
