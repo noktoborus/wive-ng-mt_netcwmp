@@ -86,6 +86,7 @@ model_func_t ModelFunction[] =
     {"cpe_get_igd_wlanc_bssid", cpe_get_igd_wlanc_bssid},
     {"cpe_get_igd_wlanc_channel", cpe_get_igd_wlanc_channel},
     {"cpe_get_igd_wlanc_ssid", cpe_get_igd_wlanc_ssid},
+    {"cpe_set_igd_wlanc_ssid", cpe_set_igd_wlanc_ssid},
     {"cpe_get_igd_wlanc_beacontype", cpe_get_igd_wlanc_beacontype},
 
     {"cpe_get_igd_lan_wlan_standard", cpe_get_igd_lan_wlan_standard},

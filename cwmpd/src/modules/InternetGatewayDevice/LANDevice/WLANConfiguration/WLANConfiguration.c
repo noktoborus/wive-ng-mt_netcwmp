@@ -1536,3 +1536,21 @@ cpe_get_igd_wlanc_ssid(cwmp_t * cwmp, const char * name, char ** value, char * a
     return FAULT_CODE_OK;
 }
 
+int
+cpe_set_igd_wlanc_ssid(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
+{
+    unsigned id = -1u;
+    char ssid_id[128] = {};
+
+    DM_TRACE_SET();
+
+    if ((id = wlanc_get_id(cwmp, name)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
+    snprintf(ssid_id, sizeof(ssid_id), "SSID%u", id + 1);
+    cwmp_nvram_set(pool, ssid_id, value);
+
+    return FAULT_CODE_OK;
+}
+
