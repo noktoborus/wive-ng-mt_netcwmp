@@ -1,6 +1,50 @@
 /* vim: set et: */
 //FIXME: Multichannel auth functions!
 
+static unsigned
+wlanc_get_id(cwmp_t *cwmp, const char *name)
+{
+    unsigned id = (unsigned)-1;
+    parameter_node_t *pn = NULL;
+    char *p = NULL;
+
+    pn = cwmp_get_parameter_path_node(cwmp->root, name);
+    if (!pn) {
+        cwmp_log_error(
+                "InternetGatewayDevice...WLANConfiguration: "
+                "can't process path: %s",
+                name);
+        return (unsigned)-1;
+    }
+
+    /* find */
+    for (; pn; pn = pn->parent) {
+        id = (unsigned)strtoul(pn->name, &p, 10);
+        if (!*p) {
+            break;
+        }
+    }
+
+    if (!pn) {
+        cwmp_log_error(
+                "InternetGatewayDevice...WLANConfiguration: "
+                "can't get number from path: %s",
+                name
+                );
+        return (unsigned)-1;
+    }
+
+    if (id == 0) {
+        cwmp_log_error(
+                "InternetGatewayDevice...WLANConfiguration: "
+                "invalid number '%u' in path: %s",
+                id, name);
+        return (unsigned)-1;
+    }
+
+    return id - 1;
+}
+
 BOOL prefix(const char *str, const char *pre)
 {
     return strncmp(pre, str, strlen(pre)) == 0;
@@ -758,12 +802,17 @@ int cpe_set_igd_lan_wlan_ieeeauthmode(cwmp_t * cwmp, const char * name, const ch
 }
 
 
-int cpe_get_igd_lan_wlan_beacontype(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+int cpe_get_igd_wlanc_beacontype(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    const unsigned index = 0u;
+    unsigned index = -1u;
     struct wlan_security_mode wsm = {};
 
 	DM_TRACE_GET();
+
+    if ((index = wlanc_get_id(cwmp, name)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
     if (!nvram_wlan_load(index, &wsm)) {
         return FAULT_CODE_9002;
     }
@@ -786,12 +835,16 @@ int cpe_get_igd_lan_wlan_beacontype(cwmp_t * cwmp, const char * name, char ** va
     return FAULT_CODE_OK;
 }
 
-int cpe_set_igd_lan_wlan_beacontype(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
+int cpe_set_igd_wlanc_beacontype(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
-    const unsigned index = 0u;
+    unsigned index = -1u;
     struct wlan_security_mode wsm = {};
 
 	DM_TRACE_SET();
+
+    if ((index = wlanc_get_id(cwmp, name)) == -1u) {
+        return FAULT_CODE_9002;
+    }
 
     if (!strcmp(value, "WPAand11i")) {
         /* WPA1WPA2 */
@@ -1432,50 +1485,6 @@ cpe_refresh_wlanc(cwmp_t * cwmp, parameter_node_t * param_node, callback_registe
     return FAULT_CODE_OK;
 }
 
-static unsigned
-wlanc_get_id(cwmp_t *cwmp, const char *name)
-{
-    unsigned id = (unsigned)-1;
-    parameter_node_t *pn = NULL;
-    char *p = NULL;
-
-    pn = cwmp_get_parameter_path_node(cwmp->root, name);
-    if (!pn) {
-        cwmp_log_error(
-                "InternetGatewayDevice...WLANConfiguration: "
-                "can't process path: %s",
-                name);
-        return (unsigned)-1;
-    }
-
-    /* find */
-    for (; pn; pn = pn->parent) {
-        id = (unsigned)strtoul(pn->name, &p, 10);
-        if (!*p) {
-            break;
-        }
-    }
-
-    if (!pn) {
-        cwmp_log_error(
-                "InternetGatewayDevice...WLANConfiguration: "
-                "can't get number from path: %s",
-                name
-                );
-        return (unsigned)-1;
-    }
-
-    if (id == 0) {
-        cwmp_log_error(
-                "InternetGatewayDevice...WLANConfiguration: "
-                "invalid number '%u' in path: %s",
-                id, name);
-        return (unsigned)-1;
-    }
-
-    return id - 1;
-}
-
 int
 cpe_get_igd_wlanc_bssid(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
@@ -1524,13 +1533,6 @@ cpe_get_igd_wlanc_ssid(cwmp_t * cwmp, const char * name, char ** value, char * a
     snprintf(ssid_id, sizeof(ssid_id), "SSID%u", id + 1);
     *value = cwmp_nvram_pool_get(pool, ssid_id);
 
-    return FAULT_CODE_OK;
-}
-
-int
-cpe_get_igd_wlanc_beacontype(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
-{
-    DM_TRACE_GET();
     return FAULT_CODE_OK;
 }
 

@@ -131,8 +131,8 @@ model_func_t ModelFunction[] =
     {"cpe_set_igd_lan_wlan_wepkey", cpe_set_igd_lan_wlan_wepkey},
     {"cpe_get_igd_lan_wlan_wepkey", cpe_get_igd_lan_wlan_wepkey},
 
-    {"cpe_get_igd_lan_wlan_beacontype", cpe_get_igd_lan_wlan_beacontype},
-    {"cpe_set_igd_lan_wlan_beacontype", cpe_set_igd_lan_wlan_beacontype},
+    {"cpe_get_igd_wlanc_beacontype", cpe_get_igd_wlanc_beacontype},
+    {"cpe_set_igd_wlanc_beacontype", cpe_set_igd_wlanc_beacontype},
     {"cpe_get_igd_lan_wlan_possiblechannels", cpe_get_igd_lan_wlan_possiblechannels},
 
     {"cpe_get_igd_lan_wlan_bssid", cpe_get_igd_lan_wlan_bssid},
