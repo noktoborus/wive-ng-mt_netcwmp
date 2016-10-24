@@ -443,10 +443,13 @@ int cpe_set_igd_lan_wlan_autochannel(cwmp_t * cwmp, const char * name, const cha
     return FAULT_CODE_OK;
 }
 
-int cpe_get_igd_lan_wlan_channel(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+int cpe_get_igd_wlanc_channel(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    cwmp_log_debug("DEBUG: cpe_get_igd_lan_wlan_channel");
-    char* chan =  cwmp_nvram_pool_get(pool, "Channel");
+    char* chan = NULL;
+
+    DM_TRACE_GET();
+
+    chan = cwmp_nvram_pool_get(pool, "Channel");
     if (chan == NULL)
     {
 	chan = "0";
@@ -468,9 +471,9 @@ int cpe_get_igd_lan_wlan_channel(cwmp_t * cwmp, const char * name, char ** value
 
 }
 
-int cpe_set_igd_lan_wlan_channel(cwmp_t * cwmp, const char * name, const char * value, int length, callback_register_func_t callback_reg)
+int cpe_set_igd_wlanc_channel(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
-    cwmp_log_debug("DEBUG: cpe_set_igd_lan_wlan_channel");
+    DM_TRACE_SET();
 
     if (value == NULL) {
 	cwmp_log_error("cpe_get_igd_lan_wlan_channel: undefined value!");
@@ -1513,13 +1516,6 @@ cpe_get_igd_wlanc_bssid(cwmp_t * cwmp, const char * name, char ** value, char * 
 }
 
 int
-cpe_get_igd_wlanc_channel(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
-{
-    DM_TRACE_GET();
-    return FAULT_CODE_OK;
-}
-
-int
 cpe_get_igd_wlanc_ssid(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
     unsigned id = -1u;
@@ -1549,7 +1545,7 @@ cpe_set_igd_wlanc_ssid(cwmp_t * cwmp, const char * name, const char * value, int
     }
 
     snprintf(ssid_id, sizeof(ssid_id), "SSID%u", id + 1);
-    cwmp_nvram_set(pool, ssid_id, value);
+    cwmp_nvram_set(ssid_id, value);
 
     return FAULT_CODE_OK;
 }

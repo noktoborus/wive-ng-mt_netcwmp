@@ -92,8 +92,8 @@ model_func_t ModelFunction[] =
     {"cpe_get_igd_lan_wlan_standard", cpe_get_igd_lan_wlan_standard},
     {"cpe_set_igd_lan_wlan_standard", cpe_set_igd_lan_wlan_standard},
 
-    {"cpe_get_igd_lan_wlan_channel", cpe_get_igd_lan_wlan_channel},
-    {"cpe_set_igd_lan_wlan_channel", cpe_set_igd_lan_wlan_channel},
+    {"cpe_get_igd_wlanc_channel", cpe_get_igd_wlanc_channel},
+    {"cpe_set_igd_wlanc_channel", cpe_set_igd_wlanc_channel},
 
     {"cpe_get_igd_lan_wlan_autochannel", cpe_get_igd_lan_wlan_autochannel},
     {"cpe_set_igd_lan_wlan_autochannel", cpe_set_igd_lan_wlan_autochannel},
