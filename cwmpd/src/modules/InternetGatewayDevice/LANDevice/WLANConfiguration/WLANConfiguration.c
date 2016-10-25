@@ -516,28 +516,9 @@ static bool nvram_wlan_save(unsigned index, struct wlan_security_mode *wsm)
     return true;
 }
 
-int cpe_get_igd_lan_wlan_bssid(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+int cpe_get_igd_wlanc_autochannel(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    cwmp_log_debug("DEBUG: cpe_get_igd_lan_wlan_bssid");
-    char if_hw[18] = {0};
-
-    char* ifstart = cwmp_nvram_pool_get(pool,"BssidIfName");
-    char ifname[20] = {0};
-    strcat(ifname,ifstart);
-    strcat(ifname,args);
-
-    if (getIfMac(ifname, if_hw, ':') == -1) *value = pool_pstrdup(pool,"00:00:00:00:00:00");
-    else *value = pool_pstrdup(pool,if_hw);
-
-    cwmp_log_debug("DEBUG cpe_get_igd_lan_wlan_bssid: BSSID%s %s",args,*value);
-
-    return FAULT_CODE_OK;
-}
-
-
-int cpe_get_igd_lan_wlan_autochannel(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
-{
-    cwmp_log_debug("DEBUG: cpe_get_igd_lan_wlan_autochannel");
+    DM_TRACE_GET();
     int chan =  cwmp_nvram_get_int("Channel", 0);
     int autoselect = cwmp_nvram_get_int("AutoChannelSelect",1);
 
@@ -546,11 +527,12 @@ int cpe_get_igd_lan_wlan_autochannel(cwmp_t * cwmp, const char * name, char ** v
     return FAULT_CODE_OK;
 }
 
-int cpe_set_igd_lan_wlan_autochannel(cwmp_t * cwmp, const char * name, const char * value, int length, callback_register_func_t callback_reg)
+int cpe_set_igd_wlanc_autochannel(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
-    cwmp_log_debug("DEBUG: cpe_set_igd_lan_wlan_autochannel");
+    DM_TRACE_SET();
+
     if (value == NULL) {
-	cwmp_log_error("cpe_get_igd_lan_wlan_autochannel: undefined value!");
+	cwmp_log_error("%s: undefined value!", __func__);
 	return FAULT_CODE_9002;
     }
 
@@ -1572,45 +1554,59 @@ cpe_get_igd_wlanc_stats(cwmp_t * cwmp, const char * name, char ** value, char * 
 
     return FAULT_CODE_OK;
 }
+
 int
-cpe_set_igd_lan_wlan_ssidadv(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
+cpe_get_wlanc_name(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    char *val = NULL;
-    pool_t *pool = NULL;
+    unsigned id = -1u;
+    struct wlanc_node *w = NULL;
 
-    DM_TRACE_SET();
-    pool = pool_create(POOL_DEFAULT_SIZE);
-    if (!pool)
-        return FAULT_CODE_9002;
+    DM_TRACE_GET();
 
-    val = cwmp_nvram_pool_get(pool, "HideSSID");
-    if (!val) {
-        pool_destroy(pool);
+    if ((id = wlanc_get_id(cwmp, name, NULL)) == -1u) {
         return FAULT_CODE_9002;
     }
 
-    if (*value == '0') {
-        *val = '1';
-    } else {
-        *val = '0';
+    w = wlanc_nget(wlanc.root, NULL, id);
+    if (!w) {
+        return FAULT_CODE_9002;
     }
-    cwmp_nvram_set("HideSSID", val);
-    pool_destroy(pool);
+
+    *value = pool_pstrdup(pool, w->name);
+
     return FAULT_CODE_OK;
 }
 
 int
-cpe_get_igd_lan_wlan_ssidadv(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+cpe_set_igd_wlanc_ssidadv(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
-    char *val = NULL;
+    unsigned id = -1u;
+
+    DM_TRACE_SET();
+
+    if ((id = wlanc_get_id(cwmp, name, NULL)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
+    nvram_set_tuple("HideSSID", id, value);
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_wlanc_ssidadv(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    unsigned id = -1u;
+    char v[82] = {};
+
     DM_TRACE_GET();
 
-    val = cwmp_nvram_get("HideSSID");
-    if (*val == '0') {
-        *value = "1";
-    } else {
-        *value = "0";
+    if ((id = wlanc_get_id(cwmp, name, NULL)) == -1u) {
+        return FAULT_CODE_9002;
     }
+
+    nvram_get_tuple("HideSSID", id, v, sizeof(v));
+    *value = pool_pstrdup(pool, v);
+
     return FAULT_CODE_OK;
 }
 

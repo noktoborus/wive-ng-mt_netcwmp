@@ -95,8 +95,8 @@ model_func_t ModelFunction[] =
     {"cpe_get_igd_wlanc_channel", cpe_get_igd_wlanc_channel},
     {"cpe_set_igd_wlanc_channel", cpe_set_igd_wlanc_channel},
 
-    {"cpe_get_igd_lan_wlan_autochannel", cpe_get_igd_lan_wlan_autochannel},
-    {"cpe_set_igd_lan_wlan_autochannel", cpe_set_igd_lan_wlan_autochannel},
+    {"cpe_get_igd_wlanc_autochannel", cpe_get_igd_wlanc_autochannel},
+    {"cpe_set_igd_wlanc_autochannel", cpe_set_igd_wlanc_autochannel},
 
     {"cpe_set_igd_wlanc_basicencryption", cpe_set_igd_wlanc_basicencryption},
     {"cpe_get_igd_wlanc_basicencryption", cpe_get_igd_wlanc_basicencryption},
@@ -121,13 +121,15 @@ model_func_t ModelFunction[] =
     {"cpe_get_igd_lan_wlan_assoc_addr", cpe_get_igd_lan_wlan_assoc_addr},
     {"cpe_get_igd_lan_wlan_assoc_state", cpe_get_igd_lan_wlan_assoc_state},
 
+    {"cpe_get_wlanc_name", cpe_get_wlanc_name},
+
     {"cpe_get_igd_wlanc_tx_bytes", cpe_get_igd_wlanc_tx_bytes},
     {"cpe_get_igd_wlanc_rx_bytes", cpe_get_igd_wlanc_rx_bytes},
     {"cpe_get_igd_wlanc_tx_packets", cpe_get_igd_wlanc_tx_packets},
     {"cpe_get_igd_wlanc_rx_packets", cpe_get_igd_wlanc_rx_packets},
     {"cpe_get_igd_wlanc_stats", cpe_get_igd_wlanc_stats},
-    {"cpe_set_igd_lan_wlan_ssidadv", cpe_set_igd_lan_wlan_ssidadv},
-    {"cpe_get_igd_lan_wlan_ssidadv", cpe_get_igd_lan_wlan_ssidadv},
+    {"cpe_set_igd_wlanc_ssidadv", cpe_set_igd_wlanc_ssidadv},
+    {"cpe_get_igd_wlanc_ssidadv", cpe_get_igd_wlanc_ssidadv},
 
     {"cpe_set_igd_wlanc_key", cpe_set_igd_wlanc_key},
     {"cpe_get_igd_wlanc_key", cpe_get_igd_wlanc_key},
@@ -143,8 +145,6 @@ model_func_t ModelFunction[] =
     {"cpe_get_igd_wlanc_beacontype", cpe_get_igd_wlanc_beacontype},
     {"cpe_set_igd_wlanc_beacontype", cpe_set_igd_wlanc_beacontype},
     {"cpe_get_igd_wlanc_possiblechannels", cpe_get_igd_wlanc_possiblechannels},
-
-    {"cpe_get_igd_lan_wlan_bssid", cpe_get_igd_lan_wlan_bssid},
 
     {"cpe_get_igd_wan_ppp_authprot", cpe_get_igd_wan_ppp_authprot},
     {"cpe_set_igd_wan_ppp_authprot", cpe_set_igd_wan_ppp_authprot},

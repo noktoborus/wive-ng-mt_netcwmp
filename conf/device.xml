@@ -289,6 +289,11 @@
 						</object>
 						-->
 						<!-- WiFiLAN:2 -->
+						<param name="Name" get_func="cpe_get_wlanc_name"/>
+						<param name="AutoChannelEnable" reload_func="cpe_reload_all" rw="1" get_func="cpe_get_igd_wlanc_autochannel" set_func="cpe_set_igd_wlanc_autochannel"/>
+						<param name="SSIDAdvertisementEnabled" rw="1" get_func="cpe_get_igd_wlanc_ssidadv" set_func="cpe_set_igd_wlanc_ssidadv"/>
+						<param name="TransmitPowerSupported" get_func="cpe_get_const_string" args="5,10,20,40,70,100"/>
+						<param name="TransmitPower" rw="1" get_func="cpe_get_nvram_int" set_func="cpe_set_nvram_int" args="TxPower"/>
 						<object name="Stats">
 							<param name="ErrorsSent" get_func="cpe_get_igd_wlanc_stats"/>
 							<param name="ErrorsReceived" get_func="cpe_get_igd_wlanc_stats"/>
