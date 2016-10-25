@@ -98,22 +98,22 @@ model_func_t ModelFunction[] =
     {"cpe_get_igd_lan_wlan_autochannel", cpe_get_igd_lan_wlan_autochannel},
     {"cpe_set_igd_lan_wlan_autochannel", cpe_set_igd_lan_wlan_autochannel},
 
-    {"cpe_set_igd_lan_wlan_basicencryption", cpe_set_igd_lan_wlan_basicencryption},
-    {"cpe_get_igd_lan_wlan_basicencryption", cpe_get_igd_lan_wlan_basicencryption},
-    {"cpe_get_igd_lan_wlan_basicauthmode", cpe_get_igd_lan_wlan_basicauthmode},
-    {"cpe_set_igd_lan_wlan_basicauthmode", cpe_set_igd_lan_wlan_basicauthmode},
+    {"cpe_set_igd_wlanc_basicencryption", cpe_set_igd_wlanc_basicencryption},
+    {"cpe_get_igd_wlanc_basicencryption", cpe_get_igd_wlanc_basicencryption},
+    {"cpe_get_igd_wlanc_basicauthmode", cpe_get_igd_wlanc_basicauthmode},
+    {"cpe_set_igd_wlanc_basicauthmode", cpe_set_igd_wlanc_basicauthmode},
 
-    {"cpe_get_igd_lan_wlan_wpaauthmode", cpe_get_igd_lan_wlan_wpaauthmode},
-    {"cpe_set_igd_lan_wlan_wpaauthmode", cpe_set_igd_lan_wlan_wpaauthmode},
+    {"cpe_get_igd_wlanc_wpaauthmode", cpe_get_igd_wlanc_wpaauthmode},
+    {"cpe_set_igd_wlanc_wpaauthmode", cpe_set_igd_wlanc_wpaauthmode},
 
-    {"cpe_get_igd_lan_wlan_ieeeauthmode", cpe_get_igd_lan_wlan_ieeeauthmode},
-    {"cpe_set_igd_lan_wlan_ieeeauthmode", cpe_set_igd_lan_wlan_ieeeauthmode},
+    {"cpe_get_igd_wlanc_ieeeauthmode", cpe_get_igd_wlanc_ieeeauthmode},
+    {"cpe_set_igd_wlanc_ieeeauthmode", cpe_set_igd_wlanc_ieeeauthmode},
 
-    {"cpe_set_igd_lan_wlan_wpaencryption", cpe_set_igd_lan_wlan_wpaencryption},
-    {"cpe_get_igd_lan_wlan_wpaencryption", cpe_get_igd_lan_wlan_wpaencryption},
-    {"cpe_get_igd_lan_wlan_status", cpe_get_igd_lan_wlan_status},
-    {"cpe_set_igd_lan_wlan_enabled", cpe_set_igd_lan_wlan_enabled},
-    {"cpe_get_igd_lan_wlan_enabled", cpe_get_igd_lan_wlan_enabled},
+    {"cpe_set_igd_wlanc_wpaencryption", cpe_set_igd_wlanc_wpaencryption},
+    {"cpe_get_igd_wlanc_wpaencryption", cpe_get_igd_wlanc_wpaencryption},
+    {"cpe_get_igd_wlanc_status", cpe_get_igd_wlanc_status},
+    {"cpe_set_igd_wlanc_enabled", cpe_set_igd_wlanc_enabled},
+    {"cpe_get_igd_wlanc_enabled", cpe_get_igd_wlanc_enabled},
 
     {"cpe_get_igd_lan_wlan_associated_count", cpe_get_igd_lan_wlan_associated_count},
     {"cpe_refresh_igd_lan_wlan_associated", cpe_refresh_igd_lan_wlan_associated},
@@ -121,11 +121,11 @@ model_func_t ModelFunction[] =
     {"cpe_get_igd_lan_wlan_assoc_addr", cpe_get_igd_lan_wlan_assoc_addr},
     {"cpe_get_igd_lan_wlan_assoc_state", cpe_get_igd_lan_wlan_assoc_state},
 
-    {"cpe_get_igd_lan_wlan_tx_bytes", cpe_get_igd_lan_wlan_tx_bytes},
-    {"cpe_get_igd_lan_wlan_rx_bytes", cpe_get_igd_lan_wlan_rx_bytes},
-    {"cpe_get_igd_lan_wlan_tx_packets", cpe_get_igd_lan_wlan_tx_packets},
-    {"cpe_get_igd_lan_wlan_rx_packets", cpe_get_igd_lan_wlan_rx_packets},
-    {"cpe_get_igd_lan_wlan_stats", cpe_get_igd_lan_wlan_stats},
+    {"cpe_get_igd_wlanc_tx_bytes", cpe_get_igd_wlanc_tx_bytes},
+    {"cpe_get_igd_wlanc_rx_bytes", cpe_get_igd_wlanc_rx_bytes},
+    {"cpe_get_igd_wlanc_tx_packets", cpe_get_igd_wlanc_tx_packets},
+    {"cpe_get_igd_wlanc_rx_packets", cpe_get_igd_wlanc_rx_packets},
+    {"cpe_get_igd_wlanc_stats", cpe_get_igd_wlanc_stats},
     {"cpe_set_igd_lan_wlan_ssidadv", cpe_set_igd_lan_wlan_ssidadv},
     {"cpe_get_igd_lan_wlan_ssidadv", cpe_get_igd_lan_wlan_ssidadv},
 
@@ -134,12 +134,15 @@ model_func_t ModelFunction[] =
 
     {"cpe_set_igd_wlanc_wepkey_index", cpe_set_igd_wlanc_wepkey_index},
     {"cpe_get_igd_wlanc_wepkey_index", cpe_get_igd_wlanc_wepkey_index},
-    {"cpe_set_igd_lan_wlan_wepkey", cpe_set_igd_lan_wlan_wepkey},
-    {"cpe_get_igd_lan_wlan_wepkey", cpe_get_igd_lan_wlan_wepkey},
+    {"cpe_set_igd_wlanc_wepkey", cpe_set_igd_wlanc_wepkey},
+    {"cpe_get_igd_wlanc_wepkey", cpe_get_igd_wlanc_wepkey},
+
+    {"cpe_set_igd_wlanc_pskfailures", cpe_set_igd_wlanc_pskfailures},
+    {"cpe_get_igd_wlanc_pskfailures", cpe_get_igd_wlanc_pskfailures},
 
     {"cpe_get_igd_wlanc_beacontype", cpe_get_igd_wlanc_beacontype},
     {"cpe_set_igd_wlanc_beacontype", cpe_set_igd_wlanc_beacontype},
-    {"cpe_get_igd_lan_wlan_possiblechannels", cpe_get_igd_lan_wlan_possiblechannels},
+    {"cpe_get_igd_wlanc_possiblechannels", cpe_get_igd_wlanc_possiblechannels},
 
     {"cpe_get_igd_lan_wlan_bssid", cpe_get_igd_lan_wlan_bssid},
 

@@ -1,20 +1,125 @@
 /* vim: set et: */
 //FIXME: Multichannel auth functions!
+struct wlanc_node {
+    unsigned id;
+    char name[16];
+    struct wlanc_node *next;
+};
 
-static unsigned
-wlanc_get_id(cwmp_t *cwmp, const char *name)
+static struct {
+    struct wlanc_node *root;
+    unsigned count;
+} wlanc;
+
+static void
+wlanc_free_all(struct wlanc_node *root)
 {
-    unsigned id = (unsigned)-1;
-    parameter_node_t *pn = NULL;
-    char *p = NULL;
+    struct wlanc_node *n = root;
 
-    pn = cwmp_get_parameter_path_node(cwmp->root, name);
-    if (!pn) {
+    while (root) {
+        n = n->next;
+        free(root);
+        root = n;
+    }
+}
+
+static struct wlanc_node *
+wlanc_nget(struct wlanc_node *root, const char *name, unsigned id)
+{
+    struct wlanc_node *n = NULL;
+
+    for (n = root; n; n = n->next) {
+        if (name) {
+            if (!strcmp(n->name, name)) {
+                break;
+            }
+        } else if (id != -1u) {
+            if (n->id == id) {
+                break;
+            }
+        }
+    }
+
+    if (!n) {
         cwmp_log_error(
                 "InternetGatewayDevice...WLANConfiguration: "
-                "can't process path: %s",
-                name);
-        return (unsigned)-1;
+                "can't get wlan with name=%s, id=%u",
+                name ? name : "", id);
+    }
+    return n;
+}
+
+static struct wlanc_node *
+wlanc_nnew(struct wlanc_node *root, char *prefix_filter, char *name)
+{
+    struct wlanc_node *n = NULL;
+    struct wlanc_node *l = NULL;
+    unsigned id = 0u;
+    size_t prefix_len = 0u;
+
+    if (!name || !*name)
+        return NULL;
+
+    if (prefix_filter) {
+        prefix_len = strlen(prefix_filter);
+        if (strncmp(name, prefix_filter, prefix_len) != 0) {
+            return NULL;
+        }
+        id = (unsigned)strtoul(name + prefix_len, NULL, 10);
+    } else {
+        /* get id from tail */
+        size_t name_max = strlen(name) - 1;
+        size_t name_len = name_max;
+        for (; name_len > 0; --name_len) {
+            if (name[name_len] >= '0' || name[name_len] <= '9') {
+                id += (name[name_len] - '0') * ((name_max - name_len) * 10);
+            } else {
+                break;
+            }
+        }
+    }
+
+    for (n = root; n; n = n->next) {
+        if (!strcmp(n->name, name)) {
+            break;
+        }
+        if (n->id == id) {
+            break;
+        }
+        l = n;
+    }
+
+    if (n) {
+        return NULL;
+    }
+
+    n = calloc(1, sizeof(*n));
+    if (!n) {
+        cwmp_log_error("InternetGatewayDevice...WLANConfiguration: calloc(%d) failed: %s",
+                sizeof(*n), strerror(errno));
+        return NULL;
+    }
+
+    if (name) {
+        strncpy(n->name, name, sizeof(n->name));
+    }
+    n->id = id;
+
+    if (l) {
+        l->next = n;
+    }
+
+    return n;
+}
+
+static unsigned
+wlanc_get_id_node(parameter_node_t *pn, const char *name, parameter_node_t **out)
+{
+    unsigned id = 0u;
+    char *p = NULL;
+
+    if (!pn || !(pn = pn->parent)) {
+        return -1u;
     }
 
     /* find */
@@ -31,7 +136,7 @@ wlanc_get_id(cwmp_t *cwmp, const char *name)
                 "can't get number from path: %s",
                 name
                 );
-        return (unsigned)-1;
+        return -1u;
     }
 
     if (id == 0) {
@@ -39,10 +144,30 @@ wlanc_get_id(cwmp_t *cwmp, const char *name)
                 "InternetGatewayDevice...WLANConfiguration: "
                 "invalid number '%u' in path: %s",
                 id, name);
+        return -1u;
+    }
+
+    if (out)
+        *out = pn;
+
+    return id - 1;
+}
+
+static unsigned
+wlanc_get_id(cwmp_t *cwmp, const char *name, parameter_node_t **out)
+{
+    parameter_node_t *pn = NULL;
+
+    pn = cwmp_get_parameter_path_node(cwmp->root, name);
+    if (!pn) {
+        cwmp_log_error(
+                "InternetGatewayDevice...WLANConfiguration: "
+                "can't process path: %s",
+                name);
         return (unsigned)-1;
     }
 
-    return id - 1;
+    return wlanc_get_id_node(pn, name, out);
 }
 
 BOOL prefix(const char *str, const char *pre)
@@ -534,12 +659,17 @@ int cpe_set_igd_wlanc_standard(cwmp_t * cwmp, const char * name, const char * va
 }
 
 /* BasicAuthenticationMode */
-int cpe_get_igd_lan_wlan_basicauthmode(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+int cpe_get_igd_wlanc_basicauthmode(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    const unsigned index = 0u;
+    unsigned index = 0u;
     struct wlan_security_mode wsm = {};
 
     DM_TRACE_GET();
+
+    if ((index = wlanc_get_id(cwmp, name, NULL)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
     if (!nvram_wlan_load(index, &wsm)) {
         return FAULT_CODE_9002;
     }
@@ -566,11 +696,16 @@ int cpe_get_igd_lan_wlan_basicauthmode(cwmp_t * cwmp, const char * name, char **
     return FAULT_CODE_OK;
 }
 
-int cpe_set_igd_lan_wlan_basicauthmode(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
+int cpe_set_igd_wlanc_basicauthmode(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
-    const unsigned index = 0u;
+    unsigned index = 0u;
     struct wlan_security_mode wsm = {};
+
     DM_TRACE_SET();
+
+    if ((index = wlanc_get_id(cwmp, name, NULL)) == -1u) {
+        return FAULT_CODE_9002;
+    }
 
     if (!strcmp(value,"None")) {
         /* Open */
@@ -594,12 +729,16 @@ int cpe_set_igd_lan_wlan_basicauthmode(cwmp_t * cwmp, const char * name, const c
 
 /* BasicEncryptionModes */
 int
-cpe_get_igd_lan_wlan_basicencryption(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+cpe_get_igd_wlanc_basicencryption(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    const unsigned index = 0u;
+    unsigned index = 0u;
     struct wlan_security_mode wsm = {};
 
     DM_TRACE_GET();
+    if ((index = wlanc_get_id(cwmp, name, NULL)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
     if (!nvram_wlan_load(index, &wsm)) {
         return FAULT_CODE_9002;
     }
@@ -623,9 +762,9 @@ cpe_get_igd_lan_wlan_basicencryption(cwmp_t * cwmp, const char * name, char ** v
 }
 
 int
-cpe_set_igd_lan_wlan_basicencryption(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
+cpe_set_igd_wlanc_basicencryption(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
 {
-    const unsigned index = 0u;
+    unsigned index = 0u;
     struct wlan_security_mode wsm = {};
 
     DM_TRACE_SET();
@@ -637,18 +776,28 @@ cpe_set_igd_lan_wlan_basicencryption(cwmp_t *cwmp, const char *name, const char 
         cwmp_log_error("%s: invalid value: '%s'", __func__, value);
         return FAULT_CODE_9007;
     }
+
+    if ((index = wlanc_get_id(cwmp, name, NULL)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
     nvram_wlan_save(index, &wsm);
     return FAULT_CODE_OK;
 }
 
 /* WPAAuthenticationMode */
 
-int cpe_get_igd_lan_wlan_wpaauthmode(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+int cpe_get_igd_wlanc_wpaauthmode(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    const unsigned index = 0u;
+    unsigned index = 0u;
     struct wlan_security_mode wsm = {};
 
 	DM_TRACE_GET();
+
+    if ((index = wlanc_get_id(cwmp, name, NULL)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
     if (!nvram_wlan_load(index, &wsm)) {
         return FAULT_CODE_9002;
     }
@@ -671,13 +820,18 @@ int cpe_get_igd_lan_wlan_wpaauthmode(cwmp_t * cwmp, const char * name, char ** v
     return FAULT_CODE_OK;
 }
 
-int cpe_set_igd_lan_wlan_wpaauthmode(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
+int cpe_set_igd_wlanc_wpaauthmode(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
-    const unsigned index = 0u;
+    unsigned index = 0u;
     struct wlan_security_mode wsm = {};
     /* only WPA1 */
 
 	DM_TRACE_SET();
+
+    if ((index = wlanc_get_id(cwmp, name, NULL)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
     if (!strcmp(value, "PSKAuthentication")) {
         wsm.authMode = WLAN_PSK;
     } else if (!strcmp(value, "EAPAuthentication")) {
@@ -694,12 +848,16 @@ int cpe_set_igd_lan_wlan_wpaauthmode(cwmp_t * cwmp, const char * name, const cha
 
 /* WPAEncryptionModes */
 int
-cpe_set_igd_lan_wlan_wpaencryption(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
+cpe_set_igd_wlanc_wpaencryption(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
-    const unsigned index = 0u;
+    unsigned index = 0u;
     struct wlan_security_mode wsm = {};
 
     DM_TRACE_SET();
+
+    if ((index = wlanc_get_id(cwmp, name, NULL)) == -1u) {
+        return FAULT_CODE_9002;
+    }
 
     if (!strcmp(value, "TKIPEncryption")) {
         wsm.encrypt = WLAN_TKIP;
@@ -720,12 +878,17 @@ cpe_set_igd_lan_wlan_wpaencryption(cwmp_t * cwmp, const char * name, const char 
 }
 
 int
-cpe_get_igd_lan_wlan_wpaencryption(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+cpe_get_igd_wlanc_wpaencryption(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    const unsigned index = 0u;
+    unsigned index = 0u;
     struct wlan_security_mode wsm = {};
 
     DM_TRACE_GET();
+
+    if ((index = wlanc_get_id(cwmp, name, NULL)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
     if (!nvram_wlan_load(index, &wsm)) {
         return FAULT_CODE_9002;
     }
@@ -754,12 +917,17 @@ cpe_get_igd_lan_wlan_wpaencryption(cwmp_t * cwmp, const char * name, char ** val
 }
 
 /* IEEE11iAuthenticationMode */
-int cpe_get_igd_lan_wlan_ieeeauthmode(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+int cpe_get_igd_wlanc_ieeeauthmode(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    const unsigned index = 0u;
+    unsigned index = 0u;
     struct wlan_security_mode wsm = {};
     /* WPA2 only */
 	DM_TRACE_GET();
+
+    if ((index = wlanc_get_id(cwmp, name, NULL)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
     if (!nvram_wlan_load(index, &wsm)) {
         return FAULT_CODE_9002;
     }
@@ -783,12 +951,17 @@ int cpe_get_igd_lan_wlan_ieeeauthmode(cwmp_t * cwmp, const char * name, char ** 
     return FAULT_CODE_OK;
 }
 
-int cpe_set_igd_lan_wlan_ieeeauthmode(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
+int cpe_set_igd_wlanc_ieeeauthmode(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
-    const unsigned index = 0u;
+    unsigned index = 0u;
     struct wlan_security_mode wsm = {};
     /* WPA2 */
 	DM_TRACE_SET();
+
+    if ((index = wlanc_get_id(cwmp, name, NULL)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
     if (!strcmp(value, "PSKAuthentication")) {
         wsm.authMode = WLAN_PSK;
     } else if (!strcmp(value, "EAPAuthentication")) {
@@ -811,7 +984,7 @@ int cpe_get_igd_wlanc_beacontype(cwmp_t * cwmp, const char * name, char ** value
 
 	DM_TRACE_GET();
 
-    if ((index = wlanc_get_id(cwmp, name)) == -1u) {
+    if ((index = wlanc_get_id(cwmp, name, NULL)) == -1u) {
         return FAULT_CODE_9002;
     }
 
@@ -844,7 +1017,7 @@ int cpe_set_igd_wlanc_beacontype(cwmp_t * cwmp, const char * name, const char * 
 
 	DM_TRACE_SET();
 
-    if ((index = wlanc_get_id(cwmp, name)) == -1u) {
+    if ((index = wlanc_get_id(cwmp, name, NULL)) == -1u) {
         return FAULT_CODE_9002;
     }
 
@@ -875,7 +1048,7 @@ int cpe_set_igd_wlanc_beacontype(cwmp_t * cwmp, const char * name, const char * 
 }
 
 int
-cpe_get_igd_lan_wlan_possiblechannels(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+cpe_get_igd_wlanc_possiblechannels(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
     int v = 0;
 
@@ -916,7 +1089,7 @@ cpe_get_igd_lan_wlan_possiblechannels(cwmp_t * cwmp, const char * name, char ** 
 }
 
 int
-cpe_get_igd_lan_wlan_status(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+cpe_get_igd_wlanc_status(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
     char *v = NULL;
     DM_TRACE_GET();
@@ -933,7 +1106,7 @@ cpe_get_igd_lan_wlan_status(cwmp_t * cwmp, const char * name, char ** value, cha
 }
 
 int
-cpe_set_igd_lan_wlan_enabled(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
+cpe_set_igd_wlanc_enabled(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
     DM_TRACE_SET();
     if (*value == '0') {
@@ -948,7 +1121,7 @@ cpe_set_igd_lan_wlan_enabled(cwmp_t * cwmp, const char * name, const char * valu
 }
 
 int
-cpe_get_igd_lan_wlan_enabled(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+cpe_get_igd_wlanc_enabled(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
     char *v = NULL;
     DM_TRACE_GET();
@@ -1128,7 +1301,7 @@ cpe_set_igd_wlanc_key(cwmp_t *cwmp, const char *name, const char *value, int len
 
     DM_TRACE_SET();
 
-    if ((id = wlanc_get_id(cwmp, name)) == -1u) {
+    if ((id = wlanc_get_id(cwmp, name, NULL)) == -1u) {
         return FAULT_CODE_9002;
     }
 
@@ -1146,7 +1319,7 @@ cpe_get_igd_wlanc_key(cwmp_t * cwmp, const char * name, char ** value, char * ar
 
     DM_TRACE_GET();
 
-    if ((id = wlanc_get_id(cwmp, name)) == -1u) {
+    if ((id = wlanc_get_id(cwmp, name, NULL)) == -1u) {
         return FAULT_CODE_9002;
     }
 
@@ -1163,7 +1336,7 @@ cpe_set_igd_wlanc_wepkey_index(cwmp_t *cwmp, const char *name, const char *value
 
     DM_TRACE_SET();
 
-    if ((id = wlanc_get_id(cwmp, name)) == -1u) {
+    if ((id = wlanc_get_id(cwmp, name, NULL)) == -1u) {
         return FAULT_CODE_9002;
     }
 
@@ -1180,7 +1353,7 @@ cpe_get_igd_wlanc_wepkey_index(cwmp_t * cwmp, const char * name, char ** value, 
 
     DM_TRACE_GET();
 
-    if ((id = wlanc_get_id(cwmp, name)) == -1u) {
+    if ((id = wlanc_get_id(cwmp, name, NULL)) == -1u) {
         return FAULT_CODE_9002;
     }
 
@@ -1192,15 +1365,25 @@ cpe_get_igd_wlanc_wepkey_index(cwmp_t * cwmp, const char * name, char ** value, 
 }
 
 int
-cpe_set_igd_lan_wlan_wepkey(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
+cpe_set_igd_wlanc_wepkey(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
 {
     char tkey[42] = {};
     char key[42] = {};
     char *end = NULL;
+    unsigned id = 1;
+    parameter_node_t *pn = NULL;
 
     DM_TRACE_SET();
-    snprintf(tkey, sizeof(tkey), "Key%sType", args);
-    snprintf(key, sizeof(key), "Key%sStr1", args);
+    if ((id = wlanc_get_id(cwmp, name, &pn)) != -1) {
+        id = wlanc_get_id_node(pn, name, NULL);
+    }
+
+    if (id == -1u) {
+        return FAULT_CODE_9002;
+    }
+
+    snprintf(tkey, sizeof(tkey), "Key%uType", id);
+    snprintf(key, sizeof(key), "Key%sStr%u", args, id);
 
     if (length != 10 || length != 26) {
         cwmp_log_trace("%s: invalid value length: %d, must be equal 10 or 26",
@@ -1221,16 +1404,26 @@ cpe_set_igd_lan_wlan_wepkey(cwmp_t *cwmp, const char *name, const char *value, i
 }
 
 int
-cpe_get_igd_lan_wlan_wepkey(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+cpe_get_igd_wlanc_wepkey(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
+    unsigned id = 1;
     char tkey[42] = {};
     char key[42] = {};
     char *val = NULL;
     char hex[27];
+    parameter_node_t *pn = NULL;
 
     DM_TRACE_GET();
-    snprintf(tkey, sizeof(tkey), "Key%sType", args);
-    snprintf(key, sizeof(key), "Key%sStr1", args);
+    if ((id = wlanc_get_id(cwmp, name, &pn)) != -1) {
+        id = wlanc_get_id_node(pn, name, NULL);
+    }
+
+    if (id == -1u) {
+        return FAULT_CODE_9002;
+    }
+
+    snprintf(tkey, sizeof(tkey), "Key%uType", id);
+    snprintf(key, sizeof(key), "Key%sStr%u", args, id);
 
     if (cwmp_nvram_get_int(tkey, 0) == 0) {
         /* hex value */
@@ -1248,14 +1441,25 @@ cpe_get_igd_lan_wlan_wepkey(cwmp_t * cwmp, const char * name, char ** value, cha
 }
 
 static bool
-get_igd_lan_wlan_txrx(struct nic_counts *result)
+get_igd_lan_wlan_txrx(cwmp_t *cwmp, const char *name, struct nic_counts *result)
 {
+    unsigned id = -1u;
     int count = 0;
     int i = 0;
     struct nic_counts *nc = NULL;
+    struct wlanc_node *w = NULL;
+
+    if ((id = wlanc_get_id(cwmp, name, NULL)) == -1u) {
+        return false;
+    }
+
+    if (!(w = wlanc_nget(wlanc.root, NULL, id))) {
+        return false;
+    }
+
     nc = nicscounts(&count);
     for (i = 0; i < count; i++) {
-        if (!strcmp(nc[i].ifname, "ra0")) {
+        if (!strcmp(nc[i].ifname, w->name)) {
             memcpy(result, &nc[i], sizeof(*result));
             goto success;
         }
@@ -1270,12 +1474,12 @@ success:
 }
 
 int
-cpe_get_igd_lan_wlan_tx_bytes(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+cpe_get_igd_wlanc_tx_bytes(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
     struct nic_counts nc = {};
     char buf[42] = {};
     DM_TRACE_GET();
-    if (!get_igd_lan_wlan_txrx(&nc)) {
+    if (!get_igd_lan_wlan_txrx(cwmp, name, &nc)) {
         cwmp_log_error("%s: can't get counter for WLAN interface");
         return FAULT_CODE_9002;
     }
@@ -1285,12 +1489,12 @@ cpe_get_igd_lan_wlan_tx_bytes(cwmp_t * cwmp, const char * name, char ** value, c
 }
 
 int
-cpe_get_igd_lan_wlan_rx_bytes(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+cpe_get_igd_wlanc_rx_bytes(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
     struct nic_counts nc = {};
     char buf[42] = {};
     DM_TRACE_GET();
-    if (!get_igd_lan_wlan_txrx(&nc)) {
+    if (!get_igd_lan_wlan_txrx(cwmp, name, &nc)) {
         cwmp_log_error("%s: can't get counter for WLAN interface");
         return FAULT_CODE_9002;
     }
@@ -1300,12 +1504,12 @@ cpe_get_igd_lan_wlan_rx_bytes(cwmp_t * cwmp, const char * name, char ** value, c
 }
 
 int
-cpe_get_igd_lan_wlan_tx_packets(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+cpe_get_igd_wlanc_tx_packets(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
     struct nic_counts nc = {};
     char buf[42] = {};
     DM_TRACE_GET();
-    if (!get_igd_lan_wlan_txrx(&nc)) {
+    if (!get_igd_lan_wlan_txrx(cwmp, name, &nc)) {
         cwmp_log_error("%s: can't get counter for WLAN interface");
         return FAULT_CODE_9002;
     }
@@ -1315,12 +1519,12 @@ cpe_get_igd_lan_wlan_tx_packets(cwmp_t * cwmp, const char * name, char ** value,
 }
 
 int
-cpe_get_igd_lan_wlan_rx_packets(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+cpe_get_igd_wlanc_rx_packets(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
     struct nic_counts nc = {};
     char buf[42] = {};
     DM_TRACE_GET();
-    if (!get_igd_lan_wlan_txrx(&nc)) {
+    if (!get_igd_lan_wlan_txrx(cwmp, name, &nc)) {
         cwmp_log_error("%s: can't get counter for WLAN interface");
         return FAULT_CODE_9002;
     }
@@ -1330,14 +1534,14 @@ cpe_get_igd_lan_wlan_rx_packets(cwmp_t * cwmp, const char * name, char ** value,
 }
 
 int
-cpe_get_igd_lan_wlan_stats(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+cpe_get_igd_wlanc_stats(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
     parameter_node_t *pn = NULL;
     struct nic_counts nc = {};
     char buf[42] = "0";
 
     DM_TRACE_GET();
-    if (!get_igd_lan_wlan_txrx(&nc)) {
+    if (!get_igd_lan_wlan_txrx(cwmp, name, &nc)) {
         cwmp_log_error("%s: can't get counter for WLAN interface");
         return FAULT_CODE_9002;
     }
@@ -1411,117 +1615,6 @@ cpe_get_igd_lan_wlan_ssidadv(cwmp_t * cwmp, const char * name, char ** value, ch
 }
 
 /* *** dynamic config *** */
-struct wlanc_node {
-    unsigned id;
-    char name[16];
-    struct wlanc_node *next;
-};
-
-static struct {
-    struct wlanc_node *root;
-    unsigned count;
-} wlanc;
-
-static void
-wlanc_free_all(struct wlanc_node *root)
-{
-    struct wlanc_node *n = root;
-
-    while (root) {
-        n = n->next;
-        free(root);
-        root = n;
-    }
-}
-
-static struct wlanc_node *
-wlanc_nget(struct wlanc_node *root, const char *name, unsigned id)
-{
-    struct wlanc_node *n = NULL;
-
-    for (n = root; n; n = n->next) {
-        if (name) {
-            if (!strcmp(n->name, name)) {
-                break;
-            }
-        } else if (id != -1u) {
-            if (n->id == id) {
-                break;
-            }
-        }
-    }
-
-    if (!n) {
-        cwmp_log_error(
-                "InternetGatewayDevice...WLANConfiguration: "
-                "can't get wlan with name=%s, id=%u",
-                name ? name : "", id);
-    }
-    return n;
-}
-
-static struct wlanc_node *
-wlanc_nnew(struct wlanc_node *root, char *prefix_filter, char *name)
-{
-    struct wlanc_node *n = NULL;
-    struct wlanc_node *l = NULL;
-    unsigned id = 0u;
-    size_t prefix_len = 0u;
-
-    if (!name || !*name)
-        return NULL;
-
-    if (prefix_filter) {
-        prefix_len = strlen(prefix_filter);
-        if (strncmp(name, prefix_filter, prefix_len) != 0) {
-            return NULL;
-        }
-        id = (unsigned)strtoul(name + prefix_len, NULL, 10);
-    } else {
-        /* get id from tail */
-        size_t name_max = strlen(name) - 1;
-        size_t name_len = name_max;
-        for (; name_len > 0; --name_len) {
-            if (name[name_len] >= '0' || name[name_len] <= '9') {
-                id += (name[name_len] - '0') * ((name_max - name_len) * 10);
-            } else {
-                break;
-            }
-        }
-    }
-
-    for (n = root; n; n = n->next) {
-        if (!strcmp(n->name, name)) {
-            break;
-        }
-        if (n->id == id) {
-            break;
-        }
-        l = n;
-    }
-
-    if (n) {
-        return NULL;
-    }
-
-    n = calloc(1, sizeof(*n));
-    if (!n) {
-        cwmp_log_error("InternetGatewayDevice...WLANConfiguration: calloc(%d) failed: %s",
-                sizeof(*n), strerror(errno));
-        return NULL;
-    }
-
-    if (name) {
-        strncpy(n->name, name, sizeof(n->name));
-    }
-    n->id = id;
-
-    if (l) {
-        l->next = n;
-    }
-
-    return n;
-}
 
 int
 cpe_refresh_wlanc(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_func_t callback_reg)
@@ -1567,7 +1660,7 @@ cpe_get_igd_wlanc_bssid(cwmp_t * cwmp, const char * name, char ** value, char * 
 
     DM_TRACE_GET();
 
-    if ((id = wlanc_get_id(cwmp, name)) == -1u) {
+    if ((id = wlanc_get_id(cwmp, name, NULL)) == -1u) {
         return FAULT_CODE_9002;
     }
 
@@ -1592,7 +1685,7 @@ cpe_get_igd_wlanc_ssid(cwmp_t * cwmp, const char * name, char ** value, char * a
     char ssid_id[128] = {};
     DM_TRACE_GET();
 
-    if ((id = wlanc_get_id(cwmp, name)) == -1u) {
+    if ((id = wlanc_get_id(cwmp, name, NULL)) == -1u) {
         return FAULT_CODE_9002;
     }
 
@@ -1610,13 +1703,47 @@ cpe_set_igd_wlanc_ssid(cwmp_t * cwmp, const char * name, const char * value, int
 
     DM_TRACE_SET();
 
-    if ((id = wlanc_get_id(cwmp, name)) == -1u) {
+    if ((id = wlanc_get_id(cwmp, name, NULL)) == -1u) {
         return FAULT_CODE_9002;
     }
 
     snprintf(ssid_id, sizeof(ssid_id), "SSID%u", id + 1);
     cwmp_nvram_set(ssid_id, value);
 
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_set_igd_wlanc_pskfailures(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
+{
+    unsigned id = -1u;
+
+    DM_TRACE_SET();
+
+    if ((id = wlanc_get_id(cwmp, name, NULL)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
+    nvram_set_tuple("RekeyInterval", id, value);
+
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_wlanc_pskfailures(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    unsigned id = -1u;
+    char v[82] = {};
+
+    DM_TRACE_GET();
+
+    if ((id = wlanc_get_id(cwmp, name, NULL)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
+    nvram_get_tuple("RekeyInterval", id, v, sizeof(v));
+
+    *value = pool_pstrdup(pool, v);
     return FAULT_CODE_OK;
 }
 
