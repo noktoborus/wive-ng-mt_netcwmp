@@ -250,6 +250,7 @@
 						<!--<param name="MACAddressControlEnabled" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>-->
 						<param name="Standard" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_wlanc_standard" set_func="cpe_set_igd_wlanc_standard"/>
 						<param name="WEPKeyIndex" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_wlanc_wepkey_index" set_func="cpe_set_igd_wlanc_wepkey_index"/>
+						<param name="KeyPassphrase" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_wlanc_key" set_func="cpe_set_igd_wlanc_key"/>
 					</object>
 				</object>
 			</object>

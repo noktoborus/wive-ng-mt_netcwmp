@@ -1120,6 +1120,41 @@ cpe_get_igd_lan_wlan_associated_count(cwmp_t * cwmp, const char * name, char ** 
     return FAULT_CODE_OK;
 }
 
+int
+cpe_set_igd_wlanc_key(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
+{
+    unsigned id = -1u;
+    char k[42] = {};
+
+    DM_TRACE_SET();
+
+    if ((id = wlanc_get_id(cwmp, name)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
+    snprintf(k, sizeof(k), "WPAPSK%u", id + 1);
+    cwmp_nvram_set(k, value);
+
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_wlanc_key(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    unsigned id = -1u;
+    char k[42] = {};
+
+    DM_TRACE_GET();
+
+    if ((id = wlanc_get_id(cwmp, name)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
+    snprintf(k, sizeof(k), "WPAPSK%u", id + 1);
+    *value = cwmp_nvram_pool_get(pool, k);
+
+    return FAULT_CODE_OK;
+}
 
 int
 cpe_set_igd_wlanc_wepkey_index(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
