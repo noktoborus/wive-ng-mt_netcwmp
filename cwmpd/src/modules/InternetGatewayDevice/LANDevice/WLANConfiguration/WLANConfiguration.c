@@ -494,12 +494,14 @@ int cpe_set_igd_wlanc_channel(cwmp_t * cwmp, const char * name, const char * val
 }
 
 
-int cpe_get_igd_lan_wlan_standard(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+int cpe_get_igd_wlanc_standard(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    cwmp_log_debug("DEBUG: cpe_get_igd_lan_wlan_standard");
-    int standard =  cwmp_nvram_get_int("WirelessMode", 9);
-
+    int standard = 9;
     char* stdstr;
+
+    DM_TRACE_GET();
+
+    cwmp_nvram_get_int("WirelessMode", 9);
 
     switch (standard) {
 
@@ -513,12 +515,11 @@ int cpe_get_igd_lan_wlan_standard(cwmp_t * cwmp, const char * name, char ** valu
     }
 
     *value = pool_pstrdup(pool, stdstr);
-    cwmp_log_debug("DEBUG: cpe_get_igd_lan_wlan_standard %s",stdstr);
 
     return FAULT_CODE_OK;
 }
 
-int cpe_set_igd_lan_wlan_standard(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
+int cpe_set_igd_wlanc_standard(cwmp_t * cwmp, const char * name, const char * value, int length, char *args, callback_register_func_t callback_reg)
 {
     char* valStr = "9";
 
@@ -528,8 +529,6 @@ int cpe_set_igd_lan_wlan_standard(cwmp_t * cwmp, const char * name, const char *
     if (strcmp(value, "b") == 0) valStr="1";
 
     cwmp_nvram_set("WirelessMode", valStr);
-
-    cwmp_log_debug("DEBUG: cpe_set_igd_lan_wlan_standard %s", valStr);
 
     return FAULT_CODE_OK;
 }
@@ -1118,6 +1117,42 @@ cpe_get_igd_lan_wlan_associated_count(cwmp_t * cwmp, const char * name, char ** 
     DM_TRACE_GET();
     snprintf(buf, sizeof(buf), "%u", wlan_assoc_count);
     *value = pool_pstrdup(pool, buf);
+    return FAULT_CODE_OK;
+}
+
+
+int
+cpe_set_igd_wlanc_wepkey_index(cwmp_t *cwmp, const char *name, const char *value, int length, char *args, callback_register_func_t callback_reg)
+{
+    unsigned id = -1u;
+
+    DM_TRACE_SET();
+
+    if ((id = wlanc_get_id(cwmp, name)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
+    nvram_set_tuple("DefaultKeyID", id, value);
+
+    return FAULT_CODE_OK;
+}
+
+int
+cpe_get_igd_wlanc_wepkey_index(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+{
+    unsigned id = -1u;
+    char v[42] = {};
+
+    DM_TRACE_GET();
+
+    if ((id = wlanc_get_id(cwmp, name)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
+    nvram_get_tuple("DefaultKeyID", id, v, sizeof(v));
+
+    *value = pool_pstrdup(pool, v);
+
     return FAULT_CODE_OK;
 }
 

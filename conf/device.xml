@@ -243,11 +243,13 @@
 						<param name="Enable" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_nvram_bool" args="RadioOn" set_func="cpe_set_nvram_bool"/>
 						<param name="Status" get_func="cpe_get_igd_lan_wlan_status"/>
 						<param name="BSSID" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_wlanc_bssid" set_func="cpe_set_igd_wlanc_bssid"/>
-						<param name="MaxBitRate" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_const_string" set_func="cpe_set_null" args="Auto"/>
+						<param name="MaxBitRate" rw="1" get_func="cpe_get_const_string" set_func="cpe_set_null" args="Auto"/>
 						<param name="Channel" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_wlanc_channel" set_func="cpe_set_igd_wlanc_channel"/>
 						<param name="SSID" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_wlanc_ssid" set_func="cpe_set_igd_wlanc_ssid"/>
 						<param name="BeaconType" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_wlanc_beacontype" set_func="cpe_set_igd_wlanc_beacontype"/>
 						<!--<param name="MACAddressControlEnabled" rw="1" reload_func="cpe_reload_all" get_func="" set_func=""/>-->
+						<param name="Standard" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_wlanc_standard" set_func="cpe_set_igd_wlanc_standard"/>
+						<param name="WEPKeyIndex" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_wlanc_wepkey_index" set_func="cpe_set_igd_wlanc_wepkey_index"/>
 					</object>
 				</object>
 			</object>

@@ -89,8 +89,8 @@ model_func_t ModelFunction[] =
     {"cpe_set_igd_wlanc_ssid", cpe_set_igd_wlanc_ssid},
     {"cpe_get_igd_wlanc_beacontype", cpe_get_igd_wlanc_beacontype},
 
-    {"cpe_get_igd_lan_wlan_standard", cpe_get_igd_lan_wlan_standard},
-    {"cpe_set_igd_lan_wlan_standard", cpe_set_igd_lan_wlan_standard},
+    {"cpe_get_igd_wlanc_standard", cpe_get_igd_wlanc_standard},
+    {"cpe_set_igd_wlanc_standard", cpe_set_igd_wlanc_standard},
 
     {"cpe_get_igd_wlanc_channel", cpe_get_igd_wlanc_channel},
     {"cpe_set_igd_wlanc_channel", cpe_set_igd_wlanc_channel},
@@ -129,6 +129,8 @@ model_func_t ModelFunction[] =
     {"cpe_set_igd_lan_wlan_ssidadv", cpe_set_igd_lan_wlan_ssidadv},
     {"cpe_get_igd_lan_wlan_ssidadv", cpe_get_igd_lan_wlan_ssidadv},
 
+    {"cpe_set_igd_wlanc_wepkey_index", cpe_set_igd_wlanc_wepkey_index},
+    {"cpe_get_igd_wlanc_wepkey_index", cpe_get_igd_wlanc_wepkey_index},
     {"cpe_set_igd_lan_wlan_wepkey", cpe_set_igd_lan_wlan_wepkey},
     {"cpe_get_igd_lan_wlan_wepkey", cpe_get_igd_lan_wlan_wepkey},
 
