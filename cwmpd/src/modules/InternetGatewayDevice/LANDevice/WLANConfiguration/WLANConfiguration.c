@@ -1,8 +1,22 @@
 /* vim: set et: */
 //FIXME: Multichannel auth functions!
+
+
+
+struct wlan_assoc
+{
+    char mac[18];
+    char addr[40];
+    bool authenticated;
+};
+
 struct wlanc_node {
     unsigned id;
     char name[16];
+
+    struct wlan_assoc *assoc;
+    unsigned assoc_count;
+
     struct wlanc_node *next;
 };
 
@@ -18,6 +32,11 @@ wlanc_free_all(struct wlanc_node *root)
 
     while (root) {
         n = n->next;
+        if (root->assoc) {
+            free(root->assoc);
+            root->assoc = NULL;
+            root->assoc_count = 0u;
+        }
         free(root);
         root = n;
     }
@@ -311,13 +330,13 @@ static void nvram_wlan_normalize(unsigned index, struct wlan_security_mode *wsm)
         if (wsm->authMode != WLAN_OPEN || wsm->authMode != WLAN_SHARED) {
             cwmp_log_info(
                     "WLANConfiguration: "
-                    "set BasicAuthenticationMode to None for index %u", index);
+                    "set BasicAuthenticationMode to None for index %u", index + 1);
             wsm->authMode = WLAN_OPEN;
         }
         if (wsm->encrypt != WLAN_NO_ENCRYPTION || wsm->encrypt != WLAN_WEP) {
             cwmp_log_info(
                     "WLANConfiguration: "
-                    "set BasicEncryptionModes to None for index %u", index);
+                    "set BasicEncryptionModes to None for index %u", index  + 1);
             wsm->encrypt = WLAN_NO_ENCRYPTION;
         }
     } else if (wsm->mode == WLAN_WPA ||
@@ -339,13 +358,13 @@ static void nvram_wlan_normalize(unsigned index, struct wlan_security_mode *wsm)
         if (wsm->authMode != WLAN_PSK || wsm->authMode != WLAN_EAP) {
             cwmp_log_info(
                     "WLANConfiguration: "
-                    "set %sAuthenticationMode to PSKAuthentication for index %u", v, index);
+                    "set %sAuthenticationMode to PSKAuthentication for index %u", v, index + 1);
             wsm->authMode = WLAN_PSK;
         }
         if (wsm->encrypt != WLAN_AES || wsm->encrypt != WLAN_TKIP || wsm->encrypt != WLAN_TKIPAES) {
             cwmp_log_info(
                     "WLANConfiguration: "
-                    "set %sEncryptionModes to AESEncryption for index %u", v, index);
+                    "set %sEncryptionModes to AESEncryption for index %u", v, index + 1);
             wsm->encrypt = WLAN_AES;
         }
     } else {
@@ -355,7 +374,7 @@ static void nvram_wlan_normalize(unsigned index, struct wlan_security_mode *wsm)
         wsm->encrypt = WLAN_NO_ENCRYPTION;
         cwmp_log_info(
                 "WLANConfiguration: "
-                "BasicAuthenticationMode as default for index %u", index);
+                "BasicAuthenticationMode as default for index %u", index + 1);
     }
 }
 
@@ -364,10 +383,10 @@ static bool nvram_wlan_load(unsigned index, struct wlan_security_mode *wsm)
     char auth[128] = {};
     char encr[128] = {};
     if (!nvram_get_tuple("AuthMode", index, auth, sizeof(auth))) {
-        cwmp_log_error("WLANConfiguration: undefined nvram's AuthMode value for index %u", index);
+        cwmp_log_error("WLANConfiguration: undefined nvram's AuthMode value for index %u", index + 1);
     }
     if (!nvram_get_tuple("EncrypType", index, encr, sizeof(encr))) {
-        cwmp_log_error("WLANConfiguration: undefined nvram's EncrypType value for index %u", index);
+        cwmp_log_error("WLANConfiguration: undefined nvram's EncrypType value for index %u", index + 1);
     }
 
     /* load encryption */
@@ -385,7 +404,7 @@ static bool nvram_wlan_load(unsigned index, struct wlan_security_mode *wsm)
         cwmp_log_error(
             "WLANConfiguration: "
             "unknown nvram's EncrypType value for index %u: '%s'",
-            index, auth);
+            index + 1, auth);
     }
 
     /* load auth mode and security mode */
@@ -393,6 +412,9 @@ static bool nvram_wlan_load(unsigned index, struct wlan_security_mode *wsm)
         wsm->authMode = WLAN_OPEN;
         wsm->mode = WLAN_BASIC;
     } else if (!strcmp(auth, "SHARED")) {
+        wsm->authMode = WLAN_SHARED;
+        wsm->mode = WLAN_BASIC;
+    } else if (!strcmp(auth, "WEPAUTO")) {
         wsm->authMode = WLAN_SHARED;
         wsm->mode = WLAN_BASIC;
     } else if (!strcmp(auth, "WPA")) {
@@ -420,7 +442,7 @@ static bool nvram_wlan_load(unsigned index, struct wlan_security_mode *wsm)
         cwmp_log_error(
                 "WLANConfiguration: "
                 "unknown nvram's AuthMode value for index %u: '%s'",
-                index, auth);
+                index + 1, auth);
     }
     return true;
 }
@@ -672,6 +694,8 @@ int cpe_get_igd_wlanc_basicauthmode(cwmp_t * cwmp, const char * name, char ** va
             *value = "EAPAuthentication";
             break;
         default:
+            cwmp_log_error("%s: unknown authentication mode: %d",
+                    __func__, wsm.authMode);
             return FAULT_CODE_9002;
     }
 
@@ -736,7 +760,10 @@ cpe_get_igd_wlanc_basicencryption(cwmp_t * cwmp, const char * name, char ** valu
             break;
         case WLAN_WEP:
             *value = "WEPEncryption";
+            break;
         default:
+            cwmp_log_error("%s: unknown encryption: %d",
+                    __func__, wsm.encrypt);
             return FAULT_CODE_9002;
     }
 
@@ -1119,17 +1146,6 @@ cpe_get_igd_wlanc_enabled(cwmp_t * cwmp, const char * name, char ** value, char 
     return FAULT_CODE_OK;
 }
 
-
-
-static struct wlan_assoc
-{
-    char mac[18];
-    char addr[40];
-    bool authenticated;
-} *wlan_assoc;
-
-static unsigned wlan_assoc_count;
-
 static void
 igd_lan_wlan_arp(const char *n, struct wlan_assoc *wa)
 {
@@ -1162,103 +1178,128 @@ igd_lan_wlan_arp(const char *n, struct wlan_assoc *wa)
 }
 
 int
-cpe_refresh_igd_lan_wlan_associated(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_func_t callback_reg)
+cpe_refresh_igd_wlanc_associated(cwmp_t * cwmp, parameter_node_t * param_node, callback_register_func_t callback_reg)
 {
+    unsigned id = -1u;
+    struct wlanc_node *w = NULL;
+    char name[1024] = {};
+
 	RT_802_11_MAC_TABLE table24 = {};
 	RT_802_11_MAC_ENTRY *pe = NULL;
     int row_no = 0;
     parameter_node_t *pn = NULL;
 
     DM_TRACE_REFRESH();
+
+    cwmp_get_parameter_fullpath(param_node, name, sizeof(name));
+
+    /* get number of WLANConfiguration */
+    if ((id = wlanc_get_id_node(param_node, name, &pn)) == -1u) {
+        id = wlanc_get_id_node(pn, name, &pn);
+    }
+
+    if (id == -1) {
+        return FAULT_CODE_9002;
+    }
+
+    /* get wlanc struct */
+    w = wlanc_nget(wlanc.root, NULL, id);
+    if (!w) {
+        return FAULT_CODE_9002;
+    }
+
     /* delete */
     cwmp_model_delete_object_child(cwmp, param_node);
-    if (wlan_assoc) {
-        free(wlan_assoc);
-        wlan_assoc = NULL;
-        wlan_assoc_count = 0u;
+    if (w->assoc) {
+        free(w->assoc);
+        w->assoc = NULL;
+        w->assoc_count = 0u;
     }
 
     /* populate 2.4GHz */
 	getWlanStationTable(&table24, 1);
 
-    wlan_assoc = calloc(table24.Num, sizeof(*wlan_assoc));
-    if (!wlan_assoc) {
+    w->assoc = calloc(table24.Num, sizeof(*w->assoc));
+    if (!w->assoc) {
         cwmp_log_error("%s: calloc(%d) failed: %s",
-                __func__, table24.Num * sizeof(*wlan_assoc), strerror(errno));
+                __func__, table24.Num * sizeof(*w->assoc), strerror(errno));
         return FAULT_CODE_9002;
     }
-    wlan_assoc_count = table24.Num;
+    w->assoc_count = table24.Num;
 
     for (row_no = 0; row_no < table24.Num; row_no++) {
         pe = &(table24.Entry[row_no]);
-        snprintf(wlan_assoc[row_no].mac,
-                sizeof(wlan_assoc[row_no].mac),
+        snprintf(w->assoc[row_no].mac,
+                sizeof(w->assoc[row_no].mac),
                 "%02x:%02x:%02x:%02x:%02x:%02x",
                 pe->Addr[0], pe->Addr[1], pe->Addr[2],
                 pe->Addr[3], pe->Addr[4], pe->Addr[5]);
         /* FIXME: too simple */
-        igd_lan_wlan_arp(__func__, &wlan_assoc[row_no]);
+        igd_lan_wlan_arp(__func__, &w->assoc[row_no]);
 		cwmp_model_copy_parameter(param_node, &pn, row_no + 1);
     }
     return FAULT_CODE_OK;
 }
 
-static long
+static struct wlan_assoc*
 igd_lan_wlan_no_from_path(cwmp_t *cwmp, const char *name)
 {
+    unsigned assoc_id = -1u;
+    unsigned wlan_id = -1u;
+    struct wlanc_node *w = NULL;
 	parameter_node_t *pn = NULL;
 	long no = 0;
 
-	pn = cwmp_get_parameter_path_node(cwmp->root, name);
-	if (!pn || !(pn = pn->parent)) {
-		cwmp_log_error("%s: can't get rule's number", name);
-		return -1;
-	}
+    /* get assoc id */
+    if ((assoc_id = wlanc_get_id(cwmp, name, &pn)) == -1u) {
+        return NULL;
+    }
+    /* get WLANConfiguration id */
+    if ((wlan_id = wlanc_get_id_node(pn, name, NULL)) == -1u) {
+        return NULL;
+    }
 
-	no = strtol(pn->name, NULL, 10);
+    /* get wlanc node */
+    if (!(w = wlanc_nget(wlanc.root, NULL, wlan_id))) {
+        return NULL;
+    }
 
-	if (!no) {
-		cwmp_log_error("%s: node name '%s' not a valid number", name, pn->name);
-		return -1;
-	}
-
-	if ((unsigned long)no > wlan_assoc_count) {
+    /* check assoc */
+	if (assoc_id >= w->assoc_count) {
 		cwmp_log_error("%s: invalid rule number: %lu", name, no);
-		return -1;
+		return NULL;
 	}
 
-	return (no - 1);
+	return &w->assoc[assoc_id];
 }
 
 
 int
-cpe_get_igd_lan_wlan_assoc_mac(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+cpe_get_igd_wlanc_assoc_mac(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    int no = -1;
+    struct wlan_assoc *wa = NULL;
     DM_TRACE_GET();
-    no = igd_lan_wlan_no_from_path(cwmp, name);
-    if (no == -1) {
+    if (!(wa = igd_lan_wlan_no_from_path(cwmp, name))) {
         return FAULT_CODE_9002;
     }
-    *value = pool_pstrdup(pool, wlan_assoc[no].mac);
+    *value = pool_pstrdup(pool, wa->mac);
     return FAULT_CODE_OK;
 }
 
 int
-cpe_get_igd_lan_wlan_assoc_addr(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+cpe_get_igd_wlanc_assoc_addr(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    int no = -1;
+    struct wlan_assoc *wa = NULL;
     DM_TRACE_GET();
-    no = igd_lan_wlan_no_from_path(cwmp, name);
-    if (no == -1) {
+    if (!(wa = igd_lan_wlan_no_from_path(cwmp, name))) {
         return FAULT_CODE_9002;
     }
-    *value = pool_pstrdup(pool, wlan_assoc[no].addr);
+    *value = pool_pstrdup(pool, wa->addr);
     return FAULT_CODE_OK;
 }
 
 int
-cpe_get_igd_lan_wlan_assoc_state(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+cpe_get_igd_wlanc_assoc_state(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
     DM_TRACE_GET();
     *value = "1";
@@ -1266,11 +1307,22 @@ cpe_get_igd_lan_wlan_assoc_state(cwmp_t * cwmp, const char * name, char ** value
 }
 
 int
-cpe_get_igd_lan_wlan_associated_count(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
+cpe_get_igd_wlanc_associated_count(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
+    unsigned id = -1u;
+    struct wlanc_node *w = NULL;
     char buf[42] = {};
     DM_TRACE_GET();
-    snprintf(buf, sizeof(buf), "%u", wlan_assoc_count);
+
+    if ((id = wlanc_get_id(cwmp, name, NULL)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
+    if (!(w = wlanc_nget(wlanc.root, NULL, id))) {
+        return FAULT_CODE_9002;
+    }
+
+    snprintf(buf, sizeof(buf), "%u", w->assoc_count);
     *value = pool_pstrdup(pool, buf);
     return FAULT_CODE_OK;
 }
@@ -1352,20 +1404,21 @@ cpe_set_igd_wlanc_wepkey(cwmp_t *cwmp, const char *name, const char *value, int 
     char tkey[42] = {};
     char key[42] = {};
     char *end = NULL;
-    unsigned id = 1;
     parameter_node_t *pn = NULL;
+    unsigned wlan_id = 1;
+    unsigned key_id = 0u;
 
     DM_TRACE_SET();
-    if ((id = wlanc_get_id(cwmp, name, &pn)) != -1) {
-        id = wlanc_get_id_node(pn, name, NULL);
-    }
-
-    if (id == -1u) {
+    if ((key_id = wlanc_get_id(cwmp, name, &pn)) == -1u) {
         return FAULT_CODE_9002;
     }
 
-    snprintf(tkey, sizeof(tkey), "Key%uType", id);
-    snprintf(key, sizeof(key), "Key%sStr%u", args, id);
+    if ((wlan_id = wlanc_get_id_node(pn, name, NULL)) == -1u) {
+        return FAULT_CODE_9002;
+    }
+
+    snprintf(tkey, sizeof(tkey), "Key%uType", wlan_id + 1);
+    snprintf(key, sizeof(key), "Key%uStr%u", key_id + 1, wlan_id + 1);
 
     if (length != 10 || length != 26) {
         cwmp_log_trace("%s: invalid value length: %d, must be equal 10 or 26",
@@ -1380,7 +1433,7 @@ cpe_set_igd_wlanc_wepkey(cwmp_t *cwmp, const char *name, const char *value, int 
         return FAULT_CODE_9007;
     }
 
-    cwmp_nvram_set(tkey, "0");
+    nvram_set_tuple(tkey, key_id, "0");
     cwmp_nvram_set(key, value);
     return FAULT_CODE_OK;
 }
@@ -1388,26 +1441,29 @@ cpe_set_igd_wlanc_wepkey(cwmp_t *cwmp, const char *name, const char *value, int 
 int
 cpe_get_igd_wlanc_wepkey(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    unsigned id = 1;
+    unsigned wlan_id = 1;
     char tkey[42] = {};
     char key[42] = {};
     char *val = NULL;
     char hex[27];
+    char tval[42] = {};
+    unsigned key_id = 0u;
     parameter_node_t *pn = NULL;
 
     DM_TRACE_GET();
-    if ((id = wlanc_get_id(cwmp, name, &pn)) != -1) {
-        id = wlanc_get_id_node(pn, name, NULL);
-    }
-
-    if (id == -1u) {
+    if ((key_id = wlanc_get_id(cwmp, name, &pn)) == -1u) {
         return FAULT_CODE_9002;
     }
 
-    snprintf(tkey, sizeof(tkey), "Key%uType", id);
-    snprintf(key, sizeof(key), "Key%sStr%u", args, id);
+    if ((wlan_id = wlanc_get_id_node(pn, name, NULL)) == -1u) {
+        return FAULT_CODE_9002;
+    }
 
-    if (cwmp_nvram_get_int(tkey, 0) == 0) {
+    snprintf(tkey, sizeof(tkey), "Key%uType", wlan_id + 1);
+    snprintf(key, sizeof(key), "Key%uStr%u", key_id + 1, wlan_id + 1);
+
+    nvram_get_tuple(tkey, key_id, tval, sizeof(tval));
+    if (*tval == '0') {
         /* hex value */
         *value = cwmp_nvram_pool_get(pool, key);
     } else {
@@ -1588,7 +1644,11 @@ cpe_set_igd_wlanc_ssidadv(cwmp_t * cwmp, const char * name, const char * value, 
         return FAULT_CODE_9002;
     }
 
-    nvram_set_tuple("HideSSID", id, value);
+    if (*value == '1') {
+        nvram_set_tuple("HideSSID", id, "0");
+    } else {
+        nvram_set_tuple("HideSSID", id, "1");
+    }
     return FAULT_CODE_OK;
 }
 
@@ -1605,7 +1665,11 @@ cpe_get_igd_wlanc_ssidadv(cwmp_t * cwmp, const char * name, char ** value, char 
     }
 
     nvram_get_tuple("HideSSID", id, v, sizeof(v));
-    *value = pool_pstrdup(pool, v);
+    if (*v == '1') {
+        *value = "0";
+    } else {
+        *value = "1";
+    }
 
     return FAULT_CODE_OK;
 }
@@ -1637,7 +1701,7 @@ cpe_refresh_wlanc(cwmp_t * cwmp, parameter_node_t * param_node, callback_registe
         if (!w) {
             continue;
         }
-        cwmp_model_copy_parameter(param_node, &new_param, w->id);
+        cwmp_model_copy_parameter(param_node, &new_param, w->id + 1);
         wlanc.count++;
         if (!wlanc.root) {
             wlanc.root = w;

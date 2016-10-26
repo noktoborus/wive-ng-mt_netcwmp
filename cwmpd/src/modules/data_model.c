@@ -115,11 +115,11 @@ model_func_t ModelFunction[] =
     {"cpe_set_igd_wlanc_enabled", cpe_set_igd_wlanc_enabled},
     {"cpe_get_igd_wlanc_enabled", cpe_get_igd_wlanc_enabled},
 
-    {"cpe_get_igd_lan_wlan_associated_count", cpe_get_igd_lan_wlan_associated_count},
-    {"cpe_refresh_igd_lan_wlan_associated", cpe_refresh_igd_lan_wlan_associated},
-    {"cpe_get_igd_lan_wlan_assoc_mac", cpe_get_igd_lan_wlan_assoc_mac},
-    {"cpe_get_igd_lan_wlan_assoc_addr", cpe_get_igd_lan_wlan_assoc_addr},
-    {"cpe_get_igd_lan_wlan_assoc_state", cpe_get_igd_lan_wlan_assoc_state},
+    {"cpe_get_igd_wlanc_associated_count", cpe_get_igd_wlanc_associated_count},
+    {"cpe_refresh_igd_wlanc_associated", cpe_refresh_igd_wlanc_associated},
+    {"cpe_get_igd_wlanc_assoc_mac", cpe_get_igd_wlanc_assoc_mac},
+    {"cpe_get_igd_wlanc_assoc_addr", cpe_get_igd_wlanc_assoc_addr},
+    {"cpe_get_igd_wlanc_assoc_state", cpe_get_igd_wlanc_assoc_state},
 
     {"cpe_get_wlanc_name", cpe_get_wlanc_name},
 
