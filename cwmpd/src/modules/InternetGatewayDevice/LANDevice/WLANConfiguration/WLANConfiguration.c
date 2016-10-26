@@ -583,7 +583,7 @@ int cpe_set_igd_wlanc_channel(cwmp_t * cwmp, const char * name, const char * val
     DM_TRACE_SET();
 
     if (value == NULL) {
-	cwmp_log_error("cpe_get_igd_lan_wlan_channel: undefined value!");
+	cwmp_log_error("%s: undefined value!", __func__);
 	return FAULT_CODE_9002;
     }
 
@@ -1462,7 +1462,7 @@ cpe_get_igd_wlanc_tx_bytes(cwmp_t * cwmp, const char * name, char ** value, char
     char buf[42] = {};
     DM_TRACE_GET();
     if (!get_igd_lan_wlan_txrx(cwmp, name, &nc)) {
-        cwmp_log_error("%s: can't get counter for WLAN interface");
+        cwmp_log_error("%s: can't get counter for WLAN interface", __func__);
         return FAULT_CODE_9002;
     }
     snprintf(buf, sizeof(buf), "%llu", nc.tx_bytes);
@@ -1477,7 +1477,7 @@ cpe_get_igd_wlanc_rx_bytes(cwmp_t * cwmp, const char * name, char ** value, char
     char buf[42] = {};
     DM_TRACE_GET();
     if (!get_igd_lan_wlan_txrx(cwmp, name, &nc)) {
-        cwmp_log_error("%s: can't get counter for WLAN interface");
+        cwmp_log_error("%s: can't get counter for WLAN interface", __func__);
         return FAULT_CODE_9002;
     }
     snprintf(buf, sizeof(buf), "%llu", nc.rx_bytes);
@@ -1492,7 +1492,7 @@ cpe_get_igd_wlanc_tx_packets(cwmp_t * cwmp, const char * name, char ** value, ch
     char buf[42] = {};
     DM_TRACE_GET();
     if (!get_igd_lan_wlan_txrx(cwmp, name, &nc)) {
-        cwmp_log_error("%s: can't get counter for WLAN interface");
+        cwmp_log_error("%s: can't get counter for WLAN interface", __func__);
         return FAULT_CODE_9002;
     }
     snprintf(buf, sizeof(buf), "%llu", nc.tx_packets);
@@ -1507,7 +1507,7 @@ cpe_get_igd_wlanc_rx_packets(cwmp_t * cwmp, const char * name, char ** value, ch
     char buf[42] = {};
     DM_TRACE_GET();
     if (!get_igd_lan_wlan_txrx(cwmp, name, &nc)) {
-        cwmp_log_error("%s: can't get counter for WLAN interface");
+        cwmp_log_error("%s: can't get counter for WLAN interface", __func__);
         return FAULT_CODE_9002;
     }
     snprintf(buf, sizeof(buf), "%llu", nc.rx_packets);
@@ -1524,7 +1524,7 @@ cpe_get_igd_wlanc_stats(cwmp_t * cwmp, const char * name, char ** value, char * 
 
     DM_TRACE_GET();
     if (!get_igd_lan_wlan_txrx(cwmp, name, &nc)) {
-        cwmp_log_error("%s: can't get counter for WLAN interface");
+        cwmp_log_error("%s: can't get counter for WLAN interface", __func__);
         return FAULT_CODE_9002;
     }
 
