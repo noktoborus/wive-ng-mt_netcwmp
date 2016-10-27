@@ -1417,7 +1417,7 @@ cpe_set_igd_wlanc_wepkey(cwmp_t *cwmp, const char *name, const char *value, int 
         return FAULT_CODE_9002;
     }
 
-    snprintf(tkey, sizeof(tkey), "Key%uType", wlan_id + 1);
+    snprintf(tkey, sizeof(tkey), "Key%uType", key_id + 1);
     snprintf(key, sizeof(key), "Key%uStr%u", key_id + 1, wlan_id + 1);
 
     if (length != 10 || length != 26) {
@@ -1433,7 +1433,7 @@ cpe_set_igd_wlanc_wepkey(cwmp_t *cwmp, const char *name, const char *value, int 
         return FAULT_CODE_9007;
     }
 
-    nvram_set_tuple(tkey, key_id, "0");
+    nvram_set_tuple(tkey, wlan_id, "0");
     cwmp_nvram_set(key, value);
     return FAULT_CODE_OK;
 }
@@ -1459,10 +1459,10 @@ cpe_get_igd_wlanc_wepkey(cwmp_t * cwmp, const char * name, char ** value, char *
         return FAULT_CODE_9002;
     }
 
-    snprintf(tkey, sizeof(tkey), "Key%uType", wlan_id + 1);
+    snprintf(tkey, sizeof(tkey), "Key%uType", key_id + 1);
     snprintf(key, sizeof(key), "Key%uStr%u", key_id + 1, wlan_id + 1);
 
-    nvram_get_tuple(tkey, key_id, tval, sizeof(tval));
+    nvram_get_tuple(tkey, wlan_id, tval, sizeof(tval));
     if (*tval == '0') {
         /* hex value */
         *value = cwmp_nvram_pool_get(pool, key);
