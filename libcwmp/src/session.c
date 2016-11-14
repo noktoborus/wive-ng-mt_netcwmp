@@ -519,7 +519,7 @@ int cwmp_session_create_connection(cwmp_session_t * session)
     if(use_ssl)
     {
 #ifdef USE_CWMP_OPENSSL
-        SSL *ssl = openssl_connect(cwmp->ssl_ctx, sock->sockdes);
+        SSL *ssl = openssl_connect(session->cwmp->ssl_ctx, sock->sockdes);
         if(ssl)
         {
            sock->ssl = ssl;
