@@ -10,14 +10,11 @@
 
 #ifdef USE_CWMP_OPENSSL
 
-static char openssl_password[32];
-
 
 BIO *bio_err=0;
 static char *pass;
 static int password_cb(char *buf,int num,
   int rwflag,void *userdata);
-static void sigpipe_handle(int x);
 
 /* A simple error and exit routine*/
 int err_exit(string)
@@ -25,6 +22,7 @@ int err_exit(string)
   {
     cwmp_log_error("%s",string);
     //exit(0);
+	return 0;
   }
 
 /* Print SSL errors and exit*/
@@ -34,6 +32,7 @@ int berr_exit(string)
     cwmp_log_error("%s",string);
     ERR_print_errors(bio_err);
     //exit(0);
+	return 0;
   }
 
 /*The password code is not thread safe*/
@@ -46,9 +45,6 @@ static int password_cb(char *buf,int num,
     strcpy(buf,pass);
     return(strlen(pass));
   }
-
-static void sigpipe_handle(int x){
-}
 
 SSL_CTX *openssl_initialize_ctx(char *keyfile,char *password)
 {
@@ -64,11 +60,8 @@ SSL_CTX *openssl_initialize_ctx(char *keyfile,char *password)
       bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
     }
 
-    /* Set up a SIGPIPE handler */
-    //signal(SIGPIPE,sigpipe_handle);
-
     /* Create our context*/
-    meth=SSLv23_method();
+    meth=(SSL_METHOD*)SSLv23_method();
     ctx=SSL_CTX_new(meth);
 
     /* Load our keys and certificates*/

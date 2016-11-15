@@ -26,6 +26,7 @@
  ***********************************************************************/
 
 #include <time.h>
+#include <signal.h>
 #include <stdlib.h>
 #include "cwmpd.h"
 #include "modules/data_model.h"
@@ -80,6 +81,10 @@ void cwmp_init_ssl(cwmp_t * cwmp)
     cwmp->ssl_ctx = openssl_initialize_ctx(cafile, capasswd);
 }
 #endif
+
+static void signal_ignore_handler(int sig)
+{
+}
 
 int main(int argc, char **argv)
 {
@@ -160,6 +165,8 @@ int main(int argc, char **argv)
 	cwmp_log_error("VERSIONPKG parameter not found!");
     }
 */
+    /* setup signals */
+    signal(SIGPIPE, signal_ignore_handler);
 #ifdef USE_CWMP_OPENSSL
     cwmp_init_ssl(cwmp);
 #endif
