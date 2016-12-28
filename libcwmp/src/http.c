@@ -112,7 +112,7 @@ void http_sockaddr_set(http_sockaddr_t * addr, int family, int port, const char 
 
     if (host)
     {
-		//inet_aton(host, &addr->sin4.sin_addr);
+        //inet_aton(host, &addr->sin4.sin_addr);
         addr->sin4.sin_addr.s_addr = inet_addr(host);
     }
     else
@@ -263,19 +263,19 @@ saddr_char(char *str, size_t size, sa_family_t family, struct sockaddr *sa)
 static void
 timeval_substract_tv(struct timeval *tv1, const struct timeval *tv2)
 {
-	if (tv2->tv_usec > tv1->tv_usec) {
-		if (tv1->tv_sec >= 1) {
-			tv1->tv_sec--;
-			tv1->tv_usec += 1000000;
-		}
-	}
-	if (tv2->tv_sec > tv1->tv_sec || tv2->tv_usec > tv1->tv_usec) {
-		tv1->tv_sec = 0u;
-		tv1->tv_usec = 0u;
-	} else {
-		tv1->tv_sec -= tv2->tv_sec;
-		tv1->tv_usec -= tv2->tv_usec;
-	}
+    if (tv2->tv_usec > tv1->tv_usec) {
+        if (tv1->tv_sec >= 1) {
+            tv1->tv_sec--;
+            tv1->tv_usec += 1000000;
+        }
+    }
+    if (tv2->tv_sec > tv1->tv_sec || tv2->tv_usec > tv1->tv_usec) {
+        tv1->tv_sec = 0u;
+        tv1->tv_usec = 0u;
+    } else {
+        tv1->tv_sec -= tv2->tv_sec;
+        tv1->tv_usec -= tv2->tv_usec;
+    }
 }
 
 static bool
@@ -552,20 +552,20 @@ int http_socket_read (http_socket_t * sock, char *buf, int bufsize)
         }
         while (res == -1 && errno == EINTR);
 
-	if (res == -1 && errno != 0) {
+    if (res == -1 && errno != 0) {
             cwmp_log_error("http_socket_read ERRNO: %d, res %d, buf %d, bufsize %d", errno, res, buf, bufsize);
-	}
+    }
 
 
 //        cwmp_log_error("http_socket_read ERRNO: %d, res %d, buf %d, bufsize %d", errno, res, buf, bufsize);
-/*	if (res == 1) {
-	    buf[1] = 0;
+/*    if (res == 1) {
+        buf[1] = 0;
             cwmp_log_error("%s", buf);
-	}
-	else
-	{
+    }
+    else
+    {
             cwmp_log_error("http_socket_read ERRNO: %d, res %d, buf %d, bufsize %d", errno, res, buf, bufsize);
-	}
+    }
 */
     }
 
@@ -980,7 +980,7 @@ int http_read_line(http_socket_t * sock, char * buffer, int max)
     int i=0;
     while (i < max)
     {
-	readnum = http_socket_read(sock, &c, 1);
+        readnum = http_socket_read(sock, &c, 1);
 
         if (readnum < 0)
         {
@@ -990,8 +990,8 @@ int http_read_line(http_socket_t * sock, char * buffer, int max)
             return CWMP_ERROR;
         };
 
-	//FIXME
-	if (readnum == 0) break;
+        //FIXME
+        if (readnum == 0) break;
 
 
         buffer[i++]=c;
@@ -1009,10 +1009,10 @@ int http_read_line(http_socket_t * sock, char * buffer, int max)
             buffer[i++]=c;
             break ;
         }
-	else if (c=='\n')
-	{
-	    break;
-	}
+        else if (c=='\n')
+        {
+            break;
+        }
     }
     if (i >= max)
     {

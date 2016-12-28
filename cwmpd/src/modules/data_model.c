@@ -1,43 +1,26 @@
 /* vim: set et: */
-#include "cwmp/model.h"
+
 #include "data_model.h"
+
+#include "cwmp/model.h"
 #include "cwmp_module.h"
-
-#define DM_TRACE_REFRESH() \
-	cwmp_log_trace("%s(cwmp=%p, param_node=%p [name=%s], callback_reg=%p)",\
-			__func__, (void*)cwmp,\
-			(void*)param_node,\
-            (param_node ? param_node->name : ""), (void*)callback_reg);
-
-#define DM_TRACE_SET() \
-    cwmp_log_trace("%s(cwmp=%p, name=\"%s\", value=\"%s\", length=%d, args=\"%s\", callback_reg=%p)",\
-            __func__, (void*)cwmp, name, value, length, args, (void*)callback_reg);
-
-#define DM_TRACE_GET() \
-    cwmp_log_trace("%s(cwmp=%p, name=\"%s\", value=%p, args=\"%s\", pool=%p)",\
-            __func__, (void*)cwmp, name, (void*)value, args, (void*)pool);
-
-#define DM_TRACE_RELOAD() \
-    cwmp_log_trace("%s(cwmp=%p, callback_reg=%p)",\
-            __func__, (void*)cwmp, (void*)callback_reg);
-
-#define DM_TRACE_DEL() \
-    cwmp_log_trace("%s(cwmp=%p, param_node=%p [name=%s], instance_number=%d, callback_reg=%p)",\
-            __func__, (void*)cwmp, (void*)param_node,\
-            (param_node ? param_node->name : ""),\
-            instance_number, (void*)callback_reg);
-
-#define DM_TRACE_ADD() \
-    cwmp_log_trace("%s(cwmp=%p, param_node=%p [name=%s], pinstance_number=%p, callback_reg=%p)",\
-            __func__, (void*)cwmp, (void*)param_node,\
-            (param_node ? param_node->name : ""),\
-            (void*)pinstance_number, (void*)callback_reg);
 
 #include "InternetGatewayDevice/InternetGatewayDevice.c"
 #include "alias.c"
 
 model_func_t ModelFunction[] =
 {
+// D-Link compatibility ---
+    {"cpe_get_igd_wlanc_standard_dlink101", cpe_get_igd_wlanc_standard_dlink101},
+    {"cpe_get_igd_wlanc_standard_dlink115", cpe_get_igd_wlanc_standard_dlink115},
+
+    {"cpe_set_igd_wlanc_standard_dlink101", cpe_set_igd_wlanc_standard_dlink101},
+    {"cpe_set_igd_wlanc_standard_dlink115", cpe_set_igd_wlanc_standard_dlink115},
+
+    {"cpe_get_igd_wlanc_dlink115_wparenewal", cpe_get_igd_wlanc_dlink115_wparenewal},
+    {"cpe_set_igd_wlanc_dlink115_wparenewal", cpe_set_igd_wlanc_dlink115_wparenewal},
+// ---
+
     {"cpe_reload_all", cpe_reload_all},
     {"cpe_get_alias", cpe_get_alias},
     {"cpe_set_alias", cpe_set_alias},
@@ -92,6 +75,7 @@ model_func_t ModelFunction[] =
     {"cpe_get_igd_wlanc_standard", cpe_get_igd_wlanc_standard},
     {"cpe_set_igd_wlanc_standard", cpe_set_igd_wlanc_standard},
 
+
     {"cpe_get_igd_wlanc_channel", cpe_get_igd_wlanc_channel},
     {"cpe_set_igd_wlanc_channel", cpe_set_igd_wlanc_channel},
 
@@ -100,14 +84,15 @@ model_func_t ModelFunction[] =
 
     {"cpe_set_igd_wlanc_basicencryption", cpe_set_igd_wlanc_basicencryption},
     {"cpe_get_igd_wlanc_basicencryption", cpe_get_igd_wlanc_basicencryption},
+
     {"cpe_get_igd_wlanc_basicauthmode", cpe_get_igd_wlanc_basicauthmode},
     {"cpe_set_igd_wlanc_basicauthmode", cpe_set_igd_wlanc_basicauthmode},
 
-    {"cpe_get_igd_wlanc_wpaauthmode", cpe_get_igd_wlanc_wpaauthmode},
-    {"cpe_set_igd_wlanc_wpaauthmode", cpe_set_igd_wlanc_wpaauthmode},
-
     {"cpe_get_igd_wlanc_ieeeauthmode", cpe_get_igd_wlanc_ieeeauthmode},
     {"cpe_set_igd_wlanc_ieeeauthmode", cpe_set_igd_wlanc_ieeeauthmode},
+
+    {"cpe_get_igd_wlanc_wpaauthmode", cpe_get_igd_wlanc_wpaauthmode},
+    {"cpe_set_igd_wlanc_wpaauthmode", cpe_set_igd_wlanc_wpaauthmode},
 
     {"cpe_set_igd_wlanc_wpaencryption", cpe_set_igd_wlanc_wpaencryption},
     {"cpe_get_igd_wlanc_wpaencryption", cpe_get_igd_wlanc_wpaencryption},
@@ -146,6 +131,8 @@ model_func_t ModelFunction[] =
     {"cpe_set_igd_wlanc_beacontype", cpe_set_igd_wlanc_beacontype},
     {"cpe_get_igd_wlanc_possiblechannels", cpe_get_igd_wlanc_possiblechannels},
 
+    {"cpe_get_igd_wan_ppp_count", cpe_get_igd_wan_ppp_count},
+
     {"cpe_get_igd_wan_ppp_authprot", cpe_get_igd_wan_ppp_authprot},
     {"cpe_set_igd_wan_ppp_authprot", cpe_set_igd_wan_ppp_authprot},
 
@@ -174,7 +161,8 @@ model_func_t ModelFunction[] =
     {"cpe_get_igd_l3f_defaultconnection", cpe_get_igd_l3f_defaultconnection},
     {"cpe_set_igd_l3f_defaultconnection", cpe_set_igd_l3f_defaultconnection},
 
-	{"cpe_get_igd_wan_ip", cpe_get_igd_wan_ip},
+    {"cpe_get_igd_wan_ip", cpe_get_igd_wan_ip},
+    {"cpe_set_igd_wan_ip", cpe_set_igd_wan_ip},
 
     {"cpe_get_conf_string", cpe_get_conf_string},
     {"cpe_set_conf_string", cpe_set_conf_string},
@@ -359,7 +347,6 @@ int get_index_after_paramname(parameter_node_t * param, const char * tag_name)
 
 void cwmp_model_load(cwmp_t * cwmp, const char * xmlfile)
 {
-
     cwmp_model_load_xml(cwmp, xmlfile, ModelFunction, sizeof(ModelFunction)/sizeof(model_func_t));
 }
 
@@ -389,7 +376,7 @@ int cpe_set_conf_string(cwmp_t * cwmp, const char * name, const char * value, in
     if (value == NULL)
     {
         cwmp_log_error("cpe_set_conf_string: param (%s) value is NULL", name);
-	return FAULT_CODE_9002;
+        return FAULT_CODE_9002;
     }
 
     cwmp_conf_set(args,value);
@@ -405,19 +392,19 @@ int cpe_get_nvram_string(cwmp_t * cwmp, const char * name, char ** value, char *
     if (!*value) {
         cwmp_log_warn("%s: empty value (%s)!", __func__, args);
     }
+
     return FAULT_CODE_OK;
 }
 
 int cpe_get_nvram_string_or_empty(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-
     DM_TRACE_GET();
 
     char* nvval = cwmp_nvram_pool_get(pool, args);
     if (nvval == NULL) {
-	*value = pool_pstrdup(pool, "0");
-	*value[0] = '\0';
-	return FAULT_CODE_OK;
+        *value = pool_pstrdup(pool, "0");
+        *value[0] = '\0';
+        return FAULT_CODE_OK;
     }
 
     *value = nvval;
@@ -431,8 +418,8 @@ int cpe_get_nvram_bool(cwmp_t * cwmp, const char * name, char ** value, char * a
 
     const char* nvval = cwmp_nvram_pool_get(pool, args);
     if (nvval == NULL) {
-    cwmp_log_error("cpe_get_nvram_bool: undefined param (%s)!",args);
-	return FAULT_CODE_9002;
+        cwmp_log_error("cpe_get_nvram_bool: undefined param (%s)!",args);
+        return FAULT_CODE_9002;
     }
 
     int val = (nvval[0] == '1');
@@ -442,24 +429,22 @@ int cpe_get_nvram_bool(cwmp_t * cwmp, const char * name, char ** value, char * a
 //    cwmp_log_debug("cpe_get_igd_lan_hcm_dhcpenabled: value is %s", *value);
 //    cwmp_log_debug("cpe_get_nvram_string: value is %s",*value);
     return FAULT_CODE_OK;
-
 }
 
 //nvram bool getter
 int cpe_get_nvram_bool_onoff(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-
     DM_TRACE_GET();
 
     const char* nvval = cwmp_nvram_pool_get(pool, args);
     if (nvval == NULL) {
-	cwmp_log_error("cpe_get_nvram_bool: undefined param (%s)!",args);
-	return FAULT_CODE_9002;
+        cwmp_log_error("cpe_get_nvram_bool: undefined param (%s)!",args);
+        return FAULT_CODE_9002;
     }
 
     if (nvval[0] == '\0') {
-	cwmp_log_error("cpe_get_nvram_bool: zero param (%s)!",args);
-	return FAULT_CODE_9002;
+        cwmp_log_error("cpe_get_nvram_bool: zero param (%s)!",args);
+        return FAULT_CODE_9002;
     }
 
     int val = (nvval[0] == 'o' && nvval[1] == 'n');
@@ -469,7 +454,6 @@ int cpe_get_nvram_bool_onoff(cwmp_t * cwmp, const char * name, char ** value, ch
 //    cwmp_log_debug("cpe_get_igd_lan_hcm_dhcpenabled: value is %s", *value);
 //    cwmp_log_debug("cpe_get_nvram_string: value is %s",*value);
     return FAULT_CODE_OK;
-
 }
 
 
@@ -478,13 +462,13 @@ int cpe_get_nvram_bool_onoff(cwmp_t * cwmp, const char * name, char ** value, ch
 //nvram bool getter
 int cpe_get_nvram_int(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-    DM_TRACE_GET();
+     DM_TRACE_GET();
 
     const char* nvval = cwmp_nvram_pool_get(pool, args);
     if (nvval == NULL)
     {
-	cwmp_log_error("cpe_get_nvram_bool: undefined param (%s)!",args);
-	return FAULT_CODE_9002;
+        cwmp_log_error("cpe_get_nvram_bool: undefined param (%s)!",args);
+        return FAULT_CODE_9002;
     }
 
     long val = strtol(nvval, NULL, 10);
@@ -504,7 +488,7 @@ int cpe_get_nvram_int(cwmp_t * cwmp, const char * name, char ** value, char * ar
 //nvram string setter
 int cpe_set_nvram_string(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
 {
-	DM_TRACE_SET();
+    DM_TRACE_SET();
 
     if (value == NULL)
     {
@@ -519,7 +503,7 @@ int cpe_set_nvram_string(cwmp_t * cwmp, const char * name, const char * value, i
 //nvram int setter
 int cpe_set_nvram_int(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
 {
-	DM_TRACE_SET();
+    DM_TRACE_SET();
 
     if (value == NULL)
     {
@@ -543,7 +527,7 @@ int cpe_set_nvram_bool(cwmp_t * cwmp, const char * name, const char * value, int
     if (value == NULL)
     {
         cwmp_log_error("cpe_set_nvram_string: param (%s) value is NULL", name);
-	return FAULT_CODE_9002;
+        return FAULT_CODE_9002;
     }
 
     long val = strtol(value, NULL, 10);
@@ -558,7 +542,7 @@ int cpe_set_nvram_bool_onoff(cwmp_t * cwmp, const char * name, const char * valu
     if (value == NULL)
     {
         cwmp_log_error("cpe_set_nvram_string: param (%s) value is NULL", name);
-	return FAULT_CODE_9002;
+        return FAULT_CODE_9002;
     }
 
     long val = strtol(value, NULL, 10);

@@ -102,7 +102,7 @@ OPENSSL_DIR=no
 AC_ARG_WITH(openssl, --with-openssl=<path>     sets path to temp directory, OPENSSL_DIR=$withval, OPENSSL_DIR=no)
 
 if test x"$OPENSSL_DIR" != "xno"; then
- 	CPPFLAGS="$CPPFLAGS -DUSE_CWMP_OPENSSL -I$OPENSSL_DIR/include"	
+ 	CPPFLAGS="$CPPFLAGS -DUSE_CWMP_OPENSSL -I$OPENSSL_DIR/include"
 	LDFLAGS="$LDFLAGS -L$OPENSSL_DIR/lib -lssl -lcrypto"
 fi
 AC_SUBST(OPENSSL_DIR)

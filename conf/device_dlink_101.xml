@@ -2,7 +2,7 @@
 <cwmp>
 	<model>
 		<object name="InternetGatewayDevice">
-
+			<param name="DeviceSummary" inform="1" get_func="cpe_get_const_string" args=""/>
 
 			<object name="DeviceInfo">
 				<param name="Manufacturer" inform="1" get_func="cpe_get_igd_di_manufacturer"/>
@@ -14,11 +14,13 @@
 				<param name="ProductClass" inform="1" get_func="cpe_get_igd_di_productclass"/>
 				<param name="ProvisioningCode" rw="1" inform="1" get_func="cpe_get_conf_string" args="cwmp:cpe_prov" set_func="cpe_set_conf_string" reload_func="cpe_reload_all"/>
 				<param name="DeviceLog" inform="0" get_func="cpe_get_igd_di_devicelog"/>
+				<param name="SpecVersion" inform="1" get_func="cpe_get_const_string" args="1.0"/>
 			</object>
 
 			<object name="ManagementServer">
 				<param name="ConnectionRequestURL" inform="1" get_func="cpe_get_igd_ms_connectionrequesturl"/>
 				<param name="URL" inform="1" get_func="cpe_get_igd_ms_url" set_func="cpe_set_igd_ms_url"/>
+				<param name="ParameterKey" inform="1" get_func="cpe_get_ms_parameter_key"/>
 			</object>
 
 
@@ -111,20 +113,20 @@
 					<param name="DHCPLeaseTime" noti_rw="1" rw="1" get_func="cpe_get_nvram_int" args="dhcpLease" set_func="cpe_set_nvram_string" reload_func="cpe_reload_all"/>
 				</object>
 
-				<object name="WLANConfiguration">
-				<object name="1">
+				<object name="WLANConfiguration" refresh_func="cpe_refresh_wlanc">
+				<object name="{i}">
 					<param name="Enable" noti_rw="1" rw="1" get_func="cpe_get_nvram_bool" args="RadioOn" set_func="cpe_set_nvram_bool" reload_func="cpe_reload_all"/>
-					<param name="BSSID" noti_rw="1" rw="1" get_func="cpe_get_igd_lan_wlan_bssid" args="1" set_func="cpe_set_null" reload_func="cpe_reload_all"/>
-					<param name="SSID" noti_rw="1" rw="1" get_func="cpe_get_nvram_string" args="SSID1" set_func="cpe_set_nvram_string" reload_func="cpe_reload_all"/>
-					<param name="Channel" noti_rw="1" rw="1" get_func="cpe_get_igd_lan_wlan_channel" args="Channel" set_func="cpe_set_igd_lan_wlan_channel" reload_func="cpe_reload_all"/>
-					<param name="AutoChannelEnable" noti_rw="1" rw="1" get_func="cpe_get_igd_lan_wlan_autochannel" args="" set_func="cpe_set_igd_lan_wlan_autochannel" reload_func="cpe_reload_all"/>
-					<param name="Standard" noti_rw="1" rw="1" get_func="cpe_get_igd_lan_wlan_standard" set_func="cpe_set_igd_lan_wlan_standard" reload_func="cpe_reload_all"/>
-					<param name="BeaconType" noti_rw="1" rw="1" get_func="cpe_get_igd_lan_wlan_beacontype" set_func="cpe_set_igd_lan_wlan_beacontype" reload_func="cpe_reload_all"/>
+					<param name="BSSID" noti_rw="1" rw="1" get_func="cpe_get_igd_wlanc_bssid" args="1" set_func="cpe_set_igd_wlanc_bssid" reload_func="cpe_reload_all"/>
+					<param name="SSID" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_wlanc_ssid" set_func="cpe_set_igd_wlanc_ssid"/>
+					<param name="Channel" noti_rw="1" rw="1" get_func="cpe_get_igd_wlanc_channel" args="Channel" set_func="cpe_set_igd_wlanc_channel" reload_func="cpe_reload_all"/>
+					<param name="AutoChannelEnable" noti_rw="1" rw="1" get_func="cpe_get_igd_wlanc_autochannel" args="" set_func="cpe_set_igd_wlanc_autochannel" reload_func="cpe_reload_all"/>
+					<param name="Standard" noti_rw="1" rw="1" get_func="cpe_get_igd_wlanc_standard_dlink101" set_func="cpe_set_igd_wlanc_standard_dlink101" reload_func="cpe_reload_all"/>
+					<param name="BeaconType" noti_rw="1" rw="1" get_func="cpe_get_igd_wlanc_beacontype" set_func="cpe_set_igd_wlanc_beacontype" reload_func="cpe_reload_all"/>
 					<param name="KeyPassphrase" noti_rw="1" rw="1" get_func="cpe_get_nvram_string" args="WPAPSK1" set_func="cpe_set_nvram_string" reload_func="cpe_reload_all"/>
 					<param name="TotalPSKFailures" rw="1" reload_func="cpe_reload_all" get_func="cpe_get_igd_wlanc_pskfailures" set_func="cpe_set_igd_wlanc_pskfailures"/>
-					<param name="BasicAuthenticationMode" noti_rw="1" rw="1" get_func="cpe_get_igd_lan_wlan_basicauthmode" set_func="cpe_set_igd_lan_wlan_basicauthmode" reload_func="cpe_reload_all"/>
-					<param name="WPAAuthenticationMode" noti_rw="1" rw="1" get_func="cpe_get_igd_lan_wlan_wpaauthmode" set_func="cpe_set_igd_lan_wlan_wpaauthmode" reload_func="cpe_reload_all"/>
-					<param name="IEEE11iAuthenticationMode" noti_rw="1" rw="1" get_func="cpe_get_igd_lan_wlan_ieeeauthmode" set_func="cpe_set_igd_lan_wlan_ieeeauthmode" reload_func="cpe_reload_all"/>
+					<param name="BasicAuthenticationMode" noti_rw="1" rw="1" get_func="cpe_get_igd_wlanc_basicauthmode" set_func="cpe_set_igd_wlanc_basicauthmode" reload_func="cpe_reload_all"/>
+					<param name="WPAAuthenticationMode" noti_rw="1" rw="1" get_func="cpe_get_igd_wlanc_wpaauthmode" set_func="cpe_set_igd_wlanc_wpaauthmode" reload_func="cpe_reload_all"/>
+					<param name="IEEE11iAuthenticationMode" noti_rw="1" rw="1" get_func="cpe_get_igd_wlanc_ieeeauthmode" set_func="cpe_set_igd_wlanc_ieeeauthmode" reload_func="cpe_reload_all"/>
 				</object>
 				</object>
 			</object>

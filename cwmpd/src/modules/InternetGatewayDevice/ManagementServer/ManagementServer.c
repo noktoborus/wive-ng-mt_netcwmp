@@ -36,11 +36,11 @@ int cpe_get_localip(const char * eth_name, char *hostip)
                 //Get IP Address
                 if (!(ioctl(fd,SIOCGIFADDR,(char*)&buf[intrface])))
                 {
-		    if(strcmp(eth_name, buf[intrface].ifr_name) == 0)
-		    {
-                    sprintf(local_ip_addr, "%s", inet_ntoa(((struct sockaddr_in*)(&buf[intrface].ifr_addr))->sin_addr));
-		    break;
-		    }
+                    if(strcmp(eth_name, buf[intrface].ifr_name) == 0)
+                    {
+                        sprintf(local_ip_addr, "%s", inet_ntoa(((struct sockaddr_in*)(&buf[intrface].ifr_addr))->sin_addr));
+                        break;
+                    }
                 }
                 //Get Hardware Address
 
@@ -60,7 +60,7 @@ int cpe_get_localip(const char * eth_name, char *hostip)
 //InternetGatewayDevice.ManagementServer.Username
 int cpe_get_igd_ms_username(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-	  *value = cwmp_conf_pool_get(pool, "cwmp:acs_username");
+    *value = cwmp_conf_pool_get(pool, "cwmp:acs_username");
     return FAULT_CODE_OK;
 }
 
@@ -74,8 +74,8 @@ int cpe_set_igd_ms_username(cwmp_t * cwmp, const char * name, const char * value
 //InternetGatewayDevice.ManagementServer.Password
 int cpe_get_igd_ms_password(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
-	  *value = cwmp_conf_pool_get(pool, "cwmp:acs_password");
-	  return FAULT_CODE_OK;
+    *value = cwmp_conf_pool_get(pool, "cwmp:acs_password");
+    return FAULT_CODE_OK;
 }
 
 int cpe_set_igd_ms_password(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
@@ -109,8 +109,8 @@ int cpe_get_igd_ms_connectionrequesturl(cwmp_t * cwmp, const char * name, char *
 
     if (local_ip == 0)
     {
-	cpe_get_localip("br0", local_ip);
-	cwmp_log_debug("Local ip is %s",local_ip);
+        cpe_get_localip("br0", local_ip);
+        cwmp_log_debug("Local ip is %s",local_ip);
     }
 
     if (local_ip == 0) {
@@ -126,7 +126,7 @@ int cpe_get_igd_ms_connectionrequesturl(cwmp_t * cwmp, const char * name, char *
         return FAULT_CODE_9002;
     }
 
-    int port = cwmp_conf_get_int("cwmpd:httpd_port");
+    int port = cwmp_conf_get_int_def("cwmpd:httpd_port", 1008);
     snprintf(buf, 256, "http://%s:%d", local_ip, port);
     *value = PSTRDUP(buf);
     return FAULT_CODE_OK;
@@ -152,7 +152,7 @@ int cpe_get_igd_ms_connectionrequestpassword(cwmp_t * cwmp, const char * name, c
 }
 int cpe_set_igd_ms_connectionrequestpassword(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
 {
-	cwmp_conf_set("cwmp:cpe_password", value);
+    cwmp_conf_set("cwmp:cpe_password", value);
     return FAULT_CODE_OK;
 }
 

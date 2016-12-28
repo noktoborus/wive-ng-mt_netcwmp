@@ -29,7 +29,7 @@
 #include "cwmp_httpd.h"
 
 static int cwmp_max_threads;
-static int 				cwmp_worker_threaded;
+static int cwmp_worker_threaded;
 
 #ifdef WIN32
 #else

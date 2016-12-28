@@ -35,23 +35,23 @@ void cwmp_conf_init(cwmp_t * cwmp)
 
     pool = cwmp->pool;
 
-    cwmp->conf.periodic_interval = (unsigned long)cwmp_conf_get_int("cwmpd:inform_periodic_interval");
-    cwmp->conf.periodic_enable = (bool)cwmp_conf_get_int("cwmpd:inform_periodic_enable");
+    cwmp->conf.periodic_interval = (unsigned long)cwmp_conf_get_int_def("cwmpd:inform_periodic_interval", 3600);
+    cwmp->conf.periodic_enable = (bool)cwmp_conf_get_int_def("cwmpd:inform_periodic_enable", 0);
     if (!cwmp->conf.periodic_interval) {
         cwmp->conf.periodic_interval = 1lu;
     }
 
-    cwmp->httpd_port =  cwmp_conf_get_int("cwmpd:httpd_port"); //cwmp_nvram_get_int("cwmp:httpd_port",8080);
+    cwmp->httpd_port =  cwmp_conf_get_int_def("cwmpd:httpd_port", 1008); //cwmp_nvram_get_int("cwmp:httpd_port",8080);
 
-    cwmp->cpe_auth  =   cwmp_conf_get_int("cwmp:cpe_auth");
+    cwmp->cpe_auth  =   cwmp_conf_get_int_def("cwmp:cpe_auth", 0);
 
-	cwmp->acs_user = cwmp_conf_pool_get(pool, "cwmp:acs_username");
-	cwmp->acs_pwd = cwmp_conf_pool_get(pool, "cwmp:acs_password");
+    cwmp->acs_user = cwmp_conf_pool_get(pool, "cwmp:acs_username");
+    cwmp->acs_pwd = cwmp_conf_pool_get(pool, "cwmp:acs_password");
 
     if(cwmp->cpe_auth)
     {
-	cwmp->cpe_user = cwmp_conf_pool_get(pool, "cwmp:cpe_username");
-    	cwmp->cpe_pwd = cwmp_conf_pool_get(pool, "cwmp:cpe_password");
+        cwmp->cpe_user = cwmp_conf_pool_get(pool, "cwmp:cpe_username");
+        cwmp->cpe_pwd = cwmp_conf_pool_get(pool, "cwmp:cpe_password");
     }
 
     cwmp->acs_url   =   cwmp_conf_pool_get(pool, "cwmp:acs_url"); //  "http://192.168.0.69:8000/otnms/acs/webservice.action";

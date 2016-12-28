@@ -1,4 +1,3 @@
-/* vim: set et: */
 ///////////////////////////////////////////////////////////////////////////
 //
 // Copyright (c) 2000-2003 Intel Corporation
@@ -563,6 +562,7 @@ XMLParserIsValidEndElement( XMLParser * xmlParser,
 {
     if (!xmlParser->pCurElement)
         return 0;
+
     return ( strcmp( xmlParser->pCurElement->element, newNode->nodeName )
              == 0 );
 }

@@ -31,9 +31,6 @@
 
 
 
-
-
-
 #define CWMP_HEAD_MAX   64
 #define CWMP_NAME_MAX   32
 #define CWMP_PARAMVALUE_SIZE	512
@@ -329,6 +326,7 @@ struct cwmp_st
 	int httpd_port;
 
 	int    cpe_auth;
+        int    acs_auth;
 
 	char * acs_url;
 	char * cpe_mf;
@@ -575,9 +573,7 @@ int     cwmp_write_doc_to_chunk(xmldoc_t *  doc, cwmp_chunk_t * chunk, pool_t * 
 xmldoc_t * cwmp_xml_parse_buffer(pool_t * pool, char * buffer);
 xmlnode_t * cwmp_xml_get_child_with_name(void * nodeptr, const char * nodeName);
 
-
-#define XmlNodeGetDocRoot(docptr)   XmlNodeGetFirstChild(& (docptr)->node)
-
+#define XmlNodeGetDocRoot(docptr)    XmlNodeGetFirstChild(& (docptr)->node)
 
 int callback_register_task(cwmp_t * cwmp, callback_func_t callback, void *data1, void *data2);
 

@@ -1,6 +1,5 @@
 /* vim: set et: */
 #define MAX_LOG_SIZE 32768
-//#define MAX_LOG_SIZE 1024
 ///////////////////// HELPERS /////////////////////
 
 // escape all XML chars and copy into new text buffer
@@ -22,33 +21,33 @@ char* pool_xml_escape_text(char* buffer, size_t text_length, size_t buffer_size,
 
     for (i=0;i<text_length;i++)
     {
-	written = ptr - resbuffer;
+        written = ptr - resbuffer;
 
-	if ( written >= (resbuffer_size - 6) ) // resbuffer overloaded
-	{
-	    char* tmp_ptr = pool_prealloc(pool,resbuffer,resbuffer_size,resbuffer_size+realloc_size);
-	    if ( !tmp_ptr )
-	    {
-		// unable to allocate additional block, let's skip some characters
-		break;
-	    }
+        if ( written >= (resbuffer_size - 6) ) // resbuffer overloaded
+        {
+            char* tmp_ptr = pool_prealloc(pool,resbuffer,resbuffer_size,resbuffer_size+realloc_size);
+            if ( !tmp_ptr )
+            {
+                // unable to allocate additional block, let's skip some characters
+                break;
+            }
 
-	    resbuffer = tmp_ptr;
-	    resbuffer_size += realloc_size;
-	    ptr = resbuffer + written;
-	}
+            resbuffer = tmp_ptr;
+            resbuffer_size += realloc_size;
+            ptr = resbuffer + written;
+        }
 
-	switch (buffer[i])
-	{
-	    case '\0':	ptr[0] = ' ';ptr++;		break;
-	    case '<':	memcpy(ptr,"&lt;",4);ptr+=4;	break;
-	    case '>':	memcpy(ptr,"&gt;",4);ptr+=4;	break;
-	    case '&':	memcpy(ptr,"&amp;",5);ptr+=5;	break;
-	    case '\"':	memcpy(ptr,"&quot;",6);ptr+=6;	break;
-	    case '\'':	memcpy(ptr,"&apos;",6);ptr+=6;	break;
+        switch (buffer[i])
+        {
+            case '\0':	ptr[0] = ' ';ptr++;		break;
+            case '<':	memcpy(ptr,"&lt;",4);ptr+=4;	break;
+            case '>':	memcpy(ptr,"&gt;",4);ptr+=4;	break;
+            case '&':	memcpy(ptr,"&amp;",5);ptr+=5;	break;
+            case '\"':	memcpy(ptr,"&quot;",6);ptr+=6;	break;
+            case '\'':	memcpy(ptr,"&apos;",6);ptr+=6;	break;
 
-	    default: ptr[0] = buffer[i];ptr++;
-	}
+            default: ptr[0] = buffer[i];ptr++;
+        }
     }
 
     ptr[0] = 0;

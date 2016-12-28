@@ -60,7 +60,9 @@ void string_randomize(char *buffer, size_t size);
 
 int getHWStatistic(unsigned long long* rxtx_count);
 char* getIntIp(pool_t * pool);
-//int getIfMac(char *ifname, char *if_hw);
+
+size_t nvram_get_tuple(const char *key, unsigned index, char *value, size_t value_size);
+
 int firmware_upgrade(char* filename);
 
 
@@ -315,14 +317,11 @@ enum upgrade_status {
 };
 
 
-const char *
-upgrade_status_to_string(enum upgrade_status s);
+const char * upgrade_status_to_string(enum upgrade_status s);
 
-enum upgrade_status
-upgrade_get_status();
+enum upgrade_status upgrade_get_status();
 
-bool
-upgrade_set_status(enum upgrade_status s);
+bool upgrade_set_status(enum upgrade_status s);
 
 char * cwmp_base64_encode(const char *src);
 

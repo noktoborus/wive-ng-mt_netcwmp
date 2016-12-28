@@ -236,7 +236,7 @@ int httpd_build_server(cwmp_t * cwmp)
                 rc = http_read_request(s, request, http_socket_get_pool(s));
                 if (rc <= 0)
                 {
-                    httpd_response_unkonw_error(s);
+                    if (rc<0) httpd_response_unkonw_error(s);
                     goto faild;
                 }
 
@@ -263,14 +263,14 @@ int httpd_build_server(cwmp_t * cwmp)
                     if (http_check_digest_auth(AuthRealm, auth, cpe_user, cpe_pwd) != 0)
                     {
                         httpd_response_unauthorization(s);
-						goto faild;
+                        goto faild;
                     }
                 }
 
                 httpd_response_ok(s);
 
                 //get a new request from acs
-				cwmp_event_set_value(cwmp, INFORM_CONNECTIONREQUEST, 1, NULL, 0, 0, 0);
+                cwmp_event_set_value(cwmp, INFORM_CONNECTIONREQUEST, 1, NULL, 0, 0, 0);
 faild:
 
                 FD_CLR(fd, &readset);

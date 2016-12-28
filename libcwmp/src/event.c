@@ -345,29 +345,29 @@ int cwmp_event_clear_active(cwmp_t *cwmp)
             continue;
         }
 
-		switch(pec[i]->event) {
-			case INFORM_BOOTSTRAP:
-				cwmp_event_file_save(cwmp);
-				break;
-			case INFORM_MREBOOT:
-				cwmp->event_global.event_flag |= EVENT_REBOOT_ACS_FLAG;
-				cwmp_event_file_save(cwmp);
-				break;
-			case INFORM_VALUECHANGE:
-	//			notify_flag = 1;
-				break;
-			case INFORM_TRANSFERCOMPLETE:
-				cwmp->event_global.event_flag |= EVENT_REBOOT_TRANSFERCOMPLETE_FLAG;
-				memset(cwmp->event_global.event_key, 0, COMMAND_KEY_LEN+1);
-				strcpy(cwmp->event_global.event_key, pec[i]->command_key);
-				cwmp->event_global.fault_code = pec[i]->fault_code;
-				cwmp->event_global.start = pec[i]->start;
-				cwmp->event_global.end = pec[i]->end;
-				cwmp_event_file_save(cwmp);
-				break;
-		}
+        switch(pec[i]->event) {
+            case INFORM_BOOTSTRAP:
+                cwmp_event_file_save(cwmp);
+                break;
+            case INFORM_MREBOOT:
+                cwmp->event_global.event_flag |= EVENT_REBOOT_ACS_FLAG;
+                cwmp_event_file_save(cwmp);
+                break;
+            case INFORM_VALUECHANGE:
+    //            notify_flag = 1;
+                break;
+            case INFORM_TRANSFERCOMPLETE:
+                cwmp->event_global.event_flag |= EVENT_REBOOT_TRANSFERCOMPLETE_FLAG;
+                memset(cwmp->event_global.event_key, 0, COMMAND_KEY_LEN+1);
+                strcpy(cwmp->event_global.event_key, pec[i]->command_key);
+                cwmp->event_global.fault_code = pec[i]->fault_code;
+                cwmp->event_global.start = pec[i]->start;
+                cwmp->event_global.end = pec[i]->end;
+                cwmp_event_file_save(cwmp);
+                break;
+        }
 
-		pec[i]->ref = 0; //clear
+        pec[i]->ref = 0; //clear
 
     }
 

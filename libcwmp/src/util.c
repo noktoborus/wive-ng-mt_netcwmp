@@ -22,8 +22,7 @@
 /* TODO: to libwive */
 #define UPGRADE_FILE _PATH_TMP "/z_upgrade_firmware"
 
-const char *
-upgrade_status_to_string(enum upgrade_status s)
+const char * upgrade_status_to_string(enum upgrade_status s)
 {
 	switch (s) {
 		case UPGRADE_NONE:
@@ -40,8 +39,7 @@ upgrade_status_to_string(enum upgrade_status s)
 	return NULL;
 }
 
-enum upgrade_status
-upgrade_get_status()
+enum upgrade_status upgrade_get_status()
 {
 	char status[32] = {};
 	int pid = -1;
@@ -68,7 +66,7 @@ upgrade_get_status()
 		/* unknown behavior */
 		return UPGRADE_DOWNLOAD;
 	}
-	fscanf(f, "%d:%32s", &pid, status);
+	fscanf(f, "%d:%31s", &pid, status);
 	fclose(f);
 
 	/* check program state */
@@ -91,8 +89,7 @@ upgrade_get_status()
 	return UPGRADE_NONE;
 }
 
-bool
-upgrade_set_status(enum upgrade_status s)
+bool upgrade_set_status(enum upgrade_status s)
 {
 	enum upgrade_status so = UPGRADE_NONE;
 	const char *status = NULL;
@@ -101,10 +98,10 @@ upgrade_set_status(enum upgrade_status s)
 	status = upgrade_status_to_string(s);
 
 	if ((so = upgrade_get_status()) != UPGRADE_NONE) {
-		cwmp_log_error(
+/*		cwmp_log_error(
 				"firmware upgrade: set status to '%s' failed: "
 				"already in status: %s",
-				status, upgrade_status_to_string(so));
+				status, upgrade_status_to_string(so));*/
 	}
 
 	if (s == UPGRADE_NONE) {
@@ -288,30 +285,6 @@ char *strip_space(char *str)
     return str;
 }
 
-/*
-int getIfIp(char *ifname, char *if_addr)
-{
-	struct ifreq ifr;
-	int skfd = 0;
-
-	if((skfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		syslog(LOG_ERR, "open socket failed, %s\n", __FUNCTION__);
-		return -1;
-	}
-
-	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
-	if (ioctl(skfd, SIOCGIFADDR, &ifr) < 0) {
-		close(skfd);
-		syslog(LOG_ERR, "ioctl call failed, %s\n", __FUNCTION__);
-		return -1;
-	}
-	strcpy(if_addr, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
-
-	close(skfd);
-	return 0;
-}
-*/
-
 char* getIntIp(pool_t * pool)
 {
     char if_addr[16];
@@ -320,20 +293,60 @@ char* getIntIp(pool_t * pool)
 
     if (vpn_mode_enabled && vpnDGW) {
         if (getIfIp(getPPPIfName(), if_addr) != -1) {
-	    cwmp_log_debug("getIntIp R %s", if_addr);
-	    return pool_pstrdup(pool, if_addr);
+            cwmp_log_debug("getIntIp R %s", if_addr);
+            return pool_pstrdup(pool, if_addr);
         }
     }
 
     /* if vpn disabled always get ip from wanif */
     if (getIfIp(getWanIfName(), if_addr) != -1) {
-	cwmp_log_debug("getIntIp R %s", if_addr);
-	return pool_pstrdup(pool, if_addr);
+        cwmp_log_debug("getIntIp R %s", if_addr);
+        return pool_pstrdup(pool, if_addr);
     }
 
 
     return 0;
 }
+
+size_t nvram_get_tuple(const char *key, unsigned index, char *value, size_t value_size)
+{
+    char *v = NULL;
+    char *e = NULL;
+    char *s = NULL;
+    unsigned i = 0;
+    size_t len = 0u;
+
+    /* indexes started at 1 */
+    index++;
+
+    e = s = v = cwmp_nvram_get(key);
+    len = strlen(v);
+    while ((e = strchr(s, ';')) != NULL) {
+        if (++i == index)
+            break;
+        /* next */
+        s = ++e;
+    }
+    /* fix endpos */
+    if (!e) {
+        e = v + len;
+        i++;
+    }
+
+    if (i != index) {
+        s = e;
+        cwmp_log_error("%s: invalid index: %u, maximum: %u",
+                __func__, index, i);
+    }
+
+    memset(value, 0u, value_size);
+    len = (e - s);
+    if (len && value) {
+        snprintf(value, value_size, "%.*s", len, s);
+    }
+    return len;
+}
+
 
 ////////////////////////////////////////////////////////
 
