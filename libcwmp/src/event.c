@@ -123,20 +123,37 @@ int cwmp_event_global_init(cwmp_t * cwmp)
     unsigned long long starttime = 0;
     unsigned long long endtime = 0;
     char fmt[20] = {};
+    unsigned long url_crc = 0lu;
+    unsigned long url_crc_calculated = 0lu;
+    char url[INI_BUFFERSIZE] = {0};
 
     cwmp_log_trace("%s(cwmp=%p)", __func__, (void*)cwmp);
     assert(cwmp != NULL);
 
     memset(&cwmp->event_global, 0, sizeof(event_global_t));
     cwmp_conf_get("cwmp:event_data", cwmp->event_global.data);
+    /* calculate url crc */
+    cwmp_conf_get("cwmp:acs_url", url);
+    url_crc_calculated = cwmp_crc32(0, (unsigned char*)url, strlen(url));
+    /* format string */
     snprintf(fmt, sizeof(fmt),
-            "%%d:%%d:%%llu:%%llu:%%%ds", sizeof(cwmp->event_global.data));
+            "%%d:%%d:%%llu:%%llu:%%lu:%%%ds", sizeof(cwmp->event_global.data));
 
+    /* read data */
     sscanf(cwmp->event_global.data, fmt,
             &cwmp->event_global.event_flag,
             &cwmp->event_global.fault_code,
             &starttime, &endtime,
+            &url_crc,
             cwmp->event_global.event_key);
+
+    /* check crc */
+    if (url_crc_calculated != url_crc) {
+        cwmp_log_info("ACS URL changed, drop event state");
+        /* drop flags */
+        cwmp->event_global.event_flag = EVENT_REBOOT_NONE_FLAG;
+        cwmp->event_global.fault_code = 0;
+    }
 
     cwmp->event_global.start = (time_t)starttime;
     cwmp->event_global.end = (time_t)endtime;
@@ -149,22 +166,28 @@ int cwmp_event_file_save(cwmp_t * cwmp)
 {
     int     ret = CWMP_OK;
     char data[sizeof(cwmp->event_global.data)] = {};
+    unsigned long url_crc = 0lu;
 
     cwmp_log_trace("%s(cwmp=%p)", __func__, (void*)cwmp);
     assert(cwmp != NULL);
 
-    snprintf(data, sizeof(data), "%d:%d:%llu:%llu:%s",
+    /* calc url crc */
+    if (cwmp->acs_url) {
+        url_crc = cwmp_crc32(0, (unsigned char*)cwmp->acs_url, strlen(cwmp->acs_url));
+    }
+
+    /* serialize */
+    snprintf(data, sizeof(data), "%d:%d:%llu:%llu:%lu:%s",
             cwmp->event_global.event_flag,
             cwmp->event_global.fault_code,
             (unsigned long long)cwmp->event_global.start,
             (unsigned long long)cwmp->event_global.end,
+            url_crc,
             cwmp->event_global.event_key
             );
 
     if (!strcmp(cwmp->event_global.data, data)) {
-
-        cwmp_log_debug("%s(): nothing to save, data=%s",
-                __func__, data);
+        cwmp_log_debug("%s(): nothing to save, data=%s", __func__, data);
     } else {
         cwmp_conf_set("cwmp:event_data", data);
         memcpy(cwmp->event_global.data, data, sizeof(data));

@@ -325,5 +325,7 @@ bool upgrade_set_status(enum upgrade_status s);
 
 char * cwmp_base64_encode(const char *src);
 
+unsigned long cwmp_crc32 (unsigned long crc, const unsigned char *buf,  unsigned int len);
+
 #endif
 

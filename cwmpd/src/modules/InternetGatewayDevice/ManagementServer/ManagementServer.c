@@ -87,14 +87,38 @@ int cpe_set_igd_ms_password(cwmp_t * cwmp, const char * name, const char * value
 //InternetGatewayDevice.ManagementServer.URL
 int cpe_get_igd_ms_url(cwmp_t * cwmp, const char * name, char ** value, char * args, pool_t * pool)
 {
+    DM_TRACE_GET();
     *value = cwmp_conf_pool_get(pool, "cwmp:acs_url");
+    return FAULT_CODE_OK;
+}
+
+static char acs_url_value[INI_BUFFERSIZE];
+
+static int
+acs_url_cb(cwmp_t *cwmp, void *arg2)
+{
+
+    cwmp_log_info("ACS URL changed to '%s', drop event state", acs_url_value);
+
+    cwmp->event_global.event_flag = EVENT_REBOOT_BOOTSTRAP_FLAG;
+    cwmp_event_set_value(cwmp, INFORM_BOOTSTRAP, 1, NULL, 0, 0, 0);
+
+    pool_pfree(cwmp->pool, cwmp->acs_url);
+    if (!(cwmp->acs_url = pool_pstrdup(cwmp->pool, acs_url_value))) {
+        cwmp_log_error("strdup() failed: %s", strerror(errno));
+        return FAULT_CODE_9002;
+    }
+
     return FAULT_CODE_OK;
 }
 
 //InternetGatewayDevice.ManagementServer.URL
 int cpe_set_igd_ms_url(cwmp_t * cwmp, const char * name, const char * value, int length, char * args, callback_register_func_t callback_reg)
 {
+    DM_TRACE_SET();
     cwmp_conf_set("cwmp:acs_url", value);
+    snprintf(acs_url_value, sizeof(acs_url_value), "%s", value);
+    callback_reg(cwmp, (callback_func_t)&acs_url_cb, (void*)cwmp, NULL);
     return FAULT_CODE_OK;
 }
 

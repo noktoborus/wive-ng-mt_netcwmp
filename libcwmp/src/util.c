@@ -453,7 +453,7 @@ char* ReadFile(char *name, unsigned long *fileLen)
     return buffer;
 }
 
-static unsigned long crc32 (unsigned long crc, const unsigned char *buf,  unsigned int len)
+unsigned long cwmp_crc32 (unsigned long crc, const unsigned char *buf,  unsigned int len)
 {
     crc = crc ^ 0xffffffffL;
     while (len >= 8)
@@ -586,7 +586,7 @@ static int checkimage(char *imagefile, int offset, int len)
 	checksum = ntohl(hdr->ih_hcrc);
 	hdr->ih_hcrc = htonl(0);	/* clear for re-calculation */
 
-	if (crc32 (0u, (unsigned char*) data, sizeof(image_header_t)) != checksum)
+	if (cwmp_crc32 (0u, (unsigned char*) data, sizeof(image_header_t)) != checksum)
 	{
 		munmap(ptr, len);
 		close(ifd);
@@ -600,7 +600,7 @@ static int checkimage(char *imagefile, int offset, int len)
 	data = (char *)(ptr + sizeof(image_header_t));
 	data_len  = len - sizeof(image_header_t) ;
 
-	if (crc32 (0, (unsigned char *)data, data_len) != ntohl(hdr->ih_dcrc))
+	if (cwmp_crc32 (0, (unsigned char *)data, data_len) != ntohl(hdr->ih_dcrc))
 	{
 		munmap(ptr, len);
 		close(ifd);
